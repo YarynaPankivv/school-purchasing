@@ -77,7 +77,9 @@ vendor_invoice, self_purchase boolean not null default false)`. Окрема т�
 
 `public.requests(id uuid pk, type text check (type in ('PUR','RMB','CRE','RFC','INV')), purchase_type text null check
 (purchase_type in ('procurement','self')), department_id, author_id, on_behalf_of_id null, status text check (status in
-('draft','submitted')) default 'draft', created_at)`; `purchase_type` обов'язковий лише для `PUR`.
+('draft','submitted')) default 'draft', created_at)` + CHECK `(type = 'PUR') = (purchase_type is not null)`:
+`purchase_type` обов'язковий для `PUR` і порожній для інших типів (CHECK `in (…)` сам `NULL` пропускає, а виправити
+чернетку автор не зможе — `update` немає).
 
 Політика `requests_insert` (`to authenticated`, `with check`) відхиляє на сервері все, що UI не показує:
 
@@ -91,8 +93,8 @@ vendor_invoice, self_purchase boolean not null default false)`. Окрема т�
   AC-ORG-16.
 
 **Поетапно, бо `user_permissions` з'являється лише в задачі 2.** Міграція задачі 1 створює `requests_insert`, що
-дозволяє лише `type in ('PUR','RMB')` і `purchase_type` порожній або `'procurement'` — для всіх, і для `admin` теж;
-`CRE`/`RFC`/`INV` і `'self'` база відхиляє, доки міграція задачі 2 не замінить політику повною версією вище. Так між
+дозволяє лише `PUR` з `purchase_type = 'procurement'` або `RMB` з порожнім `purchase_type` — для всіх, і для `admin`
+теж; `PUR` без `purchase_type`, `CRE`/`RFC`/`INV` і `'self'` база відхиляє, доки міграція задачі 2 не замінить політику повною версією вище. Так між
 деплоями задач 1 і 2 немає вікна, коли тип без дозволу можна створити прямим запитом до Data API.
 
 Інші політики (усі з `is_active_user()`, D6): `select` — автор, особа «від імені» або `admin` (усі, включно з
@@ -107,8 +109,8 @@ vendor_invoice, self_purchase boolean not null default false)`. Окрема т�
   (…)`: живий JWT деактивованого дає прямий доступ до Data API в обхід `requireActiveUser()`, тож перевіряє база.
 - `profiles`: у міграції задачі 1 шаблонну `profiles_select_own_or_admin` замінюємо на `profiles_select_own` (власний
   рядок без перевірки активності — єдиний вузький виняток, щоб `login()` прочитав `is_active`) і
-  `profiles_select_admin` (`is_active_user() and current_app_role() = 'admin'`); `profiles_select_colleagues` (D7) теж
-  вимагає активного користувача.
+  `profiles_select_admin` (`is_active_user() and current_app_role() = 'admin'`); `profiles_select_colleagues` (D7)
+  вимагає активних і читача, і профілю-цілі.
 - Вхід (AC-ORG-12): `login()` після `signInWithPassword` читає свій профіль; `is_active = false` → `signOut()` і
   `redirect("/login?error=invalid")` — той самий текст, що й для невірного пароля (PM тексту не задав; не розкриваємо
   стан облікового запису). Те саме робить `requireActiveUser()` у `src/lib/auth/session.ts` для кожної сторінки й
@@ -128,8 +130,10 @@ vendor_invoice, self_purchase boolean not null default false)`. Окрема т�
 
 - `departments`/`department_members` — `select` для активного `admin` або активного члена того самого відділу
   (`private.is_member()`, `security definer`, щоб уникнути рекурсії політик 42P17).
-- Нова політика `profiles_select_colleagues`: активний працівник бачить профілі колег зі спільного відділу — для вибору
-  особи «від імені» (AC-ORG-16).
+- Нова політика `profiles_select_colleagues`: активний працівник бачить профілі лише **активних** колег зі спільного
+  відділу (`is_active_user() and is_active and private.shares_department(id)`) — для вибору особи «від імені»; так
+  деактивованого колегу не прочитати й прямим запитом до Data API, а не лише не показати фільтром
+  `onBehalfCandidates()` (AC-ORG-16).
 - Чисті функції в `src/lib/org/`: `selectableDepartments()` (AC-ORG-01), `allowedRequestTypes()` (AC-ORG-07, 17),
   `allowedPurchaseTypes()` (AC-ORG-08), `approverCandidates()` і `onBehalfCandidates()` — лише активні (AC-ORG-16),
   `departmentHasActiveApprover()` (AC-ORG-14), `mapOrgDbError()` — `23503` на `department_approvers` → «Спершу додайте

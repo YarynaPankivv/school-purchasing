@@ -7,14 +7,16 @@
 
 - [ ] 1.1 Міграція `org_departments`: набір ролей `requester`/`approver`/`admin` у порядку D1; `profiles.is_active`;
   таблиці `departments`, `department_members` (з `auto_approve`), `department_approvers` (складений FK з каскадом),
-  мінімальна `requests` (без `on_behalf_of_id`); хелпери `private.is_member()`, `private.is_active_user()`,
-  `private.sync_role()` + тригер на `department_approvers`; RLS, `revoke all`, явні `grant`, політика на кожну операцію
-  `to authenticated` з `(select auth.uid())`, кожна — з `(select private.is_active_user())`, зокрема `select` і гілки
-  `admin`; заміна шаблонної `profiles_select_own_or_admin` на `profiles_select_own` + `profiles_select_admin` (D6);
-  початкова `requests_insert` дозволяє лише `PUR`/`RMB` і `purchase_type` порожній або `procurement`, відхиляє
-  `CRE`/`RFC`/`INV` і `self` — до задачі 2 (D5). Перевірка: `node scripts/check-migration-order.mjs`, зелений
-  `db-check`; після деплою задачі 1 і до міграції задачі 2 — прямий insert через Data API з сесією
-  `member1@example.test` для `CRE` і для `PUR` + `self` відхилено RLS (результат — в описі PR задачі 1)
+  мінімальна `requests` (без `on_behalf_of_id`; CHECK `(type = 'PUR') = (purchase_type is not null)`); хелпери
+  `private.is_member()`, `private.is_active_user()`, `private.sync_role()` + тригер на `department_approvers`; RLS,
+  `revoke all`, явні `grant`, політика на кожну операцію `to authenticated` з `(select auth.uid())`; кожна, крім
+  `profiles_select_own`, — з `(select private.is_active_user())`, зокрема `select` і гілки `admin`; заміна шаблонної
+  `profiles_select_own_or_admin` на `profiles_select_own` (без перевірки активності — для `login()`) +
+  `profiles_select_admin` (D6); початкова `requests_insert` дозволяє лише `PUR` з `purchase_type = 'procurement'` або
+  `RMB` з порожнім `purchase_type`, відхиляє `PUR` без `purchase_type`, `CRE`/`RFC`/`INV` і `self` — до задачі 2 (D5).
+  Перевірка: `node scripts/check-migration-order.mjs`, зелений `db-check`; після деплою задачі 1 і до міграції задачі 2 —
+  прямий insert через Data API з сесією `member1@example.test` для `CRE`, для `PUR` + `self` і для `PUR` без
+  `purchase_type` відхилено (результат — в описі PR задачі 1)
 - [ ] 1.2 `supabase/demo-users.json`: `member` → `requester`; `supabase/seed.sql`: відділи «Початкова школа», «Вища
   школа», «Офіс» (`on conflict do nothing`). Перевірка: `db-check` (сид на одноразовій базі)
 - [ ] 1.3 Оновити `src/lib/supabase/database.types.ts` (Summary `db-check` або `npm run db:types`). Перевірка:
@@ -53,7 +55,7 @@ Done when: AC-ORG-07, AC-ORG-08, AC-ORG-17
 
 - [ ] 3.1 Міграція `org_users`: `grant update (full_name, role, is_active)`, політика `profiles_update_admin`, тригер
   `private.guard_profile_update()` (не-`admin` не змінює `role`/`is_active`; «Має лишитись хоча б один активний
-  адміністратор»; похідна роль після зняття `admin`), `profiles_select_colleagues` (з `is_active_user()`), `requests.on_behalf_of_id` з
+  адміністратор»; похідна роль після зняття `admin`), `profiles_select_colleagues` (активні і читач, і профіль-ціль — D7), `requests.on_behalf_of_id` з
   перевіркою в `requests_insert`, `requests_delete` лише для чернеток (D5, D6, D7, тимчасово Q1, Q2). Перевірка:
   зелений `db-check`
 - [ ] 3.2 `login()` і `requireActiveUser()` виходять для деактивованого; `src/app/admin/users/actions.ts`
