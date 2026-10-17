@@ -1,0 +1,217 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit для репо розробника: власна реалізація, гілки + PR, approve колег немає — рецензент тут CodeRabbit.
+# requirements/ — знімок вимог PM (приносить лише команда агента /requirements-sync у PR «Оновлення вимог»): його зміст
+# не рецензуємо (розробник його не змінює), лише межі PR. openspec/ — специфікація розробника, переклад вимог PM: її
+# рецензуємо проти requirements/ (ті самі AC ID, нічого не вигадано й не загублено).
+# Публічні репозиторії з < 10 зірок не рецензуються автоматично — рев'ю запускає коментар `@coderabbitai review`
+# (нагадування є в шаблоні PR).
+# Усі перевірки СТАТИЧНІ (лише diff і файли репозиторію): рецензент нічого не запускає.
+# Перевірка схеми: назви custom_checks < 50 символів, tone_instructions ≤ 250 — інакше CodeRabbit
+# мовчки ігнорує ВЕСЬ файл (ознаки: рецензія англійською і знову з'являється перевірка docstrings).
+
+language: "uk-UA"
+tone_instructions: >
+  Досвідчений рецензент агенції. Українською, коротко й по суті. Спершу безпека даних (RLS, GRANT, секрети),
+  потім відповідність специфікації (AC ID), потім решта. Пропонуй конкретний виправлений код.
+
+early_access: false
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: false
+  in_progress_fortune: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - ".*"
+    ignore_title_keywords:
+      - "WIP"
+      - "[skip review]"
+    ignore_usernames:
+      - "dependabot[bot]"
+      - "renovate[bot]"
+      - "github-actions[bot]"
+
+  # Лише перелічені шляхи потрапляють у рецензію (явний список, без package-lock.json і згенерованого).
+  path_filters:
+    - "src/**"
+    - "supabase/**"
+    - "requirements/**"
+    - "openspec/**"
+    - "product/**"
+    - "scripts/**"
+    - "tests/**"
+    - "docs/**"
+    - ".github/**"
+    - ".claude/**"
+    - ".cursor/**"
+    - "AGENTS.md"
+    - "CLAUDE.md"
+    - "README.md"
+    - ".mcp.json"
+    - ".coderabbit.yaml"
+    - ".env*"
+    - ".gitignore"
+    - "package.json"
+    - "next.config.ts"
+    - "tsconfig.json"
+    - "eslint.config.mjs"
+    - "vitest.config.mts"
+    - "!src/lib/supabase/database.types.ts"
+    - "!tests/fixtures/**"
+
+  path_instructions:
+    - path: "supabase/migrations/**"
+      instructions: |
+        Міграція Postgres для Supabase (нові проєкти — без автогрантів уже, усі — з 30.10.2026). Для КОЖНОЇ нової таблиці в public
+        перевір у тому ж файлі: `alter table … enable row level security`; `revoke all … from anon, authenticated`;
+        явні `grant` лише на потрібні операції (і `service_role`, якщо таблицю пишуть серверні скрипти);
+        окрема політика на кожну операцію (select / insert / update / delete) з явним `to authenticated`;
+        `auth.uid()` лише як `(select auth.uid())`; індекси на колонках, що фільтрують політики.
+        Колонки на кшталт `role` чи `status` не повинні бути доступні для самозміни: шукай колонкові
+        `grant update (…)` або `with check`. Функції `security definer` — лише в схемі `private`, з
+        `set search_path = ''`, повними іменами `public.…` і `revoke execute … from public, anon`.
+        Ролі не беремо з `user_metadata`. Деструктивні зміни (drop, зміна типу) — позначай як ризик.
+        Нова міграція не редагує вже застосовані файли — зміни лише новим файлом.
+    - path: "src/**"
+      instructions: |
+        Next.js 16 App Router + Supabase. Сесія: `src/proxy.ts` (не `middleware.ts`) + `src/lib/supabase/proxy.ts`
+        з getAll/setAll і заголовками кешування; авторизація на сервері лише через `supabase.auth.getClaims()`,
+        ніколи через `getSession()`. Клієнт Supabase створюється на кожен запит, не в змінній модуля.
+        `SUPABASE_SECRET_KEY` — лише в серверному коді й скриптах, ніколи з префіксом `NEXT_PUBLIC_` і ніколи
+        в Client Components; застарілі `*_ANON_KEY` / `SERVICE_ROLE_KEY` не використовуємо.
+        Server actions перевіряють вхідні дані й роль користувача, не покладаючись лише на UI.
+        Тести поведінки мають AC ID на початку назви: `it("AC-AREA-01: …")`.
+    - path: "requirements/**"
+      instructions: |
+        Знімок вимог PM (issues «Продукт» і «Вимога» або файли docs/ його репо); його приносить лише команда агента
+        /requirements-sync у PR типу «Оновлення вимог» (гілка sync/*). Не пропонуй правок тексту: вимоги пише PM у своєму
+        репо, питання до PM — issue «Питання до вимог» у репо PM. Перевір лише, що файли змінюються тільки в PR «Оновлення
+        вимог», кожен починається рядком «> Джерело: …», а в docs/conformance.md того ж PR змінено лише рядок «Вимоги: …»
+        у шапці (рядків таблиці тут немає).
+    - path: "openspec/specs/**"
+      instructions: |
+        Специфікація розробника — переклад вимог PM із requirements/**; змінюється лише archive зміни специфікації в PR
+        «Специфікація» (гілка spec/*). Перевір: кожна вимога — одне речення з SHALL або MUST; назва кожного сценарію
+        починається з AC ID, який є в requirements/** (ID PM не змінено й не перенумеровано); числа, межі й ролі
+        збігаються з текстом PM; немає правил, яких немає у вимогах PM; docs/conformance.md у тому ж PR має рядок для
+        кожного нового AC і не має рядків прибраних.
+    - path: "openspec/changes/**"
+      instructions: |
+        Зміни розробника. Зміна специфікації (add-<зріз> або уточнення; без skip_specs): proposal.md з розділами Why,
+        What Changes, Capabilities, Users & roles, Non-goals, Assumptions, Open questions; дельти specs/ з SHALL і
+        сценаріями з ID PM; нова можливість — з ## Purpose; без design.md і tasks.md; неясне у вимогах PM — в Open
+        questions з посиланням на issue в репо PM, а не вигадане правило. План impl-<зріз>: .openspec.yaml зі
+        `skip_specs: true`, без теки specs/; proposal.md короткий (Why, What Changes — які AC покриває); design.md —
+        рішення (таблиці, міграції з GRANT + RLS, server actions, сторінки) з посиланнями на AC ID; tasks.md —
+        вертикальні задачі, кожна закінчується «Done when: AC-…»; кожен згаданий AC ID має існувати в openspec/specs/**.
+    - path: "product/**"
+      instructions: |
+        Лише списки заборонених слів для npm run spec:check: README.md і необов'язковий публічний product/denylist.txt
+        (локальний product/denylist.local.txt зі справжніми назвами — у .gitignore). Перевір, що в публічних файлах
+        немає справжніх назв клієнтів чи імен людей і що інших файлів тут немає (вимоги PM — у requirements/).
+    - path: "scripts/**"
+      instructions: |
+        Node-скрипти без зайвих залежностей. Секрети читаються лише зі змінних середовища й ніколи не
+        друкуються (ні ключі, ні паролі). Помилки дають ненульовий код виходу й зрозуміле повідомлення
+        українською. Скрипти, що пишуть у базу, ідемпотентні й працюють лише з синтетичними даними.
+
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: "off"
+    description:
+      mode: "warning"
+    custom_checks:
+      - mode: "warning"
+        name: "Тип PR і межі змін"
+        instructions: >
+          Static review of the diff and PR description only; do NOT run anything. Read the PR type
+          checkbox in the description (Оновлення вимог = Requirements sync, Специфікація = Specification,
+          Реалізація = Implementation, Оновлення шаблону = Template update). requirements/** is a snapshot of
+          the PM's requirements written ONLY by the /requirements-sync agent command. Requirements sync
+          (branch sync/*): the diff touches only requirements/** (every file starts with a "> Джерело:" source
+          line) and, in docs/conformance.md, only the header line "Вимоги: <url or path> · джерело:
+          issues|docs · знімок <YYYY-MM-DD>"; no table rows. Specification (branch spec/*): openspec/** (a spec
+          change archived into openspec/specs/** in the same branch, or an impl-* plan), docs/conformance.md
+          table rows (a row with status "відкладено (чекає реалізації)" for every new AC ID, rows of removed AC
+          IDs deleted) and docs/spec-reading.md; the only allowed extra is one separate commit that strips AC
+          IDs removed from the spec from test titles. Implementation (branch task/* or setup/*): src/**,
+          supabase/**, tests/**, docs/conformance.md rows, docs/decisions/**, docs/bootstrap.md, docs/img/**,
+          supabase/demo-users.json, and checkboxes or the archive of openspec/changes/impl-*; NOT requirements/**
+          and NOT openspec/specs/**. Template update (branch template/*): cherry-picked course-template commits;
+          any path except requirements/** and openspec/specs/**. FAIL if any PR other than a Requirements sync
+          modifies requirements/** or the "Вимоги:" header line, if any PR other than a Specification modifies
+          openspec/specs/**, or if a PR goes beyond the paths of its type; answer in Ukrainian.
+
+      - mode: "warning"
+        name: "AC ID у тестах і матриці відповідності"
+        instructions: >
+          Static review only; do NOT execute the test suite. If the diff adds or changes behaviour in
+          src/** or supabase/**, check that it adds or updates tests whose test()/it() titles start
+          with the AC ID they cover (format AC-AREA-NN, an ID that exists in openspec/specs/**), that
+          those tests are not .skip/.todo, and
+          that docs/conformance.md rows for these AC IDs are updated in the same PR with status
+          "реалізовано" or "відкладено (причина)". FAIL if behaviour changed without such tests or
+          matrix rows. Answer in Ukrainian.
+
+      - mode: "warning"
+        name: "Міграції: RLS, GRANT і політики"
+        instructions: >
+          Static review of new files under supabase/migrations/** only. For every created table in
+          public: enable row level security, revoke all from anon and authenticated, explicit grants,
+          one policy per granted operation with "to authenticated" and "(select auth.uid())". In every
+          new migration, including one that creates no table (for example a role-set change): no grant
+          or policy lets a user update their own role or status column, and security definer functions
+          live in schema private with search_path set to ''. PASS if there are no new migrations or all
+          these rules hold; FAIL if any rule is broken, naming the exact missing statement. Answer in
+          Ukrainian.
+
+      - mode: "warning"
+        name: "Секрети й синтетичні дані"
+        instructions: >
+          Static review of the diff only. FAIL if any committed file contains a real-looking key or
+          token (sb_secret_, sb_publishable_ values, JWTs, passwords, database URLs with passwords),
+          a .env file other than .env.example, SUPABASE_SECRET_KEY used in a client component or
+          with a NEXT_PUBLIC_ prefix, or personal data that is not synthetic (emails must be
+          *@example.test). Variable NAMES in .env.example and docs are fine. Answer in Ukrainian.
+
+      - mode: "warning"
+        name: "Переклад вимог PM і план impl"
+        instructions: >
+          Static review of changed files under openspec/changes/** and openspec/specs/** only (including
+          archive copies); PASS if none changed. requirements/** is the PM's requirements snapshot; AC IDs
+          are defined there by lines that start with "AC-<AREA>-<NN>:" under «Критерії приймання». Spec
+          changes (no skip_specs in .openspec.yaml, for example add-*): proposal.md has the sections Why, What
+          Changes, Capabilities, Users & roles, Non-goals, Assumptions, Open questions; every delta requirement
+          is one sentence with SHALL or MUST; every "#### Scenario:" title starts with an AC ID that exists in
+          requirements/** (no renamed, renumbered or invented IDs); every AC ID defined in the requirements/**
+          files that the proposal cites appears as exactly one scenario; numbers, limits and roles match the
+          PM text; behaviour that requirements/** does not state is listed under Open questions, not added as
+          a rule; the change has no design.md or tasks.md. Implementation plans (impl-*): .openspec.yaml has
+          skip_specs: true and no specs/ folder; design.md decisions cite the AC IDs they serve; every
+          tasks.md task ends with "Done when: AC-…"; every cited AC ID exists in openspec/specs/**. List each
+          violation with file and line. Answer in Ukrainian.
+
+      - mode: "warning"
+        name: "Supabase у Next.js: proxy і getClaims"
+        instructions: >
+          Static review of src/** only; PASS if no auth or Supabase code changed. Check: session
+          refresh lives in src/proxy.ts (not middleware.ts) via src/lib/supabase/proxy.ts; server code
+          authorizes with supabase.auth.getClaims(), never getSession(); Supabase clients are created
+          per request, not stored in module scope; env names are NEXT_PUBLIC_SUPABASE_URL,
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY and server-only SUPABASE_SECRET_KEY (no *_ANON_KEY).
+          Answer in Ukrainian.
+
+chat:
+  auto_reply: true

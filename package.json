@@ -1,0 +1,42 @@
+{
+  "name": "2026-quitcode-06-project-template",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint --max-warnings 0",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "spec:validate": "openspec validate --all --strict",
+    "spec:check": "node scripts/check-spec.mjs",
+    "ac:coverage": "node scripts/check-ac-coverage.mjs",
+    "db:types": "supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
+    "users:demo": "node --env-file=.env.local scripts/create-demo-users.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.3",
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "1.14.1",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "supabase": "2.120.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "5.0.3"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}

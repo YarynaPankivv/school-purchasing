@@ -1,0 +1,175 @@
+# CI вашого репо (власна реалізація; гілки + PR). Один workflow — п'ять jobs:
+#   spec        — структура вашої специфікації (openspec validate --strict) + AC ID, унікальність, denylist
+#                 (зокрема в requirements/ — знімку вимог PM);
+#   app         — lint (0 warnings), typecheck (typegen + tsc), unit-тести, build;
+#   conformance — кожен AC з openspec/specs має рядок у docs/conformance.md, кожне «реалізовано» — тест
+#                 (AC вимог PM, ще не перекладені в openspec/specs, — лише попередження);
+#   db-check    — без секретів: усі міграції (і сид) на одноразовій базі в раннері (supabase db start, Docker
+#                 є на ubuntu-latest); у PR ще й порядок міграцій відносно main (scripts/check-migration-order.mjs);
+#   db-deploy   — лише main (push або ручний запуск): міграції у вашу базу через environment production.
+# Вимоги PM (requirements/) — знімок, який приносить команда агента /requirements-sync; специфікація (openspec/) — ваш
+# переклад цих вимог. Обов'язкові перевірки ruleset-у solo-main: spec, app, conformance, db-check.
+# Назви jobs не змінюйте.
+# db-check запускається й на push у main: так його назва з'являється в списку перевірок для ruleset,
+# а db-deploy не стартує, якщо міграції з main не застосовуються на чисту базу.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      include_seed:
+        description: "db-deploy: застосувати й supabase/seed.sql (--include-seed) — перший запуск у день 0"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Новий push у PR скасовує застарілий прогін цього PR. Прогони main не скасовуються:
+# у кожного своя група, а db-deploy вишиковує їх власною групою supabase-prod.
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  OPENSPEC_TELEMETRY: "0"
+
+jobs:
+  spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: OpenSpec validate --all --strict
+        run: npm run spec:validate
+      - name: AC IDs, uniqueness, denylist
+        run: npm run spec:check
+        env:
+          # Необов'язковий секрет репозиторію: справжні назви клієнтів через кому (у публічному репо — не у файлі).
+          # PR-и з гілок цього ж репозиторію його отримують (PR-и від Dependabot — ні).
+          SPEC_DENYLIST: ${{ secrets.SPEC_DENYLIST }}
+
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Нові AC потрапляють в openspec/specs через archive зміни специфікації: у тому ж PR «Специфікація» для кожного
+      # додають рядок «відкладено (чекає реалізації)» (/conformance), інакше тут NO-ROW.
+      - name: Every AC has a matrix row; every «реалізовано» has a test
+        run: npm run ac:coverage
+
+  db-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Уся історія й гілки: скрипту порядку потрібна origin/<base> поруч із перевіреним кодом PR.
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Migration order vs base branch (PR only)
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-migration-order.mjs
+        env:
+          MIGRATION_BASE: origin/${{ github.base_ref }}
+      # Без `version:` setup-cli@v3 бере версію supabase з package-lock.json (2.120.0).
+      - uses: supabase/setup-cli@v3
+      - name: Apply all migrations and seed to a throwaway database
+        run: supabase db start
+      - name: Generated types (summary, never fails)
+        continue-on-error: true
+        run: |
+          supabase gen types typescript --local > "$RUNNER_TEMP/database.types.ts"
+          if ! diff -q "$RUNNER_TEMP/database.types.ts" src/lib/supabase/database.types.ts > /dev/null; then
+            echo "::notice title=database.types.ts::Типи зі схеми цього PR відрізняються від закомічених. Готовий файл — у Summary цього прогону."
+          fi
+          {
+            echo "### src/lib/supabase/database.types.ts зі схеми цього прогону"
+            echo
+            echo '```ts'
+            cat "$RUNNER_TEMP/database.types.ts"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  db-deploy:
+    # Лише main: push після merge або ручний запуск (Actions → CI → Run workflow, гілка main).
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [spec, app, conformance, db-check]
+    runs-on: ubuntu-latest
+    # Секрети environment production (Settings → Environments; Deployment branches = main) бачить лише цей job.
+    environment: production
+    concurrency:
+      group: supabase-prod
+      cancel-in-progress: false
+    env:
+      # Основний шлях: рядок Session pooler (порт 5432) з Dashboard → Connect; пароль у ньому — percent-encoded.
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      # Запасний шлях (README, «Міграції в прод: запасний шлях»): офіційний supabase link + db push.
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+      SEED_FLAG: ${{ github.event_name == 'workflow_dispatch' && inputs.include_seed && '--include-seed' || '' }}
+    steps:
+      # secrets.* не можна використати в if на рівні job, тому перевіряємо їх кроком.
+      - name: Check Supabase secrets
+        id: mode
+        run: |
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            echo "mode=db-url" >> "$GITHUB_OUTPUT"
+          elif [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_DB_PASSWORD" ] && [ -n "$SUPABASE_PROJECT_ID" ]; then
+            echo "mode=link" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=skip" >> "$GITHUB_OUTPUT"
+            echo "::notice title=db-deploy::Секрет SUPABASE_DB_URL в environment production не задано — міграції не застосовано (db push пропущено)."
+          fi
+      - if: steps.mode.outputs.mode != 'skip'
+        uses: actions/checkout@v7
+      - if: steps.mode.outputs.mode != 'skip'
+        uses: supabase/setup-cli@v3
+      - name: Link project (fallback path)
+        if: steps.mode.outputs.mode == 'link'
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+      # Без --include-all: міграція, старша за вже застосовану, має впасти тут, а не застосуватись не в тому порядку.
+      - name: Dry run (list of migrations to apply)
+        if: steps.mode.outputs.mode != 'skip'
+        run: |
+          if [ "${{ steps.mode.outputs.mode }}" = "db-url" ]; then
+            supabase db push --yes --dry-run --db-url "$SUPABASE_DB_URL" $SEED_FLAG
+          else
+            supabase db push --yes --dry-run $SEED_FLAG
+          fi
+      - name: Apply migrations
+        if: steps.mode.outputs.mode != 'skip'
+        run: |
+          if [ "${{ steps.mode.outputs.mode }}" = "db-url" ]; then
+            supabase db push --yes --db-url "$SUPABASE_DB_URL" $SEED_FLAG
+          else
+            supabase db push --yes $SEED_FLAG
+          fi

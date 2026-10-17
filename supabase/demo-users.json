@@ -1,0 +1,17 @@
+[
+  {
+    "email": "admin@example.test",
+    "full_name": "Олена Демо-Адмін",
+    "role": "admin"
+  },
+  {
+    "email": "member1@example.test",
+    "full_name": "Андрій Демо-Перший",
+    "role": "member"
+  },
+  {
+    "email": "member2@example.test",
+    "full_name": "Марія Демо-Друга",
+    "role": "member"
+  }
+]

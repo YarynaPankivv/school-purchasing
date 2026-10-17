@@ -1,0 +1,4 @@
+# Однакові закінчення рядків на Windows і macOS/Linux (CI працює на Linux).
+* text=auto eol=lf
+*.ico binary
+*.png binary

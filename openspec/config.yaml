@@ -1,0 +1,35 @@
+schema: spec-driven
+
+# Контекст і правила потрапляють у кожен запит агента (`openspec instructions <artifact> --json`).
+# Тримайте їх короткими: довгі інструкції агент виконує гірше.
+# УВАГА: кожен пункт rules — у лапках. Пункт із ": " без лапок YAML читає як словник,
+# і OpenSpec мовчки (лише з попередженням) відкидає ВСІ правила цього артефакту.
+context: |
+  Language: Ukrainian
+  All artifacts must be written in Ukrainian.
+  Keep OpenSpec structural headings, EARS keywords (WHEN, WHILE, WHERE, IF … THEN), «the system» and SHALL/MUST in English.
+
+  Вимоги пише PM людською мовою у своєму репо; requirements/ — їхній знімок (product.md — бачення, ролі й матриця прав, глосарій, roadmap; <N>-<slug>.md — вимоги з критеріями приймання AC-<AREA>-<NN>). Знімок приносить лише команда агента /requirements-sync — тут його не редагуємо.
+  OpenSpec у цьому репо веде розробник: openspec/specs/ — його специфікація, переклад вимог PM. Дві зміни на зріз: add-<зріз> — специфікація (proposal.md і specs/, без design.md і tasks.md; archive у гілці PR «Специфікація»); impl-<зріз> — план реалізації (skip_specs: true у .openspec.yaml; proposal.md, design.md, tasks.md, без specs/). Після уточнень PM — нова зміна специфікації з ADDED / MODIFIED / REMOVED.
+  Переклад: кожен AC PM стає рівно одним сценарієм із тим самим ID; числа, межі й тексти повідомлень — як у PM. Нічого не вигадуй: чого немає у вимогах PM або що неясно — не правило, а Open questions і питання PM (скіл spec-clarify).
+  Стек (фіксований, у специфікаціях його не описуємо): Next.js 16 App Router, React 19, TypeScript, Tailwind 4, Supabase (Postgres + Auth + RLS), Vercel, Node 24.
+  Конвенції: одна зміна OpenSpec — один намір; AC ID формату AC-<AREA>-<NN> на початку назви кожного сценарію; ті самі ID — у назвах тестів і в docs/conformance.md; дані в прикладах лише синтетичні (*@example.test).
+
+rules:
+  proposal:
+    - "Зміна специфікації (add-<зріз> або уточнення після відповіді PM): розділи proposal.md у такому порядку — ## Why, ## What Changes, ## Capabilities (з шаблону OpenSpec: ### New Capabilities і ### Modified Capabilities; для кожної можливості — свій specs/<capability>/spec.md), ## Users & roles, ## Non-goals, ## Assumptions, ## Open questions; ## Impact — необов'язково і без коду."
+    - "Why — навіщо зріз, з розділу «Навіщо» вимоги PM, з посиланням на файл requirements/ і його джерело (issue PM чи файл, рядок «> Джерело:»). What Changes — зміни поведінки з AC ID кожної нової, зміненої чи прибраної вимоги."
+    - "Users & roles — з «Користувачі й ролі» вимоги PM і матриці прав у requirements/product.md; Non-goals — з «Поза межами»; Assumptions — «Припущення» PM, а ваші власні — окремо з позначкою (розробник); Open questions — «Відкриті питання» PM і ваші питання до PM (Q1, Q2, … з посиланням на issue в репо PM)."
+    - "Зміна impl-<зріз> (skip_specs: true): proposal.md короткий — ## Why (який зріз реалізуємо) і ## What Changes (які AC з openspec/specs/ покриває зміна, списком AC ID)."
+  specs:
+    - "Кожен AC з requirements/ — рівно один сценарій, назва починається з того самого ID: '#### Scenario: AC-LEAVE-01 Подання заявки на 3 дні'. ID не змінюй, не перенумеровуй і не вигадуй нових; AC, яких немає у вимогах PM, не додавай."
+    - "Кожна вимога — одне речення EARS українською; англійською лише ключові слова EARS (WHEN, WHILE, WHERE, IF … THEN), the system і SHALL або MUST: 'WHEN працівник подає заявку, the system SHALL створити заявку зі статусом «на розгляді».', 'IF дата кінця раніша за дату початку, THEN the system SHALL відхилити заявку.'; заголовок сценарію — рівно чотири решітки (####); кроки — - **GIVEN** (з «Дано»), - **WHEN** (з «Коли»), - **THEN** (з «Тоді»), - **AND**."
+    - "Числа, межі, ролі й тексти повідомлень — як у PM. Неоднозначний чи неповний AC не доповнюй власним правилом: залиш текст PM і винеси питання в Open questions (скіл spec-clarify)."
+    - "Для нової можливості дельта починається з ## Purpose (1–2 речення, навіщо можливість): інакше після archive openspec validate --strict падає на заглушці Purpose."
+    - "Без деталей реалізації (таблиці, ендпоінти, компоненти, бібліотеки) — вони в design.md зміни impl-<зріз>."
+    - "MODIFIED містить повністю скопійований блок вимоги з усіма сценаріями; змінений AC зберігає свій ID; перейменування — лише через RENAMED; AC, прибраний PM, — REMOVED із причиною й посиланням на рішення PM."
+    - "У зміні impl-<зріз> (skip_specs: true) specs/ не створюй."
+  design:
+    - "design.md — лише в зміні impl-<зріз>: таблиці, міграції (GRANT + RLS + політики), server actions, сторінки; кожне рішення посилається на AC ID. У зміні специфікації (add-<зріз>, уточнення) design.md не створюй — пропусти цей артефакт."
+  tasks:
+    - "tasks.md — лише в зміні impl-<зріз>: вертикальні зрізи (UI + server action + таблиця/RLS + тест); кожна задача закінчується рядком 'Done when: AC-…'. У зміні специфікації tasks.md не створюй — пропусти цей артефакт."
