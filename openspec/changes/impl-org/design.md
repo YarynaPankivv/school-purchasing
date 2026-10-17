@@ -90,14 +90,25 @@ vendor_invoice, self_purchase boolean not null default false)`. Окрема т�
 - `on_behalf_of_id` — порожньо або активний працівник; для не-`admin` — заявник того самого відділу (матриця прав) —
   AC-ORG-16.
 
-Інші політики: `select` — автор, особа «від імені» або `admin` (усі, включно з чернетками — матриця прав);
+**Поетапно, бо `user_permissions` з'являється лише в задачі 2.** Міграція задачі 1 створює `requests_insert`, що
+дозволяє лише `type in ('PUR','RMB')` і `purchase_type` порожній або `'procurement'` — для всіх, і для `admin` теж;
+`CRE`/`RFC`/`INV` і `'self'` база відхиляє, доки міграція задачі 2 не замінить політику повною версією вище. Так між
+деплоями задач 1 і 2 немає вікна, коли тип без дозволу можна створити прямим запитом до Data API.
+
+Інші політики (усі з `is_active_user()`, D6): `select` — автор, особа «від імені» або `admin` (усі, включно з
+чернетками — матриця прав);
 `delete` — лише `admin` і лише `status = 'draft'` (AC-ORG-13: подані заявки не видаляються); `update` — немає (WS7).
 
 ### D6. Деактивація й захист єдиного адміністратора (AC-ORG-09, 10, 12, 18; Q2)
 
 - `profiles.is_active boolean not null default true` (у міграції задачі 1, бо AC-ORG-14 рахує лише активних
-  схвалювачів); хелпер `private.is_active_user()`; нові політики `insert`/`update`/`delete` вимагають активного
-  користувача, тож деактивований зі старою сесією нічого не змінить.
+  схвалювачів); хелпер `private.is_active_user()` (`security definer`). **Кожна** політика нових таблиць і `requests` —
+  `select`, `insert`, `update`, `delete`, зокрема гілки `admin` — починається з `(select private.is_active_user()) and
+  (…)`: живий JWT деактивованого дає прямий доступ до Data API в обхід `requireActiveUser()`, тож перевіряє база.
+- `profiles`: у міграції задачі 1 шаблонну `profiles_select_own_or_admin` замінюємо на `profiles_select_own` (власний
+  рядок без перевірки активності — єдиний вузький виняток, щоб `login()` прочитав `is_active`) і
+  `profiles_select_admin` (`is_active_user() and current_app_role() = 'admin'`); `profiles_select_colleagues` (D7) теж
+  вимагає активного користувача.
 - Вхід (AC-ORG-12): `login()` після `signInWithPassword` читає свій профіль; `is_active = false` → `signOut()` і
   `redirect("/login?error=invalid")` — той самий текст, що й для невірного пароля (PM тексту не задав; не розкриваємо
   стан облікового запису). Те саме робить `requireActiveUser()` у `src/lib/auth/session.ts` для кожної сторінки й
@@ -115,10 +126,10 @@ vendor_invoice, self_purchase boolean not null default false)`. Окрема т�
 
 ### D7. Видимість для форм і списків (AC-ORG-01, 14, 16)
 
-- `departments`/`department_members` — `select` для `admin` або для членів того самого відділу
+- `departments`/`department_members` — `select` для активного `admin` або активного члена того самого відділу
   (`private.is_member()`, `security definer`, щоб уникнути рекурсії політик 42P17).
-- Нова політика `profiles_select_colleagues`: працівник бачить профілі колег зі спільного відділу — для вибору особи
-  «від імені» (AC-ORG-16).
+- Нова політика `profiles_select_colleagues`: активний працівник бачить профілі колег зі спільного відділу — для вибору
+  особи «від імені» (AC-ORG-16).
 - Чисті функції в `src/lib/org/`: `selectableDepartments()` (AC-ORG-01), `allowedRequestTypes()` (AC-ORG-07, 17),
   `allowedPurchaseTypes()` (AC-ORG-08), `approverCandidates()` і `onBehalfCandidates()` — лише активні (AC-ORG-16),
   `departmentHasActiveApprover()` (AC-ORG-14), `mapOrgDbError()` — `23503` на `department_approvers` → «Спершу додайте
