@@ -5,7 +5,7 @@
 
 ## 1. Відділи, заявники, схвалювачі, автосхвалення й похідна роль (`task/org-departments`)
 
-- [ ] 1.1 Міграція `org_departments`: набір ролей `requester`/`approver`/`admin` у порядку D1; `profiles.is_active`;
+- [x] 1.1 Міграція `org_departments`: набір ролей `requester`/`approver`/`admin` у порядку D1; `profiles.is_active`;
   таблиці `departments`, `department_members` (з `auto_approve`), `department_approvers` (складений FK з каскадом),
   мінімальна `requests` (без `on_behalf_of_id`; CHECK `(type = 'PUR') = (purchase_type is not null)`); хелпери
   `private.is_member()`, `private.is_active_user()`, `private.sync_role()` + тригер на `department_approvers`; RLS,
@@ -17,7 +17,7 @@
   Перевірка: `node scripts/check-migration-order.mjs`, зелений `db-check`; після деплою задачі 1 і до міграції задачі 2 —
   прямий insert через Data API з сесією `member1@example.test` для `CRE`, для `PUR` + `self` і для `PUR` без
   `purchase_type` відхилено (результат — в описі PR задачі 1)
-- [ ] 1.2 `supabase/demo-users.json`: `member` → `requester`; `supabase/seed.sql`: відділи «Початкова школа», «Вища
+- [x] 1.2 `supabase/demo-users.json`: `member` → `requester`; `supabase/seed.sql`: відділи «Початкова школа», «Вища
   школа», «Офіс» (`on conflict do nothing`). Перевірка: `db-check` (сид на одноразовій базі)
 - [x] 1.3 Оновити `src/lib/supabase/database.types.ts` (Summary `db-check` або `npm run db:types`). Перевірка:
   `npm run typecheck`
@@ -27,7 +27,7 @@
 - [x] 1.5 `src/lib/auth/session.ts` (`requireActiveUser`, `requireAdmin` з «Недостатньо прав»);
   `src/app/admin/departments/actions.ts` (`createDepartment`, `addMember`, `removeMember`, `setAutoApprove`,
   `addApprover`, `removeApprover`). Перевірка: тести 1.7
-- [ ] 1.6 Сторінки `/admin/departments` (список, «Немає схвалювача»), `/admin/departments/[id]`, `/requests/new`
+- [x] 1.6 Сторінки `/admin/departments` (список, «Немає схвалювача»), `/admin/departments/[id]`, `/requests/new`
   (вибір лише своїх відділів, типи «Закупівля» й «Відшкодування»), `/profile` (лише читання). Перевірка: `npm run build`
   і ручний прохід на Preview з `admin@example.test` і `member1@example.test` (кроки — в описі PR)
 - [x] 1.7 `tests/org/departments.test.ts`: `it("AC-ORG-01: …")`, 02, 03, 04, 05, 06, 11, 14, 15 — чисті функції й
