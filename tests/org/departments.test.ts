@@ -13,6 +13,7 @@ import {
   selectableDepartments,
 } from "@/lib/org/departments";
 import { ORG_ERROR_MESSAGES, mapOrgDbError, orgErrorMessage } from "@/lib/org/errors";
+import { isRequestType } from "@/lib/org/requests";
 import { deriveRole } from "@/lib/org/roles";
 import { createSupabaseMock, form, makeProfile, redirectedTo } from "./supabase-mock";
 
@@ -145,8 +146,6 @@ describe("схвалювачі", () => {
     expect(deriveRole("approver", 0)).toBe("requester");
     // Тимчасово Q3: схвалювач кількох відділів лишається approver, поки схвалює хоча б один.
     expect(deriveRole("approver", 1)).toBe("approver");
-    // Тимчасово Q6: те саме, коли схвалення зникло через зняття заявника (каскад AC-ORG-03).
-    expect(deriveRole("approver", 0)).toBe("requester");
 
     const mock = useSupabase(createSupabaseMock());
     const { removeApprover } = await actions();
@@ -174,6 +173,23 @@ describe("схвалювачі", () => {
       op: "insert",
       payload: { department_id: PRIMARY.id, user_id: WORKER },
     });
+  });
+
+  it("тимчасово Q6: зняття заявника, що схвалював лише цей відділ, робить його requester", async () => {
+    const memberships = [{ department_id: PRIMARY.id, user_id: WORKER, auto_approve: false }];
+    const approvers = [{ department_id: PRIMARY.id, user_id: WORKER }];
+    expect(memberRemovalEffects(PRIMARY.id, WORKER, memberships, approvers)).toEqual(["approver"]);
+
+    // Дія видаляє лише членство: схвалювача знімає каскад FK, а роль після нього перераховує тригер sync_role.
+    const mock = useSupabase(createSupabaseMock());
+    const { removeMember } = await actions();
+    await redirectedTo(() => removeMember(form({ department_id: PRIMARY.id, user_id: WORKER })));
+    expect(mock.calls.filter((c) => c.op !== "select").map((c) => `${c.table}.${c.op}`)).toEqual([
+      "department_members.delete",
+    ]);
+
+    const remainingApprovals = approvers.filter((a) => a.department_id !== PRIMARY.id).length;
+    expect(deriveRole("approver", remainingApprovals)).toBe("requester");
   });
 
   it("AC-ORG-11: адміністратор, якого прибрали з усіх відділів, лишається admin", () => {
@@ -250,5 +266,31 @@ describe("тексти помилок", () => {
   it("текст «Недостатньо прав» — дослівно з вимог PM", () => {
     expect(ORG_ERROR_MESSAGES.forbidden).toBe("Недостатньо прав");
     expect(orgErrorMessage("nonsense")).toBeUndefined();
+  });
+
+  it("ключі прототипу з адреси чи форми не стають ні текстом помилки, ні типом заявки", () => {
+    for (const key of ["toString", "__proto__", "constructor", "hasOwnProperty"]) {
+      expect(orgErrorMessage(key)).toBeUndefined();
+      expect(isRequestType(key)).toBe(false);
+    }
+    expect(isRequestType("PUR")).toBe(true);
+  });
+});
+
+describe("сесія", () => {
+  it("збій запиту профілю — помилка, а не вихід із системи", async () => {
+    const mock = useSupabase(
+      createSupabaseMock({ results: { "profiles.select": { error: { code: "57014", message: "timeout" } } } }),
+    );
+    const { requireActiveUser } = await import("@/lib/auth/session");
+    await expect(requireActiveUser()).rejects.toThrow("Не вдалося прочитати профіль: timeout");
+    expect(mock.signOut).not.toHaveBeenCalled();
+  });
+
+  it("неактивного працівника виводить із системи з тим самим текстом, що й за невірного пароля", async () => {
+    const mock = useSupabase(createSupabaseMock({ profile: makeProfile({ id: WORKER, is_active: false }) }));
+    const { requireActiveUser } = await import("@/lib/auth/session");
+    await expect(redirectedTo(() => requireActiveUser())).resolves.toBe("/login?error=invalid");
+    expect(mock.signOut).toHaveBeenCalledOnce();
   });
 });

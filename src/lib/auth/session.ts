@@ -21,11 +21,13 @@ export async function getSessionContext(): Promise<{ supabase: Supabase; user: C
   if (!userId) return { supabase, user: null };
 
   // Власний профіль читається навіть неактивним (політика profiles_select_own) — щоб перевірити is_active.
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("id, email, full_name, role, is_active")
     .eq("id", userId)
     .maybeSingle();
+  // Збій бази — не привід розлогінювати активного користувача: нехай спрацює сторінка помилки.
+  if (error) throw new Error(`Не вдалося прочитати профіль: ${error.message}`);
 
   if (!profile || !isAppRole(profile.role)) {
     return {

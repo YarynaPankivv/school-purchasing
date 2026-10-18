@@ -38,7 +38,8 @@ export function mapOrgDbError(error: DbError, table: OrgTable): OrgErrorCode {
 }
 
 export function orgErrorMessage(code: unknown): string | undefined {
-  return typeof code === "string" && code in ORG_ERROR_MESSAGES
+  // Object.hasOwn, а не `in`: ключі прототипу (toString, __proto__) з адреси не мають пройти.
+  return typeof code === "string" && Object.hasOwn(ORG_ERROR_MESSAGES, code)
     ? ORG_ERROR_MESSAGES[code as OrgErrorCode]
     : undefined;
 }

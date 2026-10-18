@@ -22,7 +22,8 @@ export const PURCHASE_TYPE_LABELS = {
 export type PurchaseType = keyof typeof PURCHASE_TYPE_LABELS;
 
 export function isRequestType(value: unknown): value is RequestType {
-  return typeof value === "string" && value in REQUEST_TYPE_LABELS;
+  // Object.hasOwn, а не `in`: ключі прототипу (toString, __proto__) не є типом заявки.
+  return typeof value === "string" && Object.hasOwn(REQUEST_TYPE_LABELS, value);
 }
 
 // purchase_type обов'язковий для PUR і порожній для інших (CHECK requests_purchase_type_for_pur).
