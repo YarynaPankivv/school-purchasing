@@ -19,20 +19,20 @@
   `purchase_type` відхилено (результат — в описі PR задачі 1)
 - [ ] 1.2 `supabase/demo-users.json`: `member` → `requester`; `supabase/seed.sql`: відділи «Початкова школа», «Вища
   школа», «Офіс» (`on conflict do nothing`). Перевірка: `db-check` (сид на одноразовій базі)
-- [ ] 1.3 Оновити `src/lib/supabase/database.types.ts` (Summary `db-check` або `npm run db:types`). Перевірка:
+- [x] 1.3 Оновити `src/lib/supabase/database.types.ts` (Summary `db-check` або `npm run db:types`). Перевірка:
   `npm run typecheck`
-- [ ] 1.4 `src/lib/org/roles.ts` (`deriveRole`), `src/lib/org/departments.ts` (`selectableDepartments`,
+- [x] 1.4 `src/lib/org/roles.ts` (`deriveRole`), `src/lib/org/departments.ts` (`selectableDepartments`,
   `departmentHasActiveApprover`, `approverCandidates`), `src/lib/org/errors.ts` (`mapOrgDbError` для `23503`).
   Перевірка: тести 1.7
-- [ ] 1.5 `src/lib/auth/session.ts` (`requireActiveUser`, `requireAdmin` з «Недостатньо прав»);
+- [x] 1.5 `src/lib/auth/session.ts` (`requireActiveUser`, `requireAdmin` з «Недостатньо прав»);
   `src/app/admin/departments/actions.ts` (`createDepartment`, `addMember`, `removeMember`, `setAutoApprove`,
   `addApprover`, `removeApprover`). Перевірка: тести 1.7
 - [ ] 1.6 Сторінки `/admin/departments` (список, «Немає схвалювача»), `/admin/departments/[id]`, `/requests/new`
   (вибір лише своїх відділів, типи «Закупівля» й «Відшкодування»), `/profile` (лише читання). Перевірка: `npm run build`
   і ручний прохід на Preview з `admin@example.test` і `member1@example.test` (кроки — в описі PR)
-- [ ] 1.7 `tests/org/departments.test.ts`: `it("AC-ORG-01: …")`, 02, 03, 04, 05, 06, 11, 14, 15 — чисті функції й
+- [x] 1.7 `tests/org/departments.test.ts`: `it("AC-ORG-01: …")`, 02, 03, 04, 05, 06, 11, 14, 15 — чисті функції й
   actions із `vi.mock("@/lib/supabase/server")`, зокрема тимчасові Q3, Q4, Q6 (D10). Перевірка: `npm test`
-- [ ] 1.8 `docs/decisions/0001-org-model.md` (D2–D6) і рядки AC задачі в `docs/conformance.md` → «реалізовано».
+- [x] 1.8 `docs/decisions/0001-org-model.md` (D2–D6) і рядки AC задачі в `docs/conformance.md` → «реалізовано».
   Перевірка: `npm run ac:coverage`
 
 Done when: AC-ORG-01, AC-ORG-02, AC-ORG-03, AC-ORG-04, AC-ORG-05, AC-ORG-06, AC-ORG-11, AC-ORG-14, AC-ORG-15

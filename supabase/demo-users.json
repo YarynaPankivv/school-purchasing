@@ -7,11 +7,11 @@
   {
     "email": "member1@example.test",
     "full_name": "Андрій Демо-Перший",
-    "role": "member"
+    "role": "requester"
   },
   {
     "email": "member2@example.test",
     "full_name": "Марія Демо-Друга",
-    "role": "member"
+    "role": "requester"
   }
 ]
