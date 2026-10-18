@@ -42,9 +42,9 @@
 | AC-ORG-11 | адміністратор без відділів лишається admin | `supabase/migrations/20261018182200_org_departments.sql` (private.sync_role) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-06 | автосхвалення діє лише у відділі, де його ввімкнено | `src/app/admin/departments/actions.ts` (setAutoApprove) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-14 | відділ без активного схвалювача позначено «Немає схвалювача» | `src/lib/org/departments.ts` (departmentHasActiveApprover) | `tests/org/departments.test.ts` | реалізовано |
-| AC-ORG-07 | без дозволу «Витрати карткою» немає у виборі типу заявки | — | — | відкладено (чекає реалізації) |
-| AC-ORG-17 | з дозволом «Витрата карткою» є у виборі типу заявки | — | — | відкладено (чекає реалізації) |
-| AC-ORG-08 | без дозволу «Самостійна закупівля» — лише тип «Відділ закупівель» | — | — | відкладено (чекає реалізації) |
+| AC-ORG-07 | без дозволу «Витрати карткою» немає у виборі типу заявки | `src/lib/org/request-options.ts` (allowedRequestTypes; RLS requests_insert → private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
+| AC-ORG-17 | з дозволом «Витрата карткою» є у виборі типу заявки | `src/app/admin/users/actions.ts` (setPermissions; allowedRequestTypes) | `tests/org/permissions.test.ts` | реалізовано |
+| AC-ORG-08 | без дозволу «Самостійна закупівля» — лише тип «Відділ закупівель» | `src/lib/org/request-options.ts` (allowedPurchaseTypes; private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
 | AC-ORG-09 | без ролі admin немає доступу до працівників і відділів, «Недостатньо прав» | — | — | відкладено (чекає реалізації) |
 | AC-ORG-10 | єдиний активний адміністратор не знімає з себе роль admin | — | — | відкладено (чекає реалізації) |
 | AC-ORG-18 | єдиний активний адміністратор не деактивує себе | — | — | відкладено (чекає реалізації) |

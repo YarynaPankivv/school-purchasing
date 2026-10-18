@@ -68,7 +68,9 @@ describe("відділи й заявники", () => {
       }),
     );
     const { createDraftRequest } = await requestActions();
-    const url = await redirectedTo(() => createDraftRequest(form({ department_id: HIGH.id, type: "PUR" })));
+    const url = await redirectedTo(() =>
+      createDraftRequest(form({ department_id: HIGH.id, type: "PUR", purchase_type: "procurement" })),
+    );
     expect(url).toBe("/requests/new?error=invalid_request");
     expect(mock.calls.find((c) => c.table === "requests")?.payload).toEqual({
       author_id: WORKER,

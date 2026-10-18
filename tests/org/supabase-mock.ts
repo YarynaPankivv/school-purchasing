@@ -5,7 +5,7 @@ import { vi } from "vitest";
 
 export type MockError = { code?: string; message?: string } | null;
 export type MockResult = { data?: unknown; error?: MockError };
-export type Op = "select" | "insert" | "update" | "delete";
+export type Op = "select" | "insert" | "update" | "upsert" | "delete";
 export type Call = { table: string; op: Op; payload?: unknown; filters: Array<[string, unknown]> };
 
 export type MockProfile = {
@@ -43,6 +43,7 @@ export function createSupabaseMock(options: {
       select: () => builder,
       insert: (payload: unknown) => ((call.op = "insert"), (call.payload = payload), builder),
       update: (payload: unknown) => ((call.op = "update"), (call.payload = payload), builder),
+      upsert: (payload: unknown) => ((call.op = "upsert"), (call.payload = payload), builder),
       delete: () => ((call.op = "delete"), builder),
       eq: (column: string, value: unknown) => (call.filters.push([column, value]), builder),
       order: () => builder,

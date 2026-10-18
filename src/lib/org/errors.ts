@@ -15,7 +15,7 @@ export type OrgErrorCode = keyof typeof ORG_ERROR_MESSAGES;
 export type DbError = { code?: string | null; message?: string | null; details?: string | null } | null;
 
 // Контекст — таблиця, з якою працювала дія: той самий код Postgres означає різне.
-export type OrgTable = "departments" | "department_members" | "department_approvers" | "requests";
+export type OrgTable = "departments" | "department_members" | "department_approvers" | "requests" | "user_permissions";
 
 export function mapOrgDbError(error: DbError, table: OrgTable): OrgErrorCode {
   if (!error) return "unknown";
