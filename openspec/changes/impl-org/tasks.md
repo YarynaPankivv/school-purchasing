@@ -39,7 +39,7 @@ Done when: AC-ORG-01, AC-ORG-02, AC-ORG-03, AC-ORG-04, AC-ORG-05, AC-ORG-06, AC-
 
 ## 2. Дозволи на типи заявок і тип закупівлі (`task/org-permissions`)
 
-- [ ] 2.1 Міграція `org_permissions`: `user_permissions` (D4) з RLS (з `is_active_user()`) і grant; заміна початкової
+- [x] 2.1 Міграція `org_permissions`: `user_permissions` (D4) з RLS (з `is_active_user()`) і grant; заміна початкової
   політики `requests_insert` повною — `CRE`/`RFC`/`INV` лише з дозволом або для `admin`, `purchase_type = 'self'` лише з
   `self_purchase` або для `admin` (D5, тимчасово Q5). Перевірка: зелений `db-check`
 - [x] 2.2 `src/lib/org/request-options.ts` (`allowedRequestTypes`, `allowedPurchaseTypes`); дозволи в
