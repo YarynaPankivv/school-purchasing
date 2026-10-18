@@ -22,9 +22,11 @@ comment on table public.user_permissions is
 alter table public.user_permissions enable row level security;
 
 revoke all on table public.user_permissions from anon, authenticated;
--- upsert з адмінки = insert … on conflict do update: потрібні обидва права.
+-- upsert з адмінки = insert … on conflict (user_id) do update set <усі поля запиту>: PostgREST включає в SET і
+-- user_id, а Postgres перевіряє право UPDATE на кожну колонку SET ще до вибору гілки — без user_id тут
+-- не пройде навіть перше збереження. Змінювати рядки однаково може лише активний admin (політика нижче).
 grant select, insert, delete on table public.user_permissions to authenticated;
-grant update (card_expense, check_request, vendor_invoice, self_purchase, updated_at)
+grant update (user_id, card_expense, check_request, vendor_invoice, self_purchase, updated_at)
   on table public.user_permissions to authenticated;
 grant select, insert, update, delete on table public.user_permissions to service_role;
 

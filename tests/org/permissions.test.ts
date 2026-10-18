@@ -9,6 +9,7 @@ import {
   canCreateRequest,
   permissionsFrom,
 } from "@/lib/org/request-options";
+import { isUuid } from "@/lib/org/departments";
 import { purchaseTypeFor } from "@/lib/org/requests";
 import { createSupabaseMock, form, makeProfile, redirectedTo } from "./supabase-mock";
 
@@ -140,6 +141,12 @@ describe("тип закупівлі", () => {
     expect(canCreateRequest("requester", NO_PERMISSIONS, "PUR", null)).toBe(false);
     expect(canCreateRequest("requester", NO_PERMISSIONS, "RMB", null)).toBe(true);
     expect(canCreateRequest("admin", NO_PERMISSIONS, "INV", null)).toBe(true);
+  });
+
+  it("ідентифікатор працівника з адреси перевіряється як UUID ще до запитів", () => {
+    expect(isUuid("3f0c2a5e-9b1d-4c7e-8a2f-1b6d5e4c3a21")).toBe(true);
+    expect(isUuid("abc")).toBe(false);
+    expect(isUuid("3f0c2a5e-9b1d-4c7e-8a2f-1b6d5e4c3a21; drop")).toBe(false);
   });
 
   it("збій читання дозволів — помилка, а не «дозволів немає»", async () => {

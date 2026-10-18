@@ -50,7 +50,12 @@ export default async function ProfilePage() {
 
       <section className="flex flex-col gap-2">
         <h2 className="text-lg font-medium">Мої дозволи</h2>
-        {granted.length === 0 ? (
+        {user.role === "admin" ? (
+          // Матриця прав PM; «Самостійна закупівля» для admin — тимчасово Q5.
+          <p className="text-sm text-zinc-600">
+            Адміністратор створює всі типи заявок і обирає «Самостійну закупівлю» без окремих дозволів.
+          </p>
+        ) : granted.length === 0 ? (
           <p className="text-sm text-zinc-600">
             Окремих дозволів немає: доступні «Закупівля» й «Відшкодування» з типом закупівлі «Відділ закупівель».
           </p>

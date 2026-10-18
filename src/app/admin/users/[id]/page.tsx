@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Alert, Forbidden, PageShell, buttonClass } from "@/app/_components/ui";
 import { requireAdmin } from "@/lib/auth/session";
-import { personLabel } from "@/lib/org/departments";
+import { isUuid, personLabel } from "@/lib/org/departments";
 import { orgErrorMessage } from "@/lib/org/errors";
 import { loadPermissions } from "@/lib/org/load-permissions";
 import { PERMISSION_KEYS, PERMISSION_LABELS } from "@/lib/org/request-options";
@@ -15,6 +15,7 @@ export default async function UserPage({ params, searchParams }: PageProps<"/adm
   const { supabase } = ctx;
   const { id } = await params;
   const { error, saved } = await searchParams;
+  if (!isUuid(id)) notFound();
 
   const [{ data: person }, permissions] = await Promise.all([
     supabase.from("profiles").select("id, email, full_name, role, is_active").eq("id", id).maybeSingle(),
