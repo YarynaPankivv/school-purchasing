@@ -9,8 +9,8 @@
 --   * користувачів Auth (auth.users) тут НЕ створюємо: їх створює
 --     scripts/create-demo-users.mjs через Admin API (npm run users:demo)
 --     за списком supabase/demo-users.json, а тригер on_auth_user_created додає профілі.
---
--- Приклад для довідкової таблиці, коли вона з'явиться у вашій міграції:
---   insert into public.departments (code, name)
---   values ('MATH', 'Кафедра математики'), ('LANG', 'Кафедра мов')
---   on conflict (code) do update set name = excluded.name;
+
+-- Відділи школи (зріз ORG). Унікальність — за lower(name), тож on conflict без цілі.
+insert into public.departments (name)
+values ('Початкова школа'), ('Вища школа'), ('Офіс')
+on conflict do nothing;
