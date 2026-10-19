@@ -29,7 +29,7 @@
 | AC-LEAVE-10 | діапазон лише із заблокованих днів | — | — | відкладено (чекає реалізації) |
 -->
 
-Вимоги: https://github.com/ValiaBihun/2026-quitcode-dream-team · джерело: issues · знімок 2026-10-17
+Вимоги: https://github.com/ValiaBihun/2026-quitcode-dream-team · джерело: issues · знімок 2026-10-19
 
 | AC | Що перевіряє | Код | Тест | Статус |
 |---|---|---|---|---|
