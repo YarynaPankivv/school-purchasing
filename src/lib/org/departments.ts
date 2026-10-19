@@ -82,6 +82,13 @@ export function autoApproveDepartments(memberships: Membership[], userId: string
   return memberships.filter((m) => m.user_id === userId && m.auto_approve).map((m) => m.department_id);
 }
 
+// Ідентифікатор з адреси: не-UUID дає в Postgres 22P02, тож сторінка має віддати «не знайдено» ще до запитів.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: unknown): value is string {
+  return typeof value === "string" && UUID_RE.test(value);
+}
+
 export function personLabel(person: Pick<Person, "email" | "full_name">): string {
   return person.full_name?.trim() || person.email || "—";
 }

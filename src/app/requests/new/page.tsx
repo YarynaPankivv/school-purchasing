@@ -2,20 +2,25 @@ import { Alert, PageShell, buttonClass, inputClass } from "@/app/_components/ui"
 import { requireActiveUser } from "@/lib/auth/session";
 import { selectableDepartments } from "@/lib/org/departments";
 import { orgErrorMessage } from "@/lib/org/errors";
-import { BASE_REQUEST_TYPES, PURCHASE_TYPE_LABELS, REQUEST_TYPE_LABELS } from "@/lib/org/requests";
+import { loadPermissions } from "@/lib/org/load-permissions";
+import { allowedPurchaseTypes, allowedRequestTypes } from "@/lib/org/request-options";
+import { PURCHASE_TYPE_LABELS, REQUEST_TYPE_LABELS } from "@/lib/org/requests";
 import { createDraftRequest } from "./actions";
 
-// Нова чернетка заявки: лише від імені відділів, де працівник заявник (AC-ORG-01).
-// Типи поки «Закупівля» й «Відшкодування»; решта — за дозволами (задача 2).
+// Нова чернетка заявки: лише від імені відділів, де працівник заявник (AC-ORG-01); типи заявки
+// й закупівлі — за дозволами (AC-ORG-07, AC-ORG-08, AC-ORG-17).
 export default async function NewRequestPage({ searchParams }: PageProps<"/requests/new">) {
   const { supabase, user } = await requireActiveUser();
   const { error, created } = await searchParams;
 
-  const [{ data: departments }, { data: memberships }] = await Promise.all([
+  const [{ data: departments }, { data: memberships }, permissions] = await Promise.all([
     supabase.from("departments").select("id, name"),
     supabase.from("department_members").select("department_id, user_id").eq("user_id", user.id),
+    loadPermissions(supabase, user.id),
   ]);
   const options = selectableDepartments(departments ?? [], memberships ?? [], user.id);
+  const types = allowedRequestTypes(user.role, permissions);
+  const purchaseTypes = allowedPurchaseTypes(user.role, permissions);
 
   return (
     <PageShell title="Нова заявка">
@@ -41,16 +46,23 @@ export default async function NewRequestPage({ searchParams }: PageProps<"/reque
           <label className="flex flex-col gap-1 text-sm">
             Тип заявки
             <select name="type" required className={inputClass} data-testid="type-select">
-              {BASE_REQUEST_TYPES.map((t) => (
+              {types.map((t) => (
                 <option key={t} value={t}>
                   {REQUEST_TYPE_LABELS[t]}
                 </option>
               ))}
             </select>
           </label>
-          <p className="text-xs text-zinc-500">
-            Тип закупівлі: «{PURCHASE_TYPE_LABELS.procurement}».
-          </p>
+          <label className="flex flex-col gap-1 text-sm">
+            Тип закупівлі (лише для «{REQUEST_TYPE_LABELS.PUR}»)
+            <select name="purchase_type" className={inputClass} data-testid="purchase-type-select">
+              {purchaseTypes.map((p) => (
+                <option key={p} value={p}>
+                  {PURCHASE_TYPE_LABELS[p]}
+                </option>
+              ))}
+            </select>
+          </label>
           <button type="submit" className={buttonClass}>
             Створити чернетку
           </button>

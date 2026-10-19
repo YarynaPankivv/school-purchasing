@@ -39,15 +39,15 @@ Done when: AC-ORG-01, AC-ORG-02, AC-ORG-03, AC-ORG-04, AC-ORG-05, AC-ORG-06, AC-
 
 ## 2. Дозволи на типи заявок і тип закупівлі (`task/org-permissions`)
 
-- [ ] 2.1 Міграція `org_permissions`: `user_permissions` (D4) з RLS (з `is_active_user()`) і grant; заміна початкової
+- [x] 2.1 Міграція `org_permissions`: `user_permissions` (D4) з RLS (з `is_active_user()`) і grant; заміна початкової
   політики `requests_insert` повною — `CRE`/`RFC`/`INV` лише з дозволом або для `admin`, `purchase_type = 'self'` лише з
   `self_purchase` або для `admin` (D5, тимчасово Q5). Перевірка: зелений `db-check`
-- [ ] 2.2 `src/lib/org/request-options.ts` (`allowedRequestTypes`, `allowedPurchaseTypes`); дозволи в
+- [x] 2.2 `src/lib/org/request-options.ts` (`allowedRequestTypes`, `allowedPurchaseTypes`); дозволи в
   `src/app/admin/users/actions.ts` (`setPermissions`) і `/admin/users/[id]`; у `/requests/new` — типи й тип закупівлі
   за дозволами, `createDraftRequest` перетворює відмову RLS на помилку. Перевірка: тести 2.3 і `npm run build`
-- [ ] 2.3 `tests/org/permissions.test.ts`: `it("AC-ORG-07: …")`, 08, 17, зокрема тимчасове Q5 (D10). Перевірка:
+- [x] 2.3 `tests/org/permissions.test.ts`: `it("AC-ORG-07: …")`, 08, 17, зокрема тимчасове Q5 (D10). Перевірка:
   `npm test`
-- [ ] 2.4 Рядки AC задачі в `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
+- [x] 2.4 Рядки AC задачі в `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
 
 Done when: AC-ORG-07, AC-ORG-08, AC-ORG-17
 

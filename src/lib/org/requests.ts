@@ -1,4 +1,4 @@
-// Типи заявок і закупівлі (глосарій PM; design.md D5).
+// Типи заявок і закупівлі (глосарій PM; design.md D5). Хто що може обрати — request-options.ts.
 
 export const REQUEST_TYPE_LABELS = {
   PUR: "Закупівля",
@@ -10,10 +10,6 @@ export const REQUEST_TYPE_LABELS = {
 
 export type RequestType = keyof typeof REQUEST_TYPE_LABELS;
 
-// «Закупівля» і «Відшкодування» створюють усі ролі (матриця прав PM). Інші три — за дозволом (задача 2).
-// Поки дозволів немає, база теж приймає лише ці два типи (початкова політика requests_insert).
-export const BASE_REQUEST_TYPES: readonly RequestType[] = ["PUR", "RMB"];
-
 export const PURCHASE_TYPE_LABELS = {
   procurement: "Відділ закупівель",
   self: "Самостійна закупівля",
@@ -21,13 +17,18 @@ export const PURCHASE_TYPE_LABELS = {
 
 export type PurchaseType = keyof typeof PURCHASE_TYPE_LABELS;
 
+// Object.hasOwn, а не `in`: ключі прототипу (toString, __proto__) не є ні типом заявки, ні типом закупівлі.
 export function isRequestType(value: unknown): value is RequestType {
-  // Object.hasOwn, а не `in`: ключі прототипу (toString, __proto__) не є типом заявки.
   return typeof value === "string" && Object.hasOwn(REQUEST_TYPE_LABELS, value);
 }
 
-// purchase_type обов'язковий для PUR і порожній для інших (CHECK requests_purchase_type_for_pur).
-// Задача 1: для PUR — лише «Відділ закупівель».
-export function purchaseTypeFor(type: RequestType): PurchaseType | null {
-  return type === "PUR" ? "procurement" : null;
+export function isPurchaseType(value: unknown): value is PurchaseType {
+  return typeof value === "string" && Object.hasOwn(PURCHASE_TYPE_LABELS, value);
+}
+
+// purchase_type обов'язковий для PUR і порожній для інших (CHECK requests_purchase_type_for_pur):
+// для інших типів обране у формі ігноруємо.
+export function purchaseTypeFor(type: RequestType, requested: unknown): PurchaseType | null {
+  if (type !== "PUR") return null;
+  return isPurchaseType(requested) ? requested : null;
 }

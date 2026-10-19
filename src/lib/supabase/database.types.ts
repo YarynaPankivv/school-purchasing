@@ -1,6 +1,7 @@
 // Типи схеми бази. Оновлюйте разом із міграцією: готовий файл — у Summary прогону job db-check у CI
 // (supabase gen types typescript --local на одноразовій базі); або npm run db:types після npx supabase link на ваш проєкт.
-// Ця версія написана вручну за міграціями 20261012000000_profiles_and_roles.sql і 20261018182200_org_departments.sql;
+// Ця версія написана вручну за міграціями 20261012000000_profiles_and_roles.sql, 20261018182200_org_departments.sql
+// і 20261018200633_org_permissions.sql;
 // після зеленого db-check її можна замінити згенерованою.
 
 export type Json =
@@ -162,6 +163,41 @@ export type Database = {
             columns: ["department_id"];
             isOneToOne: false;
             referencedRelation: "departments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_permissions: {
+        Row: {
+          user_id: string;
+          card_expense: boolean;
+          check_request: boolean;
+          vendor_invoice: boolean;
+          self_purchase: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          card_expense?: boolean;
+          check_request?: boolean;
+          vendor_invoice?: boolean;
+          self_purchase?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          card_expense?: boolean;
+          check_request?: boolean;
+          vendor_invoice?: boolean;
+          self_purchase?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];

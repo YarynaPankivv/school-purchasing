@@ -24,9 +24,14 @@ export default async function Home() {
           Мій профіль
         </Link>
         {user.role === "admin" ? (
-          <Link href="/admin/departments" className="underline">
-            Відділи
-          </Link>
+          <>
+            <Link href="/admin/departments" className="underline">
+              Відділи
+            </Link>
+            <Link href="/admin/users" className="underline">
+              Працівники
+            </Link>
+          </>
         ) : null}
       </nav>
       <form action={signOut}>
