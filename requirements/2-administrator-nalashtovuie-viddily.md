@@ -1,4 +1,4 @@
-> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/2 · оновлено 2026-10-19T13:30:15Z
+> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/2 · оновлено 2026-10-20T12:40:43Z
 
 # Вимога: адміністратор налаштовує відділи, схвалювачів і дозволи працівників
 
