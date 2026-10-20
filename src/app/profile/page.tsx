@@ -51,7 +51,7 @@ export default async function ProfilePage() {
       <section className="flex flex-col gap-2">
         <h2 className="text-lg font-medium">Мої дозволи</h2>
         {user.role === "admin" ? (
-          // Матриця прав PM; «Самостійна закупівля» для admin — тимчасово Q5.
+          // Матриця прав PM; «Самостійна закупівля» для admin — AC-ORG-23.
           <p className="text-sm text-zinc-600">
             Адміністратор створює всі типи заявок і обирає «Самостійну закупівлю» без окремих дозволів.
           </p>

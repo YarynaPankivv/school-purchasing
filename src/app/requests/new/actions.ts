@@ -28,7 +28,7 @@ export async function createDraftRequest(formData: FormData) {
     redirect(`${PATH}?error=invalid_request`);
   }
 
-  // AC-ORG-01: відділ, де автор не заявник, база відхиляє (private.is_member) — і для admin (тимчасово Q1).
+  // AC-ORG-01: відділ, де не-admin не заявник, база відхиляє (private.is_member); admin — будь-який відділ (AC-ORG-22).
   const { error } = await supabase.from("requests").insert({
     author_id: user.id,
     department_id: departmentId,

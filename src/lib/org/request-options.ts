@@ -53,7 +53,7 @@ export function allowedRequestTypes(role: AppRole, permissions: Permissions): Re
   });
 }
 
-// AC-ORG-08: без дозволу «Самостійна закупівля» — лише «Відділ закупівель»; admin — без дозволу (тимчасово Q5).
+// AC-ORG-08: без дозволу «Самостійна закупівля» — лише «Відділ закупівель»; admin — будь-який тип без дозволу (AC-ORG-23).
 export function allowedPurchaseTypes(role: AppRole, permissions: Permissions): PurchaseType[] {
   return role === "admin" || permissions.self_purchase ? ["procurement", "self"] : ["procurement"];
 }

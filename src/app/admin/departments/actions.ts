@@ -81,7 +81,7 @@ export async function setAutoApprove(formData: FormData) {
 }
 
 // AC-ORG-02: не-заявника база відхиляє (FK, 23503) → «Спершу додайте працівника до відділу як заявника».
-// AC-ORG-05: роль approver ставить тригер private.sync_role (admin лишається admin — AC-ORG-11, тимчасово Q4).
+// AC-ORG-05: роль approver ставить тригер private.sync_role (admin лишається admin — AC-ORG-11, AC-ORG-20).
 export async function addApprover(formData: FormData) {
   const departmentId = field(formData, "department_id");
   const path = detailPath(departmentId);
@@ -93,7 +93,7 @@ export async function addApprover(formData: FormData) {
   finish(path, error, "department_approvers");
 }
 
-// AC-ORG-04: схвалювач лише одного відділу після зняття стає requester (тригер; тимчасово Q3 — для кількох).
+// AC-ORG-04: схвалювач лише одного відділу після зняття стає requester (тригер; схвалювач кількох — AC-ORG-19).
 export async function removeApprover(formData: FormData) {
   const departmentId = field(formData, "department_id");
   const path = detailPath(departmentId);

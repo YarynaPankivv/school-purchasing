@@ -110,8 +110,6 @@ describe("тип закупівлі", () => {
   it("AC-ORG-08: без дозволу «Самостійна закупівля» — лише тип закупівлі «Відділ закупівель»", async () => {
     expect(allowedPurchaseTypes("requester", NO_PERMISSIONS)).toEqual(["procurement"]);
     expect(allowedPurchaseTypes("requester", withSelf)).toEqual(["procurement", "self"]);
-    // Тимчасово Q5: адміністратору дозвіл не потрібен.
-    expect(allowedPurchaseTypes("admin", NO_PERMISSIONS)).toEqual(["procurement", "self"]);
 
     const mock = useSupabase(createSupabaseMock({ profile: worker }));
     const { createDraftRequest } = await requestActions();
@@ -120,6 +118,22 @@ describe("тип закупівлі", () => {
     );
     expect(url).toBe("/requests/new?error=invalid_request");
     expect(mock.calls.some((c) => c.table === "requests")).toBe(false);
+  });
+
+  it("AC-ORG-23: адміністратор без дозволу «Самостійна закупівля» обирає будь-який тип закупівлі", async () => {
+    expect(allowedPurchaseTypes("admin", NO_PERMISSIONS)).toEqual(["procurement", "self"]);
+    expect(canCreateRequest("admin", NO_PERMISSIONS, "PUR", "self")).toBe(true);
+
+    const mock = useSupabase(createSupabaseMock({ profile: makeProfile({ role: "admin" }) }));
+    const { createDraftRequest } = await requestActions();
+    const url = await redirectedTo(() =>
+      createDraftRequest(form({ department_id: OFFICE, type: "PUR", purchase_type: "self" })),
+    );
+    expect(url).toBe("/requests/new?created=1");
+    expect(mock.calls.find((c) => c.table === "requests")?.payload).toMatchObject({
+      type: "PUR",
+      purchase_type: "self",
+    });
   });
 
   it("«Закупівля» з «Відділом закупівель» створюється й без дозволів", async () => {

@@ -39,6 +39,7 @@ const PRIMARY = { id: "dep-primary", name: "Початкова школа" };
 const HIGH = { id: "dep-high", name: "Вища школа" };
 const OFFICE = { id: "dep-office", name: "Офіс" };
 const WORKER = "user-worker";
+const ADMIN = "user-admin";
 
 function useSupabase(mock: ReturnType<typeof createSupabaseMock>) {
   createClient.mockResolvedValue(mock.client);
@@ -52,13 +53,10 @@ beforeEach(() => {
 describe("відділи й заявники", () => {
   it("AC-ORG-01: працівник створює заявки лише від імені відділу, куди його додали, і не бачить інших", async () => {
     const departments = [PRIMARY, HIGH, OFFICE];
-    expect(selectableDepartments(departments, [], WORKER)).toEqual([]);
+    expect(selectableDepartments(departments, [], WORKER, "requester")).toEqual([]);
 
     const memberships = [{ department_id: PRIMARY.id, user_id: WORKER }];
-    expect(selectableDepartments(departments, memberships, WORKER)).toEqual([PRIMARY]);
-
-    // Тимчасово Q1: адміністратор без відділів теж нічого не обирає.
-    expect(selectableDepartments(departments, [], "user-admin")).toEqual([]);
+    expect(selectableDepartments(departments, memberships, WORKER, "requester")).toEqual([PRIMARY]);
 
     // Чужий відділ база відхиляє (requests_insert → private.is_member) — дія показує помилку.
     const mock = useSupabase(
@@ -78,6 +76,27 @@ describe("відділи й заявники", () => {
       type: "PUR",
       purchase_type: "procurement",
     });
+  });
+
+  it("AC-ORG-22: адміністратор без жодного відділу обирає будь-який відділ зі списку всіх", async () => {
+    const departments = [PRIMARY, HIGH, OFFICE];
+    expect(selectableDepartments(departments, [], ADMIN, "admin")).toEqual([HIGH, OFFICE, PRIMARY]);
+
+    // «Закупівля» й «Відшкодування» від імені відділу, де адміністратор не заявник, ідуть у базу без відмови
+    // (requests_insert пропускає admin повз private.is_member — міграція 20261020182013).
+    const mock = useSupabase(createSupabaseMock({ profile: makeProfile({ id: ADMIN, role: "admin" }) }));
+    const { createDraftRequest } = await requestActions();
+    const drafts: Record<string, string>[] = [
+      { department_id: HIGH.id, type: "PUR", purchase_type: "procurement" },
+      { department_id: OFFICE.id, type: "RMB" },
+    ];
+    for (const fields of drafts) {
+      expect(await redirectedTo(() => createDraftRequest(form(fields)))).toBe("/requests/new?created=1");
+    }
+    expect(mock.calls.filter((c) => c.table === "requests").map((c) => c.payload)).toEqual([
+      { author_id: ADMIN, department_id: HIGH.id, type: "PUR", purchase_type: "procurement" },
+      { author_id: ADMIN, department_id: OFFICE.id, type: "RMB", purchase_type: null },
+    ]);
   });
 
   it("чернетка у своєму відділі створюється", async () => {
@@ -146,8 +165,6 @@ describe("схвалювачі", () => {
 
   it("AC-ORG-04: схвалювач лише одного відділу після зняття стає requester", async () => {
     expect(deriveRole("approver", 0)).toBe("requester");
-    // Тимчасово Q3: схвалювач кількох відділів лишається approver, поки схвалює хоча б один.
-    expect(deriveRole("approver", 1)).toBe("approver");
 
     const mock = useSupabase(createSupabaseMock());
     const { removeApprover } = await actions();
@@ -164,8 +181,6 @@ describe("схвалювачі", () => {
   it("AC-ORG-05: призначення схвалювачем відділу, де працівник заявник, дає роль approver", async () => {
     expect(deriveRole("requester", 1)).toBe("approver");
     expect(canAssignApprover([{ department_id: PRIMARY.id, user_id: WORKER }], PRIMARY.id, WORKER)).toBe(true);
-    // Тимчасово Q4: адміністратор, призначений схвалювачем, лишається admin.
-    expect(deriveRole("admin", 1)).toBe("admin");
 
     const mock = useSupabase(createSupabaseMock());
     const { addApprover } = await actions();
@@ -177,7 +192,50 @@ describe("схвалювачі", () => {
     });
   });
 
-  it("тимчасово Q6: зняття заявника, що схвалював лише цей відділ, робить його requester", async () => {
+  it("AC-ORG-19: схвалювач двох відділів після зняття з «Офісу» лишається approver і схвалює «Початкову школу»", async () => {
+    const approvers = [
+      { department_id: PRIMARY.id, user_id: WORKER },
+      { department_id: OFFICE.id, user_id: WORKER },
+    ];
+    const remaining = approvers.filter((a) => a.department_id !== OFFICE.id);
+    expect(remaining).toEqual([{ department_id: PRIMARY.id, user_id: WORKER }]);
+    expect(deriveRole("approver", remaining.length)).toBe("approver");
+
+    // Дія знімає лише рядок «Офісу»; схвалення «Початкової школи» не зачіпає.
+    const mock = useSupabase(createSupabaseMock());
+    const { removeApprover } = await actions();
+    await redirectedTo(() => removeApprover(form({ department_id: OFFICE.id, user_id: WORKER })));
+    const deletes = mock.calls.filter((c) => c.op === "delete");
+    expect(deletes).toEqual([
+      expect.objectContaining({
+        table: "department_approvers",
+        filters: [
+          ["department_id", OFFICE.id],
+          ["user_id", WORKER],
+        ],
+      }),
+    ]);
+  });
+
+  it("AC-ORG-20: адміністратор, призначений схвалювачем відділу, де він заявник, лишається admin", async () => {
+    expect(canAssignApprover([{ department_id: PRIMARY.id, user_id: ADMIN }], PRIMARY.id, ADMIN)).toBe(true);
+    expect(deriveRole("admin", 1)).toBe("admin");
+
+    const mock = useSupabase(createSupabaseMock());
+    const { addApprover } = await actions();
+    const url = await redirectedTo(() => addApprover(form({ department_id: PRIMARY.id, user_id: ADMIN })));
+    expect(url).toBe(`/admin/departments/${PRIMARY.id}`);
+    // Роль дія не змінює: її перераховує тригер private.sync_role, який admin не чіпає.
+    expect(mock.calls.filter((c) => c.op !== "select")).toEqual([
+      expect.objectContaining({
+        table: "department_approvers",
+        op: "insert",
+        payload: { department_id: PRIMARY.id, user_id: ADMIN },
+      }),
+    ]);
+  });
+
+  it("AC-ORG-24: зняття заявника, що схвалював лише цей відділ, робить його requester", async () => {
     const memberships = [{ department_id: PRIMARY.id, user_id: WORKER, auto_approve: false }];
     const approvers = [{ department_id: PRIMARY.id, user_id: WORKER }];
     expect(memberRemovalEffects(PRIMARY.id, WORKER, memberships, approvers)).toEqual(["approver"]);
