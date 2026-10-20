@@ -10,9 +10,9 @@ export function isAppRole(value: unknown): value is AppRole {
 }
 
 // Роль після зміни схвалювачів працівника:
-// - admin лишається admin (AC-ORG-11; тимчасово Q4 — і коли його призначили схвалювачем);
-// - approver, поки людина схвалює хоча б один відділ (AC-ORG-05; тимчасово Q3);
-// - requester, коли не схвалює жодного (AC-ORG-04; тимчасово Q6 — і після каскаду з AC-ORG-03).
+// - admin лишається admin (AC-ORG-11; AC-ORG-20 — і коли його призначили схвалювачем);
+// - approver, поки людина схвалює хоча б один відділ (AC-ORG-05, AC-ORG-19);
+// - requester, коли не схвалює жодного (AC-ORG-04; AC-ORG-24 — і після каскаду з AC-ORG-03).
 export function deriveRole(current: AppRole, approvedDepartmentCount: number): AppRole {
   if (current === "admin") return "admin";
   return approvedDepartmentCount > 0 ? "approver" : "requester";

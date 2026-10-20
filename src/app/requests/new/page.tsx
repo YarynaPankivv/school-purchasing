@@ -7,8 +7,8 @@ import { allowedPurchaseTypes, allowedRequestTypes } from "@/lib/org/request-opt
 import { PURCHASE_TYPE_LABELS, REQUEST_TYPE_LABELS } from "@/lib/org/requests";
 import { createDraftRequest } from "./actions";
 
-// Нова чернетка заявки: лише від імені відділів, де працівник заявник (AC-ORG-01); типи заявки
-// й закупівлі — за дозволами (AC-ORG-07, AC-ORG-08, AC-ORG-17).
+// Нова чернетка заявки: не-admin — лише від імені відділів, де він заявник (AC-ORG-01), admin — будь-якого
+// (AC-ORG-22); типи заявки й закупівлі — за дозволами (AC-ORG-07, AC-ORG-08, AC-ORG-17, AC-ORG-23).
 export default async function NewRequestPage({ searchParams }: PageProps<"/requests/new">) {
   const { supabase, user } = await requireActiveUser();
   const { error, created } = await searchParams;
@@ -18,7 +18,7 @@ export default async function NewRequestPage({ searchParams }: PageProps<"/reque
     supabase.from("department_members").select("department_id, user_id").eq("user_id", user.id),
     loadPermissions(supabase, user.id),
   ]);
-  const options = selectableDepartments(departments ?? [], memberships ?? [], user.id);
+  const options = selectableDepartments(departments ?? [], memberships ?? [], user.id, user.role);
   const types = allowedRequestTypes(user.role, permissions);
   const purchaseTypes = allowedPurchaseTypes(user.role, permissions);
 
@@ -29,7 +29,9 @@ export default async function NewRequestPage({ searchParams }: PageProps<"/reque
 
       {options.length === 0 ? (
         <p className="text-sm text-zinc-600" data-testid="no-departments">
-          Вас ще не додано до жодного відділу як заявника, тож створити заявку поки не можна.
+          {user.role === "admin"
+            ? "У системі ще немає жодного відділу, тож створити заявку поки не можна."
+            : "Вас ще не додано до жодного відділу як заявника, тож створити заявку поки не можна."}
         </p>
       ) : (
         <form action={createDraftRequest} className="flex flex-col gap-4">

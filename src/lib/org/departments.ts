@@ -1,5 +1,6 @@
 // Правила відділів для сторінок і server actions (design.md D2, D7).
 // Базу захищають FK, тригери й RLS міграції 20261018182200_org_departments.sql; тут — те саме для UI і тестів.
+import type { AppRole } from "./roles";
 
 export type Department = { id: string; name: string };
 export type Membership = { department_id: string; user_id: string; auto_approve: boolean };
@@ -18,13 +19,15 @@ export function normalizeDepartmentName(raw: unknown): string | null {
   return name;
 }
 
-// AC-ORG-01: у виборі відділу — лише відділи, де працівник заявник.
-// Діє й для admin (тимчасово Q1): без відділів вибір порожній.
+// AC-ORG-01: у виборі відділу не-admin — лише відділи, де він заявник.
+// AC-ORG-22: admin обирає будь-який відділ (у базі — requests_insert, міграція 20261020182013).
 export function selectableDepartments(
   departments: Department[],
   memberships: Pick<Membership, "department_id" | "user_id">[],
   userId: string,
+  role: AppRole,
 ): Department[] {
+  if (role === "admin") return [...departments].sort(byName);
   const mine = new Set(memberships.filter((m) => m.user_id === userId).map((m) => m.department_id));
   return departments.filter((d) => mine.has(d.id)).sort(byName);
 }
