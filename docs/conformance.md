@@ -33,24 +33,30 @@
 
 | AC | Що перевіряє | Код | Тест | Статус |
 |---|---|---|---|---|
-| AC-ORG-01 | заявник подає заявки лише від імені своїх відділів, інших у виборі немає | `src/app/requests/new/actions.ts` (createDraftRequest; RLS requests_insert) | `tests/org/departments.test.ts` | реалізовано |
+| AC-ORG-01 | працівник без ролі `admin` подає заявки лише від імені своїх відділів, інших у виборі немає | `src/app/requests/new/actions.ts` (createDraftRequest; RLS requests_insert) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-02 | призначення схвалювачем не-заявника відхилено з повідомленням | `src/app/admin/departments/actions.ts` (addApprover; FK department_approvers_member_fkey) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-03 | зняття заявника відділу знімає його зі схвалювачів цього відділу | `src/app/admin/departments/actions.ts` (removeMember; каскад FK) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-15 | зняття заявника відділу вимикає його автосхвалення в цьому відділі | `supabase/migrations/20261018182200_org_departments.sql` (department_members.auto_approve) | `tests/org/departments.test.ts` | реалізовано |
-| AC-ORG-05 | призначення схвалювачем змінює роль на approver | `supabase/migrations/20261018182200_org_departments.sql` (private.sync_role) | `tests/org/departments.test.ts` | реалізовано |
+| AC-ORG-05 | призначення схвалювачем змінює роль не-admin на approver | `supabase/migrations/20261018182200_org_departments.sql` (private.sync_role) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-04 | зняття з єдиного відділу схвалення повертає роль requester | `supabase/migrations/20261018182200_org_departments.sql` (private.sync_role) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-11 | адміністратор без відділів лишається admin | `supabase/migrations/20261018182200_org_departments.sql` (private.sync_role) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-06 | автосхвалення діє лише у відділі, де його ввімкнено | `src/app/admin/departments/actions.ts` (setAutoApprove) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-14 | відділ без активного схвалювача позначено «Немає схвалювача» | `src/lib/org/departments.ts` (departmentHasActiveApprover) | `tests/org/departments.test.ts` | реалізовано |
+| AC-ORG-19 | схвалювач двох відділів після зняття з одного лишається approver | — | — | відкладено (чекає реалізації) |
+| AC-ORG-20 | адміністратор, призначений схвалювачем, лишається admin | — | — | відкладено (чекає реалізації) |
+| AC-ORG-22 | адміністратор без відділів обирає будь-який відділ | — | — | відкладено (чекає реалізації) |
+| AC-ORG-24 | зняття заявника, що схвалював лише цей відділ, дає роль requester | — | — | відкладено (чекає реалізації) |
 | AC-ORG-07 | без дозволу «Витрати карткою» немає у виборі типу заявки | `src/lib/org/request-options.ts` (allowedRequestTypes; RLS requests_insert → private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
 | AC-ORG-17 | з дозволом «Витрата карткою» є у виборі типу заявки | `src/app/admin/users/actions.ts` (setPermissions; allowedRequestTypes) | `tests/org/permissions.test.ts` | реалізовано |
-| AC-ORG-08 | без дозволу «Самостійна закупівля» — лише тип «Відділ закупівель» | `src/lib/org/request-options.ts` (allowedPurchaseTypes; private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
+| AC-ORG-08 | не-admin без дозволу «Самостійна закупівля» — лише тип «Відділ закупівель» | `src/lib/org/request-options.ts` (allowedPurchaseTypes; private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
+| AC-ORG-23 | адміністратор без дозволу обирає «Самостійну закупівлю» | — | — | відкладено (чекає реалізації) |
 | AC-ORG-09 | без ролі admin немає доступу до працівників і відділів, «Недостатньо прав» | — | — | відкладено (чекає реалізації) |
 | AC-ORG-10 | єдиний активний адміністратор не знімає з себе роль admin | — | — | відкладено (чекає реалізації) |
 | AC-ORG-18 | єдиний активний адміністратор не деактивує себе | — | — | відкладено (чекає реалізації) |
 | AC-ORG-12 | деактивований працівник не може увійти | — | — | відкладено (чекає реалізації) |
 | AC-ORG-13 | видалення чернетки деактивованого не зачіпає поданих заявок | — | — | відкладено (чекає реалізації) |
 | AC-ORG-16 | деактивованого немає у виборі схвалювача й особи «від імені» | — | — | відкладено (чекає реалізації) |
+| AC-ORG-21 | за двох активних адміністраторів можна зняти роль із себе | — | — | відкладено (чекає реалізації) |
 | AC-PUR-01 | нова закупівля — «Чернетка», номер `PUR-N` без провідних нулів, один порожній рядок | — | — | відкладено (чекає реалізації) |
 | AC-PUR-02 | одночасне створення двох закупівель дає різні номери | — | — | відкладено (чекає реалізації) |
 | AC-PUR-04 | автор обирає лише свої відділи, адміністратор — усі | — | — | відкладено (чекає реалізації) |
