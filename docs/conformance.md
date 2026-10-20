@@ -33,7 +33,7 @@
 
 | AC | Що перевіряє | Код | Тест | Статус |
 |---|---|---|---|---|
-| AC-ORG-01 | заявник подає заявки лише від імені своїх відділів, інших у виборі немає | `src/app/requests/new/actions.ts` (createDraftRequest; RLS requests_insert) | `tests/org/departments.test.ts` | реалізовано |
+| AC-ORG-01 | працівник без ролі `admin` подає заявки лише від імені своїх відділів, інших у виборі немає | `src/app/requests/new/actions.ts` (createDraftRequest; RLS requests_insert) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-02 | призначення схвалювачем не-заявника відхилено з повідомленням | `src/app/admin/departments/actions.ts` (addApprover; FK department_approvers_member_fkey) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-03 | зняття заявника відділу знімає його зі схвалювачів цього відділу | `src/app/admin/departments/actions.ts` (removeMember; каскад FK) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-15 | зняття заявника відділу вимикає його автосхвалення в цьому відділі | `supabase/migrations/20261018182200_org_departments.sql` (department_members.auto_approve) | `tests/org/departments.test.ts` | реалізовано |
