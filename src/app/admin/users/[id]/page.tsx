@@ -193,7 +193,7 @@ export default async function UserPage({ params, searchParams }: PageProps<"/adm
                         {purchase ? ` · ${purchase}` : ""}
                       </span>
                       <span className="text-xs text-muted">
-                        {row ? names.get(row.department_id) : null}
+                        {row?.department_id ? names.get(row.department_id) : null}
                         {row ? ` · ${dateFormat.format(new Date(row.created_at))}` : null}
                       </span>
                     </span>
