@@ -19,7 +19,7 @@ export function deriveRole(current: AppRole, approvedDepartmentCount: number): A
 }
 
 export const ROLE_LABELS: Record<AppRole, string> = {
-  requester: "Заявник",
-  approver: "Схвалювач",
-  admin: "Адміністратор",
+  requester: "Requester",
+  approver: "Approver",
+  admin: "Administrator",
 };

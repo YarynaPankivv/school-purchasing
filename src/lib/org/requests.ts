@@ -1,18 +1,18 @@
 // Типи заявок і закупівлі (глосарій PM; design.md D5). Хто що може обрати — request-options.ts.
 
 export const REQUEST_TYPE_LABELS = {
-  PUR: "Закупівля",
-  RMB: "Відшкодування",
-  CRE: "Витрата карткою",
-  RFC: "Запит на чек",
-  INV: "Рахунок постачальника",
+  PUR: "Purchase",
+  RMB: "Reimbursement",
+  CRE: "Card expense",
+  RFC: "Check request",
+  INV: "Vendor invoice",
 } as const;
 
 export type RequestType = keyof typeof REQUEST_TYPE_LABELS;
 
 export const PURCHASE_TYPE_LABELS = {
-  procurement: "Відділ закупівель",
-  self: "Самостійна закупівля",
+  procurement: "Procurement department",
+  self: "Self-purchase",
 } as const;
 
 export type PurchaseType = keyof typeof PURCHASE_TYPE_LABELS;

@@ -134,7 +134,7 @@ describe("схвалювачі", () => {
     const url = await redirectedTo(() => addApprover(form({ department_id: HIGH.id, user_id: WORKER })));
 
     expect(url).toBe(`/admin/departments/${HIGH.id}?error=not_member`);
-    expect(orgErrorMessage("not_member")).toBe("Спершу додайте працівника до відділу як заявника");
+    expect(orgErrorMessage("not_member")).toBe("First add the employee to the department as a requester");
     expect(mock.calls.find((c) => c.table === "department_approvers")).toMatchObject({
       op: "insert",
       payload: { department_id: HIGH.id, user_id: WORKER },
@@ -271,7 +271,7 @@ describe("схвалювачі", () => {
       { id: "active", is_active: true },
       { id: "inactive", is_active: false },
     ];
-    expect(NO_APPROVER_LABEL).toBe("Немає схвалювача");
+    expect(NO_APPROVER_LABEL).toBe("No approver");
     expect(departmentHasActiveApprover(PRIMARY.id, [], people)).toBe(false);
     expect(departmentHasActiveApprover(PRIMARY.id, [{ department_id: PRIMARY.id, user_id: "inactive" }], people)).toBe(
       false,
@@ -324,7 +324,7 @@ describe("автосхвалення", () => {
 
 describe("тексти помилок", () => {
   it("текст «Недостатньо прав» — дослівно з вимог PM", () => {
-    expect(ORG_ERROR_MESSAGES.forbidden).toBe("Недостатньо прав");
+    expect(ORG_ERROR_MESSAGES.forbidden).toBe("Insufficient permissions");
     expect(orgErrorMessage("nonsense")).toBeUndefined();
   });
 
@@ -343,7 +343,7 @@ describe("сесія", () => {
       createSupabaseMock({ results: { "profiles.select": { error: { code: "57014", message: "timeout" } } } }),
     );
     const { requireActiveUser } = await import("@/lib/auth/session");
-    await expect(requireActiveUser()).rejects.toThrow("Не вдалося прочитати профіль: timeout");
+    await expect(requireActiveUser()).rejects.toThrow("Failed to read profile: timeout");
     expect(mock.signOut).not.toHaveBeenCalled();
   });
 

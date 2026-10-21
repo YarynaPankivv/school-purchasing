@@ -29,12 +29,21 @@ export function makeProfile(overrides: Partial<MockProfile> = {}): MockProfile {
 
 export function createSupabaseMock(options: {
   profile?: MockProfile | null;
+  // Інші профілі: select(…).eq("id", …).maybeSingle() знаходить їх за id (поруч із профілем сеансу).
+  profiles?: MockProfile[];
+  // Відповідь signInWithPassword (login()); за замовчуванням — успішний вхід профілю сеансу.
+  signInError?: MockError;
   results?: Partial<Record<`${string}.${Op}`, MockResult>>;
 } = {}) {
   const profile = options.profile === undefined ? makeProfile() : options.profile;
   const results = options.results ?? {};
   const calls: Call[] = [];
   const signOut = vi.fn(async () => ({ error: null }));
+  const signInWithPassword = vi.fn(async () => ({
+    data: { user: profile ? { id: profile.id } : null },
+    error: options.signInError ?? null,
+  }));
+  const known = [...(profile ? [profile] : []), ...(options.profiles ?? [])];
 
   function from(table: string) {
     const call: Call = { table, op: "select", filters: [] };
@@ -51,7 +60,11 @@ export function createSupabaseMock(options: {
       then<T>(resolve: (value: { data: unknown; error: MockError }) => T, reject?: (reason: unknown) => T) {
         calls.push(call);
         let result: { data: unknown; error: MockError };
-        if (table === "profiles" && call.op === "select" && single && !(`profiles.select` in results)) {
+        const idFilter = call.filters.find(([column]) => column === "id")?.[1];
+        const matched = known.find((p) => p.id === idFilter);
+        if (table === "profiles" && call.op === "select" && single && matched && !(`profiles.select` in results)) {
+          result = { data: matched, error: null };
+        } else if (table === "profiles" && call.op === "select" && single && !(`profiles.select` in results) && idFilter === undefined) {
           result = { data: profile, error: null };
         } else {
           const configured = results[`${table}.${call.op}`];
@@ -67,11 +80,12 @@ export function createSupabaseMock(options: {
     auth: {
       getClaims: vi.fn(async () => ({ data: profile ? { claims: { sub: profile.id } } : null, error: null })),
       signOut,
+      signInWithPassword,
     },
     from,
   };
 
-  return { client, calls, signOut };
+  return { client, calls, signOut, signInWithPassword };
 }
 
 // redirect() / notFound() кидають — як і в Next.js; тест читає адресу з помилки.

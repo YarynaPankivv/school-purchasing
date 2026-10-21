@@ -11,6 +11,6 @@ export async function loadPermissions(supabase: Supabase, userId: string): Promi
     .eq("user_id", userId)
     .maybeSingle();
   // Збій бази — не «немає дозволів»: інакше працівник мовчки втратить доступні типи.
-  if (error) throw new Error(`Не вдалося прочитати дозволи: ${error.message}`);
+  if (error) throw new Error(`Failed to read permissions: ${error.message}`);
   return permissionsFrom(data);
 }

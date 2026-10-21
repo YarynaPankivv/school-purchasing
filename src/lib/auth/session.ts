@@ -27,7 +27,7 @@ export async function getSessionContext(): Promise<{ supabase: Supabase; user: C
     .eq("id", userId)
     .maybeSingle();
   // Збій бази — не привід розлогінювати активного користувача: нехай спрацює сторінка помилки.
-  if (error) throw new Error(`Не вдалося прочитати профіль: ${error.message}`);
+  if (error) throw new Error(`Failed to read profile: ${error.message}`);
 
   if (!profile || !isAppRole(profile.role)) {
     return {

@@ -23,10 +23,10 @@ export type PermissionKey = keyof Permissions;
 export const PERMISSION_KEYS: readonly PermissionKey[] = ["card_expense", "check_request", "vendor_invoice", "self_purchase"];
 
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
-  card_expense: "Витрата карткою",
-  check_request: "Запит на чек",
-  vendor_invoice: "Рахунок постачальника",
-  self_purchase: "Самостійна закупівля",
+  card_expense: "Card expense",
+  check_request: "Check request",
+  vendor_invoice: "Vendor invoice",
+  self_purchase: "Self-purchase",
 };
 
 // Тип заявки, що вимагає дозволу (матриця прав PM). «Закупівля» й «Відшкодування» — без дозволу.

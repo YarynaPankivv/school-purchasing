@@ -1,37 +1,32 @@
 import { notFound } from "next/navigation";
-import {
-  Alert,
-  Forbidden,
-  PageShell,
-  buttonClass,
-  inputClass,
-  secondaryButtonClass,
-} from "@/app/_components/ui";
+import { Alert, Avatar, Badge, Card, EmptyState, Field, Forbidden, PageShell, RoleBadge, inputClass } from "@/app/_components/ui";
+import { SubmitButton } from "@/app/_components/submit-button";
 import { requireAdmin } from "@/lib/auth/session";
 import {
   NO_APPROVER_LABEL,
   approverCandidates,
   departmentHasActiveApprover,
+  isUuid,
   memberRemovalEffects,
   personLabel,
   type RemovalEffect,
 } from "@/lib/org/departments";
 import { orgErrorMessage } from "@/lib/org/errors";
-import { ROLE_LABELS, isAppRole } from "@/lib/org/roles";
 import { addApprover, addMember, removeApprover, removeMember, setAutoApprove } from "../actions";
 
 const EFFECT_LABELS: Record<RemovalEffect, string> = {
-  approver: "схвалювача цього відділу",
-  auto_approve: "автосхвалення в цьому відділі",
+  approver: "approver of this department",
+  auto_approve: "auto-approval in this department",
 };
 
-// Заявники (AC-ORG-01, 03, 15), автосхвалення (AC-ORG-06), схвалювачі (AC-ORG-02, 04, 05). Лише для admin.
+// Заявники (AC-ORG-01, 03, 15), автосхвалення (AC-ORG-06), схвалювачі (AC-ORG-02, 04, 05, 16). Лише для admin.
 export default async function DepartmentPage({ params, searchParams }: PageProps<"/admin/departments/[id]">) {
   const ctx = await requireAdmin();
-  if (!ctx.ok) return <Forbidden />;
-  const { supabase } = ctx;
+  if (!ctx.ok) return <Forbidden user={ctx.user} />;
+  const { supabase, user } = ctx;
   const { id } = await params;
   const { error } = await searchParams;
+  if (!isUuid(id)) notFound();
 
   const [{ data: department }, { data: members }, { data: approvers }, { data: people }] = await Promise.all([
     supabase.from("departments").select("id, name").eq("id", id).maybeSingle(),
@@ -47,126 +42,145 @@ export default async function DepartmentPage({ params, searchParams }: PageProps
   const byId = new Map(everyone.map((p) => [p.id, p]));
   const memberIds = new Set(memberRows.map((m) => m.user_id));
   const notMembers = everyone.filter((p) => p.is_active && !memberIds.has(p.id));
+  // AC-ORG-16: деактивованих у виборі схвалювача немає.
   const candidates = approverCandidates(id, approverRows, everyone);
+  const hasApprover = departmentHasActiveApprover(id, approverRows, everyone);
 
   return (
-    <PageShell title={department.name}>
+    <PageShell
+      title={department.name}
+      description={`Requesters: ${memberRows.length} · Approvers: ${approverRows.length}`}
+      user={user}
+      back={{ href: "/admin/departments", label: "All departments" }}
+      actions={hasApprover ? undefined : <Badge tone="warn">{NO_APPROVER_LABEL}</Badge>}
+    >
       <Alert message={orgErrorMessage(error)} />
-      {departmentHasActiveApprover(id, approverRows, everyone) ? null : (
-        <p className="text-sm text-amber-800">{NO_APPROVER_LABEL}</p>
-      )}
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Заявники</h2>
-        <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800" data-testid="members">
-          {memberRows.map((m) => {
-            const person = byId.get(m.user_id);
-            const isApprover = approverRows.some((a) => a.user_id === m.user_id);
-            const effects = memberRemovalEffects(id, m.user_id, memberRows, approverRows);
-            return (
-              <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-                <span>
-                  {person ? personLabel(person) : m.user_id}
-                  {person && isAppRole(person.role) ? (
-                    <span className="ml-2 text-zinc-500">({ROLE_LABELS[person.role]})</span>
+      <Card title="Requesters" description="Employees who submit requests on behalf of this department.">
+        {memberRows.length === 0 ? (
+          <EmptyState>This department has no requesters yet.</EmptyState>
+        ) : (
+          <ul className="flex flex-col divide-y divide-line" data-testid="members">
+            {memberRows.map((m) => {
+              const person = byId.get(m.user_id);
+              const label = person ? personLabel(person) : m.user_id;
+              const isApprover = approverRows.some((a) => a.user_id === m.user_id);
+              const effects = memberRemovalEffects(id, m.user_id, memberRows, approverRows);
+              return (
+                <li key={m.user_id} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="flex min-w-0 items-center gap-3">
+                      <Avatar name={label} />
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm font-medium text-ink">{label}</span>
+                        <span className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                          {person ? <RoleBadge role={person.role} /> : null}
+                          {isApprover ? <Badge tone="info">Approver</Badge> : null}
+                          {person && !person.is_active ? <Badge tone="danger">Deactivated</Badge> : null}
+                        </span>
+                      </span>
+                    </span>
+                    <span className="flex flex-wrap items-center gap-3">
+                      <form action={setAutoApprove} className="flex items-center gap-2">
+                        <input type="hidden" name="department_id" value={id} />
+                        <input type="hidden" name="user_id" value={m.user_id} />
+                        <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                          <input type="checkbox" name="auto_approve" defaultChecked={m.auto_approve} className="toggle" />
+                          Auto-approval
+                        </label>
+                        <SubmitButton variant="secondary" className="px-3 py-1.5">
+                          Save
+                        </SubmitButton>
+                      </form>
+                      <form action={removeMember}>
+                        <input type="hidden" name="department_id" value={id} />
+                        <input type="hidden" name="user_id" value={m.user_id} />
+                        <SubmitButton
+                          variant="danger-ghost"
+                          className="px-3 py-1.5"
+                          confirm={
+                            effects.length
+                              ? `Remove ${label}? This will also remove: ${effects.map((e) => EFFECT_LABELS[e]).join(", ")}.`
+                              : `Remove ${label} from the department?`
+                          }
+                        >
+                          Remove
+                        </SubmitButton>
+                      </form>
+                    </span>
+                  </div>
+                  {effects.length ? (
+                    <p className="text-xs text-muted">
+                      Removing will also remove: {effects.map((e) => EFFECT_LABELS[e]).join(", ")}.
+                    </p>
                   ) : null}
-                  {isApprover ? <span className="ml-2 font-medium">схвалювач</span> : null}
-                  {person && !person.is_active ? <span className="ml-2 text-zinc-500">деактивований</span> : null}
-                </span>
-                <span className="flex flex-wrap items-center gap-2">
-                  <form action={setAutoApprove} className="flex items-center gap-2">
-                    <input type="hidden" name="department_id" value={id} />
-                    <input type="hidden" name="user_id" value={m.user_id} />
-                    <label className="flex items-center gap-1">
-                      <input type="checkbox" name="auto_approve" defaultChecked={m.auto_approve} />
-                      Автосхвалення
-                    </label>
-                    <button type="submit" className={secondaryButtonClass}>
-                      Зберегти
-                    </button>
-                  </form>
-                  <form action={removeMember}>
-                    <input type="hidden" name="department_id" value={id} />
-                    <input type="hidden" name="user_id" value={m.user_id} />
-                    <button
-                      type="submit"
-                      className={secondaryButtonClass}
-                      title={
-                        effects.length
-                          ? `Також буде знято: ${effects.map((e) => EFFECT_LABELS[e]).join(", ")}`
-                          : undefined
-                      }
-                    >
-                      Прибрати
-                    </button>
-                  </form>
-                </span>
-                {effects.length ? (
-                  <span className="w-full text-xs text-zinc-500">
-                    Якщо прибрати, буде знято також: {effects.map((e) => EFFECT_LABELS[e]).join(", ")}.
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <form action={addMember} className="mt-5 flex flex-wrap items-end gap-3 border-t border-line pt-5">
+          <input type="hidden" name="department_id" value={id} />
+          <div className="min-w-60 flex-1">
+            <Field label="Add requester">
+              <select name="user_id" required className={inputClass} disabled={notMembers.length === 0}>
+                {notMembers.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {personLabel(p)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <SubmitButton disabled={notMembers.length === 0}>Add</SubmitButton>
+        </form>
+      </Card>
+
+      <Card title="Approvers" description="They approve the department's requests. An approver must be a requester of this department.">
+        {approverRows.length === 0 ? (
+          <EmptyState>No approvers yet.</EmptyState>
+        ) : (
+          <ul className="flex flex-col divide-y divide-line" data-testid="approvers">
+            {approverRows.map((a) => {
+              const person = byId.get(a.user_id);
+              const label = person ? personLabel(person) : a.user_id;
+              return (
+                <li key={a.user_id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                  <span className="flex min-w-0 items-center gap-3">
+                    <Avatar name={label} />
+                    <span className="truncate text-sm font-medium text-ink">{label}</span>
                   </span>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
+                  <form action={removeApprover}>
+                    <input type="hidden" name="department_id" value={id} />
+                    <input type="hidden" name="user_id" value={a.user_id} />
+                    <SubmitButton variant="secondary" className="px-3 py-1.5">
+                      Unassign
+                    </SubmitButton>
+                  </form>
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
-        <form action={addMember} className="flex flex-wrap items-end gap-2">
+        <form action={addApprover} className="mt-5 flex flex-wrap items-end gap-3 border-t border-line pt-5">
           <input type="hidden" name="department_id" value={id} />
-          <label className="flex flex-col gap-1 text-sm">
-            Додати заявника
-            <select name="user_id" required className={inputClass}>
-              {notMembers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {personLabel(p)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className={buttonClass} disabled={notMembers.length === 0}>
-            Додати
-          </button>
+          <div className="min-w-60 flex-1">
+            <Field label="Assign approver">
+              <select name="user_id" required className={inputClass} disabled={candidates.length === 0}>
+                {candidates.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {personLabel(p)}
+                    {memberIds.has(p.id) ? "" : " — not a requester"}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <SubmitButton disabled={candidates.length === 0}>Assign</SubmitButton>
         </form>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Схвалювачі</h2>
-        <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800" data-testid="approvers">
-          {approverRows.map((a) => {
-            const person = byId.get(a.user_id);
-            return (
-              <li key={a.user_id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                <span>{person ? personLabel(person) : a.user_id}</span>
-                <form action={removeApprover}>
-                  <input type="hidden" name="department_id" value={id} />
-                  <input type="hidden" name="user_id" value={a.user_id} />
-                  <button type="submit" className={secondaryButtonClass}>
-                    Зняти
-                  </button>
-                </form>
-              </li>
-            );
-          })}
-        </ul>
-
-        <form action={addApprover} className="flex flex-wrap items-end gap-2">
-          <input type="hidden" name="department_id" value={id} />
-          <label className="flex flex-col gap-1 text-sm">
-            Призначити схвалювача
-            <select name="user_id" required className={inputClass}>
-              {candidates.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {personLabel(p)}
-                  {memberIds.has(p.id) ? "" : " — не заявник"}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className={buttonClass} disabled={candidates.length === 0}>
-            Призначити
-          </button>
-        </form>
-      </section>
+      </Card>
     </PageShell>
   );
 }

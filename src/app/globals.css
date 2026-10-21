@@ -1,26 +1,151 @@
 @import "tailwindcss";
 
+/* Дизайн-токени застосунку. Колір завжди беремо з токена (bg-surface, text-muted, border-line …),
+   щоб світла й темна теми перемикались в одному місці. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f6fa;
+  --foreground: #12151f;
+
+  --surface: #ffffff;
+  --surface-muted: #f0f2f8;
+  --line: #e3e6ef;
+  --line-strong: #cdd2e0;
+  --ink: #12151f;
+  --muted: #5d6579;
+
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-ink: #ffffff;
+  --primary-soft: #eceefe;
+  --primary-soft-ink: #3730a3;
+
+  --ok-soft: #e4f6ec;
+  --ok-ink: #14633a;
+  --warn-soft: #fdf1d8;
+  --warn-ink: #8a5300;
+  --danger: #c4283c;
+  --danger-hover: #a81f31;
+  --danger-soft: #fce8eb;
+  --danger-ink: #8f1a2b;
+  --info-soft: #e5f0fd;
+  --info-ink: #1b4f9c;
+
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b0d14;
+    --foreground: #e8eaf2;
+
+    --surface: #131622;
+    --surface-muted: #1a1e2e;
+    --line: #262b3d;
+    --line-strong: #363c54;
+    --ink: #e8eaf2;
+    --muted: #9aa2b8;
+
+    --primary: #8b86f9;
+    --primary-hover: #a09cfb;
+    --primary-ink: #0b0d14;
+    --primary-soft: #23264a;
+    --primary-soft-ink: #c3c1fd;
+
+    --ok-soft: #12301f;
+    --ok-ink: #7fdba5;
+    --warn-soft: #36290c;
+    --warn-ink: #f0c36a;
+    --danger: #ee5a6e;
+    --danger-hover: #f47b8b;
+    --danger-soft: #3a141b;
+    --danger-ink: #f4a0ad;
+    --info-soft: #11264a;
+    --info-ink: #8fbaf3;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-ink: var(--primary-ink);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-ink: var(--primary-soft-ink);
+  --color-ok-soft: var(--ok-soft);
+  --color-ok-ink: var(--ok-ink);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-ink: var(--warn-ink);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
+  --color-info-soft: var(--info-soft);
+  --color-info-ink: var(--info-ink);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  --shadow-card: 0 1px 2px rgb(18 21 31 / 0.05), 0 1px 3px rgb(18 21 31 / 0.07);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Видимий фокус для клавіатури на всіх інтерактивних елементах. */
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Перемикач (checkbox → toggle) для дозволів і автосхвалення. */
+.toggle {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 2.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: var(--line-strong);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transition: transform 0.15s ease;
+}
+.toggle:checked {
+  background: var(--primary);
+}
+.toggle:checked::after {
+  transform: translateX(1rem);
+}
+.toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle,
+  .toggle::after {
+    transition: none;
+  }
 }

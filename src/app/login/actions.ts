@@ -16,10 +16,22 @@ export async function login(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data: signIn, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     // Не показуємо текст помилки Auth: він може підказати, чи існує email.
+    redirect("/login?error=invalid");
+  }
+
+  // AC-ORG-12: деактивований працівник не входить. Пароль міг бути вірним, тож читаємо власний профіль
+  // (політика profiles_select_own діє й для неактивного) і виходимо з тим самим текстом, що й за невірного пароля:
+  // PM тексту не задав, а стан облікового запису не розкриваємо (design.md D6).
+  const userId = signIn?.user?.id;
+  const { data: profile, error: profileError } = userId
+    ? await supabase.from("profiles").select("is_active").eq("id", userId).maybeSingle()
+    : { data: null, error: null };
+  if (!userId || profileError || !profile || !profile.is_active) {
+    await supabase.auth.signOut();
     redirect("/login?error=invalid");
   }
 

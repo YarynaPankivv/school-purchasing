@@ -1,17 +1,17 @@
 [
   {
     "email": "admin@example.test",
-    "full_name": "Олена Демо-Адмін",
+    "full_name": "Olena Demo-Admin",
     "role": "admin"
   },
   {
     "email": "member1@example.test",
-    "full_name": "Андрій Демо-Перший",
+    "full_name": "Andrii Demo-First",
     "role": "requester"
   },
   {
     "email": "member2@example.test",
-    "full_name": "Марія Демо-Друга",
+    "full_name": "Maria Demo-Second",
     "role": "requester"
   }
 ]
