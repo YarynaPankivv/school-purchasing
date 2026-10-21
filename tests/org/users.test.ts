@@ -343,6 +343,25 @@ describe("варіанти вибору", () => {
     expect(forAdmin).not.toContain(WORKER_2);
   });
 
+  it("AC-PUR-13: колеги «від імені» — лише з відділу заявки, без автора й адміністраторів; адміністратор — будь-хто", () => {
+    // Автор — звичайний заявник відділу OFFICE.
+    const forAuthor = onBehalfCandidates(OFFICE, members, people, WORKER, "requester").map((p) => p.id);
+    expect(forAuthor).toContain(APPROVER); // колега з відділу
+    expect(forAuthor).not.toContain(WORKER); // не сам автор
+    expect(forAuthor).not.toContain(ADMIN); // не адміністратор відділу
+    expect(forAuthor).not.toContain(SECOND_ADMIN); // не адміністратор чужого відділу
+    expect(forAuthor).not.toContain(WORKER_2); // не деактивований
+
+    // Колега з іншого відділу в списку відсутній.
+    const otherDepartment = onBehalfCandidates("other", members, people, WORKER, "requester").map((p) => p.id);
+    expect(otherDepartment).toEqual([]);
+
+    // Адміністратор може обрати будь-якого активного працівника, крім себе.
+    const forAdmin = onBehalfCandidates(OFFICE, members, people, ADMIN, "admin").map((p) => p.id);
+    expect(forAdmin).toEqual(expect.arrayContaining([WORKER, APPROVER, SECOND_ADMIN]));
+    expect(forAdmin).not.toContain(ADMIN);
+  });
+
   it("AC-ORG-16: особа «від імені» йде в чернетку; відмова бази (деактивований, чужий відділ) — зрозуміла помилка", async () => {
     const mock = useSupabase(createSupabaseMock({ profile: worker }));
     const { createDraftRequest } = await requestActions();
