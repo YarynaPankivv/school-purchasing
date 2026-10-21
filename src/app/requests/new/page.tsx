@@ -1,75 +1,68 @@
-import { Alert, PageShell, buttonClass, inputClass } from "@/app/_components/ui";
+import { Alert, Card, EmptyState, PageShell } from "@/app/_components/ui";
 import { requireActiveUser } from "@/lib/auth/session";
-import { selectableDepartments } from "@/lib/org/departments";
+import { onBehalfCandidates, personLabel, selectableDepartments } from "@/lib/org/departments";
 import { orgErrorMessage } from "@/lib/org/errors";
 import { loadPermissions } from "@/lib/org/load-permissions";
 import { allowedPurchaseTypes, allowedRequestTypes } from "@/lib/org/request-options";
 import { PURCHASE_TYPE_LABELS, REQUEST_TYPE_LABELS } from "@/lib/org/requests";
 import { createDraftRequest } from "./actions";
+import { RequestForm } from "./request-form";
 
 // Нова чернетка заявки: не-admin — лише від імені відділів, де він заявник (AC-ORG-01), admin — будь-якого
-// (AC-ORG-22); типи заявки й закупівлі — за дозволами (AC-ORG-07, AC-ORG-08, AC-ORG-17, AC-ORG-23).
+// (AC-ORG-22); типи заявки й закупівлі — за дозволами (AC-ORG-07, AC-ORG-08, AC-ORG-17, AC-ORG-23);
+// особа «від імені» — лише активні (AC-ORG-16).
 export default async function NewRequestPage({ searchParams }: PageProps<"/requests/new">) {
   const { supabase, user } = await requireActiveUser();
   const { error, created } = await searchParams;
 
-  const [{ data: departments }, { data: memberships }, permissions] = await Promise.all([
+  const [{ data: departments }, { data: memberships }, { data: people }, permissions] = await Promise.all([
     supabase.from("departments").select("id, name"),
-    supabase.from("department_members").select("department_id, user_id").eq("user_id", user.id),
+    supabase.from("department_members").select("department_id, user_id"),
+    // RLS: не-admin бачить себе й активних колег зі спільних відділів (profiles_select_colleagues), admin — усіх.
+    supabase.from("profiles").select("id, email, full_name, is_active, role"),
     loadPermissions(supabase, user.id),
   ]);
   const options = selectableDepartments(departments ?? [], memberships ?? [], user.id, user.role);
   const types = allowedRequestTypes(user.role, permissions);
   const purchaseTypes = allowedPurchaseTypes(user.role, permissions);
+  const candidatesByDepartment = Object.fromEntries(
+    options.map((d) => [
+      d.id,
+      onBehalfCandidates(d.id, memberships ?? [], people ?? [], user.id, user.role).map((p) => ({
+        value: p.id,
+        label: personLabel(p),
+      })),
+    ]),
+  );
 
   return (
-    <PageShell title="Нова заявка">
+    <PageShell
+      title="New request"
+      description="The request is created as a draft on behalf of one of your departments."
+      user={user}
+      back={{ href: "/", label: "Back to home" }}
+    >
       <Alert message={orgErrorMessage(error)} />
-      <Alert tone="ok" message={created === "1" ? "Чернетку заявки створено." : undefined} />
+      <Alert tone="ok" message={created === "1" ? "Draft request created." : undefined} />
 
-      {options.length === 0 ? (
-        <p className="text-sm text-zinc-600" data-testid="no-departments">
-          {user.role === "admin"
-            ? "У системі ще немає жодного відділу, тож створити заявку поки не можна."
-            : "Вас ще не додано до жодного відділу як заявника, тож створити заявку поки не можна."}
-        </p>
-      ) : (
-        <form action={createDraftRequest} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm">
-            Відділ
-            <select name="department_id" required className={inputClass} data-testid="department-select">
-              {options.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Тип заявки
-            <select name="type" required className={inputClass} data-testid="type-select">
-              {types.map((t) => (
-                <option key={t} value={t}>
-                  {REQUEST_TYPE_LABELS[t]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Тип закупівлі (лише для «{REQUEST_TYPE_LABELS.PUR}»)
-            <select name="purchase_type" className={inputClass} data-testid="purchase-type-select">
-              {purchaseTypes.map((p) => (
-                <option key={p} value={p}>
-                  {PURCHASE_TYPE_LABELS[p]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className={buttonClass}>
-            Створити чернетку
-          </button>
-        </form>
-      )}
+      <Card>
+        {options.length === 0 ? (
+          <EmptyState testId="no-departments">
+            {user.role === "admin"
+              ? "There are no departments yet, so a request cannot be created."
+              : "You have not been added to any department as a requester, so a request cannot be created."}
+          </EmptyState>
+        ) : (
+          <RequestForm
+            action={createDraftRequest}
+            departments={options.map((d) => ({ value: d.id, label: d.name }))}
+            candidatesByDepartment={candidatesByDepartment}
+            types={types.map((t) => ({ value: t, label: REQUEST_TYPE_LABELS[t] }))}
+            purchaseTypes={purchaseTypes.map((p) => ({ value: p, label: PURCHASE_TYPE_LABELS[p] }))}
+            purchaseTypeRequestType={{ value: "PUR", label: REQUEST_TYPE_LABELS.PUR }}
+          />
+        )}
+      </Card>
     </PageShell>
   );
 }

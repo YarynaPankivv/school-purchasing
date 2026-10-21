@@ -12,5 +12,5 @@
 
 -- Відділи школи (зріз ORG). Унікальність — за lower(name), тож on conflict без цілі.
 insert into public.departments (name)
-values ('Початкова школа'), ('Вища школа'), ('Офіс')
+values ('Primary School'), ('Upper School'), ('Office')
 on conflict do nothing;

@@ -1,11 +1,12 @@
 // Мок клієнта Supabase і next/navigation для тестів server actions (design.md D9).
 // Не тест: Vitest запускає лише *.test.ts. Записує кожен запит (таблиця, операція, payload, фільтри),
-// а відповідь бере з results за ключем "<таблиця>.<операція>".
+// а відповідь бере з results за ключем "<таблиця>.<операція>". Виклик rpc("name", args) записується як
+// таблиця "rpc:name", операція "rpc", payload — аргументи; відповідь — з results["rpc:name.rpc"] (за замовчуванням true).
 import { vi } from "vitest";
 
-export type MockError = { code?: string; message?: string } | null;
+export type MockError = { code?: string; message?: string; details?: string } | null;
 export type MockResult = { data?: unknown; error?: MockError };
-export type Op = "select" | "insert" | "update" | "upsert" | "delete";
+export type Op = "select" | "insert" | "update" | "upsert" | "delete" | "rpc";
 export type Call = { table: string; op: Op; payload?: unknown; filters: Array<[string, unknown]> };
 
 export type MockProfile = {
@@ -29,12 +30,21 @@ export function makeProfile(overrides: Partial<MockProfile> = {}): MockProfile {
 
 export function createSupabaseMock(options: {
   profile?: MockProfile | null;
+  // Інші профілі: select(…).eq("id", …).maybeSingle() знаходить їх за id (поруч із профілем сеансу).
+  profiles?: MockProfile[];
+  // Відповідь signInWithPassword (login()); за замовчуванням — успішний вхід профілю сеансу.
+  signInError?: MockError;
   results?: Partial<Record<`${string}.${Op}`, MockResult>>;
 } = {}) {
   const profile = options.profile === undefined ? makeProfile() : options.profile;
   const results = options.results ?? {};
   const calls: Call[] = [];
   const signOut = vi.fn(async () => ({ error: null }));
+  const signInWithPassword = vi.fn(async () => ({
+    data: { user: profile ? { id: profile.id } : null },
+    error: options.signInError ?? null,
+  }));
+  const known = [...(profile ? [profile] : []), ...(options.profiles ?? [])];
 
   function from(table: string) {
     const call: Call = { table, op: "select", filters: [] };
@@ -51,8 +61,15 @@ export function createSupabaseMock(options: {
       then<T>(resolve: (value: { data: unknown; error: MockError }) => T, reject?: (reason: unknown) => T) {
         calls.push(call);
         let result: { data: unknown; error: MockError };
-        if (table === "profiles" && call.op === "select" && single && !(`profiles.select` in results)) {
+        const idFilter = call.filters.find(([column]) => column === "id")?.[1];
+        const matched = known.find((p) => p.id === idFilter);
+        if (table === "profiles" && call.op === "select" && single && matched && !(`profiles.select` in results)) {
+          result = { data: matched, error: null };
+        } else if (table === "profiles" && call.op === "select" && single && !(`profiles.select` in results) && idFilter === undefined) {
           result = { data: profile, error: null };
+        } else if (table === "profiles" && call.op === "select" && !single && !(`profiles.select` in results) && known.length > 0) {
+          // Список профілів (напр. люди для імен і кандидатів): без явної відповіді — сеансовий профіль і options.profiles.
+          result = { data: known, error: null };
         } else {
           const configured = results[`${table}.${call.op}`];
           result = { data: configured?.data ?? (single ? null : []), error: configured?.error ?? null };
@@ -63,15 +80,29 @@ export function createSupabaseMock(options: {
     return builder;
   }
 
+  function rpc(name: string, args: unknown) {
+    const call: Call = { table: `rpc:${name}`, op: "rpc", payload: args, filters: [] };
+    return {
+      then<T>(resolve: (value: { data: unknown; error: MockError }) => T, reject?: (reason: unknown) => T) {
+        calls.push(call);
+        const configured = results[`rpc:${name}.rpc`];
+        const result = { data: configured?.data ?? (configured?.error ? null : true), error: configured?.error ?? null };
+        return Promise.resolve(result).then(resolve, reject);
+      },
+    };
+  }
+
   const client = {
     auth: {
       getClaims: vi.fn(async () => ({ data: profile ? { claims: { sub: profile.id } } : null, error: null })),
       signOut,
+      signInWithPassword,
     },
     from,
+    rpc,
   };
 
-  return { client, calls, signOut };
+  return { client, calls, signOut, signInWithPassword };
 }
 
 // redirect() / notFound() кидають — як і в Next.js; тест читає адресу з помилки.
