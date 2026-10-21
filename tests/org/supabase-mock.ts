@@ -67,6 +67,9 @@ export function createSupabaseMock(options: {
           result = { data: matched, error: null };
         } else if (table === "profiles" && call.op === "select" && single && !(`profiles.select` in results) && idFilter === undefined) {
           result = { data: profile, error: null };
+        } else if (table === "profiles" && call.op === "select" && !single && !(`profiles.select` in results) && known.length > 0) {
+          // Список профілів (напр. люди для імен і кандидатів): без явної відповіді — сеансовий профіль і options.profiles.
+          result = { data: known, error: null };
         } else {
           const configured = results[`${table}.${call.op}`];
           result = { data: configured?.data ?? (single ? null : []), error: configured?.error ?? null };

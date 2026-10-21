@@ -15,7 +15,8 @@ export type IconName =
   | "search"
   | "chevron-left"
   | "trash"
-  | "arrow-right";
+  | "arrow-right"
+  | "list";
 
 const PATHS: Record<IconName, ReactNode> = {
   home: (
@@ -84,6 +85,7 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   "arrow-right": <path d="M5 12h14M13 6l6 6-6 6" />,
+  list: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
 };
 
 export function Icon({ name, className = "size-5" }: { name: IconName; className?: string }) {

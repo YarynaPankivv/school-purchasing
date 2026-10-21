@@ -1,19 +1,35 @@
 import Link from "next/link";
-import { Card, DetailList, PageShell, RoleBadge } from "@/app/_components/ui";
+import { Badge, Card, DetailList, PageShell, RoleBadge } from "@/app/_components/ui";
 import { Icon, type IconName } from "@/app/_components/icons";
 import { requireActiveUser } from "@/lib/auth/session";
 import { personLabel } from "@/lib/org/departments";
+import { loadOverview } from "./requests/_lib/overview";
 
-type Tile = { href: string; title: string; text: string; icon: IconName };
+type Tile = { href: string; title: string; text: string; icon: IconName; counters?: Array<{ label: string; count: number }> };
 
 // Головна: хто увійшов, з якою роллю (з таблиці profiles) і куди можна перейти.
 // requireActiveUser() перевіряє JWT через getClaims() і виводить деактивованого (design.md D6).
 export default async function Home() {
-  const { user } = await requireActiveUser();
+  const { supabase, user } = await requireActiveUser();
+  // Лічильники «To decide» і «Awaiting decision» (AC-PUR-15, 33): не критичні для головної, тож збій читання
+  // (наприклад, міграцію ще не застосовано) не має ламати сторінку.
+  const overview = await loadOverview(supabase, user).catch(() => null);
+  const counters: Array<{ label: string; count: number }> = [];
+  if (overview && overview.toDecide.length > 0) counters.push({ label: "To decide", count: overview.toDecide.length });
+  if (overview && user.role === "admin" && overview.awaiting.length > 0) {
+    counters.push({ label: "Awaiting decision", count: overview.awaiting.length });
+  }
   const name = personLabel({ email: user.email, full_name: user.fullName });
   const firstName = name.split(/\s+/)[0];
 
   const tiles: Tile[] = [
+    {
+      href: "/requests",
+      title: "Requests",
+      text: "Your purchase requests, requests waiting for your decision and their history.",
+      icon: "list",
+      counters,
+    },
     { href: "/requests/new", title: "New request", text: "Draft a purchase or reimbursement on behalf of your department.", icon: "file-plus" },
     { href: "/profile", title: "My profile", text: "Your departments, approvals and request-type permissions.", icon: "user" },
     ...(user.role === "admin"
@@ -50,6 +66,15 @@ export default async function Home() {
                 />
               </span>
               <span className="text-sm text-muted">{tile.text}</span>
+              {tile.counters?.length ? (
+                <span className="mt-1 flex flex-wrap gap-1.5" data-testid="home-counters">
+                  {tile.counters.map((c) => (
+                    <Badge key={c.label} tone="warn">
+                      {c.label}: {c.count}
+                    </Badge>
+                  ))}
+                </span>
+              ) : null}
             </span>
           </Link>
         ))}
