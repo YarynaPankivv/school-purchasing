@@ -1,7 +1,7 @@
 // Типи схеми бази. Оновлюйте разом із міграцією: готовий файл — у Summary прогону job db-check у CI
 // (supabase gen types typescript --local на одноразовій базі); або npm run db:types після npx supabase link на ваш проєкт.
 // Ця версія написана вручну за міграціями 20261012000000_profiles_and_roles.sql, 20261018182200_org_departments.sql
-// 20261018200633_org_permissions.sql і 20261021120000_org_users.sql;
+// 20261018200633_org_permissions.sql, 20261021120000_org_users.sql і 20261021140000_pur_drafts.sql;
 // після зеленого db-check її можна замінити згенерованою.
 
 export type Json =
@@ -122,36 +122,146 @@ export type Database = {
         };
         Relationships: [];
       };
-      requests: {
+      request_history: {
         Row: {
           id: string;
-          type: string;
-          purchase_type: string | null;
-          department_id: string;
-          author_id: string;
-          on_behalf_of_id: string | null;
+          request_id: string;
+          actor_id: string;
+          actor_name: string | null;
+          action: string;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          request_id: string;
+          actor_id: string;
+          actor_name?: string | null;
+          action: string;
+          reason?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          request_id?: string;
+          actor_id?: string;
+          actor_name?: string | null;
+          action?: string;
+          reason?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "request_history_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "request_history_request_id_fkey";
+            columns: ["request_id"];
+            isOneToOne: false;
+            referencedRelation: "requests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      request_lines: {
+        Row: {
+          id: string;
+          request_id: string;
+          position: number;
+          name: string | null;
+          purpose: string | null;
+          quantity: number | null;
+          unit_price: number | null;
           status: string;
           created_at: string;
         };
         Insert: {
           id?: string;
-          type: string;
-          purchase_type?: string | null;
-          department_id: string;
-          author_id: string;
-          on_behalf_of_id?: string | null;
+          request_id: string;
+          position?: number;
+          name?: string | null;
+          purpose?: string | null;
+          quantity?: number | null;
+          unit_price?: number | null;
           status?: string;
           created_at?: string;
         };
         Update: {
           id?: string;
+          request_id?: string;
+          position?: number;
+          name?: string | null;
+          purpose?: string | null;
+          quantity?: number | null;
+          unit_price?: number | null;
+          status?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "request_lines_request_id_fkey";
+            columns: ["request_id"];
+            isOneToOne: false;
+            referencedRelation: "requests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      requests: {
+        Row: {
+          id: string;
+          type: string;
+          purchase_type: string | null;
+          department_id: string | null;
+          author_id: string;
+          on_behalf_of_id: string | null;
+          status: string;
+          created_at: string;
+          number: number | null;
+          note: string | null;
+          delivery_date: string | null;
+          editing: boolean;
+          decision_reason: string | null;
+          archived_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          type: string;
+          purchase_type?: string | null;
+          department_id?: string | null;
+          author_id: string;
+          on_behalf_of_id?: string | null;
+          status?: string;
+          created_at?: string;
+          number?: number | null;
+          note?: string | null;
+          delivery_date?: string | null;
+          editing?: boolean;
+          decision_reason?: string | null;
+          archived_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
           type?: string;
           purchase_type?: string | null;
-          department_id?: string;
+          department_id?: string | null;
           author_id?: string;
           on_behalf_of_id?: string | null;
           status?: string;
           created_at?: string;
+          number?: number | null;
+          note?: string | null;
+          delivery_date?: string | null;
+          editing?: boolean;
+          decision_reason?: string | null;
+          archived_at?: string | null;
+          updated_at?: string;
         };
         Relationships: [
           {
@@ -217,6 +327,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_reject_purchase: {
+        Args: { target_request: string; reason_text: string };
+        Returns: string;
+      };
       admin_set_active: {
         Args: { target_user: string; make_active: boolean };
         Returns: boolean;
@@ -224,6 +338,35 @@ export type Database = {
       admin_set_role: {
         Args: { target_user: string; make_admin: boolean };
         Returns: boolean;
+      };
+      cancel_purchase: {
+        Args: { target_request: string };
+        Returns: string;
+      };
+      copy_purchase: {
+        Args: { target_request: string };
+        Returns: string;
+      };
+      decide_purchase: {
+        Args: {
+          target_request: string;
+          decision: string;
+          reason_text?: string;
+          rejected_line_ids?: string[];
+        };
+        Returns: string;
+      };
+      reopen_purchase: {
+        Args: { target_request: string };
+        Returns: string;
+      };
+      set_purchase_editing: {
+        Args: { target_request: string; make_editing: boolean };
+        Returns: boolean;
+      };
+      submit_purchase: {
+        Args: { target_request: string };
+        Returns: string;
       };
     };
     Enums: {

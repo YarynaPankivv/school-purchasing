@@ -4,7 +4,7 @@
 // таблиця "rpc:name", операція "rpc", payload — аргументи; відповідь — з results["rpc:name.rpc"] (за замовчуванням true).
 import { vi } from "vitest";
 
-export type MockError = { code?: string; message?: string } | null;
+export type MockError = { code?: string; message?: string; details?: string } | null;
 export type MockResult = { data?: unknown; error?: MockError };
 export type Op = "select" | "insert" | "update" | "upsert" | "delete" | "rpc";
 export type Call = { table: string; op: Op; payload?: unknown; filters: Array<[string, unknown]> };
@@ -67,6 +67,9 @@ export function createSupabaseMock(options: {
           result = { data: matched, error: null };
         } else if (table === "profiles" && call.op === "select" && single && !(`profiles.select` in results) && idFilter === undefined) {
           result = { data: profile, error: null };
+        } else if (table === "profiles" && call.op === "select" && !single && !(`profiles.select` in results) && known.length > 0) {
+          // Список профілів (напр. люди для імен і кандидатів): без явної відповіді — сеансовий профіль і options.profiles.
+          result = { data: known, error: null };
         } else {
           const configured = results[`${table}.${call.op}`];
           result = { data: configured?.data ?? (single ? null : []), error: configured?.error ?? null };

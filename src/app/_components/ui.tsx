@@ -73,6 +73,7 @@ export function RoleBadge({ role }: { role: string }) {
 function AppHeader({ user }: { user: ShellUser }) {
   const items: NavItem[] = [
     { href: "/", label: "Home", icon: "home" },
+    { href: "/requests", label: "Requests", icon: "list" },
     { href: "/requests/new", label: "New request", icon: "file-plus" },
     { href: "/profile", label: "My profile", icon: "user" },
     ...(user.role === "admin"
