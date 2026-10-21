@@ -50,13 +50,13 @@
 | AC-ORG-17 | з дозволом «Витрата карткою» є у виборі типу заявки | `src/app/admin/users/actions.ts` (setPermissions; allowedRequestTypes) | `tests/org/permissions.test.ts` | реалізовано |
 | AC-ORG-08 | не-admin без дозволу «Самостійна закупівля» — лише тип «Відділ закупівель» | `src/lib/org/request-options.ts` (allowedPurchaseTypes; private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
 | AC-ORG-23 | адміністратор без дозволу обирає «Самостійну закупівлю» | `src/lib/org/request-options.ts` (allowedPurchaseTypes; private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
-| AC-ORG-09 | без ролі admin немає доступу до працівників і відділів, «Недостатньо прав» | — | — | відкладено (чекає реалізації) |
-| AC-ORG-10 | єдиний активний адміністратор не знімає з себе роль admin | — | — | відкладено (чекає реалізації) |
-| AC-ORG-18 | єдиний активний адміністратор не деактивує себе | — | — | відкладено (чекає реалізації) |
-| AC-ORG-12 | деактивований працівник не може увійти | — | — | відкладено (чекає реалізації) |
-| AC-ORG-13 | видалення чернетки деактивованого не зачіпає поданих заявок | — | — | відкладено (чекає реалізації) |
-| AC-ORG-16 | деактивованого немає у виборі схвалювача й особи «від імені» | — | — | відкладено (чекає реалізації) |
-| AC-ORG-21 | за двох активних адміністраторів можна зняти роль із себе | — | — | відкладено (чекає реалізації) |
+| AC-ORG-09 | без ролі admin немає доступу до працівників і відділів, «Недостатньо прав» | `src/lib/auth/session.ts` (requireAdmin); `src/app/_components/ui.tsx` (Forbidden); `src/app/admin/users/actions.ts` | `tests/org/users.test.ts` | реалізовано |
+| AC-ORG-10 | єдиний активний адміністратор не знімає з себе роль admin | `src/app/admin/users/actions.ts` (setAdminRole); `supabase/migrations/20261021120000_org_users.sql` (admin_set_role; private.guard_profile_update) | `tests/org/users.test.ts` | реалізовано |
+| AC-ORG-18 | єдиний активний адміністратор не деактивує себе | `src/app/admin/users/actions.ts` (setActive); `supabase/migrations/20261021120000_org_users.sql` (private.guard_profile_update) | `tests/org/users.test.ts` | реалізовано |
+| AC-ORG-12 | деактивований працівник не може увійти | `src/app/login/actions.ts` (login); `src/lib/auth/session.ts` (requireActiveUser); `src/app/admin/users/actions.ts` (setActive) | `tests/org/users.test.ts` | реалізовано |
+| AC-ORG-13 | видалення чернетки деактивованого не зачіпає поданих заявок | `src/app/admin/users/actions.ts` (deleteDraft); `supabase/migrations/20261021120000_org_users.sql` (requests_delete_draft_admin) | `tests/org/users.test.ts` | реалізовано |
+| AC-ORG-16 | деактивованого немає у виборі схвалювача й особи «від імені» | `src/lib/org/departments.ts` (approverCandidates, onBehalfCandidates); `supabase/migrations/20261021120000_org_users.sql` (private.can_act_on_behalf, profiles_select_colleagues) | `tests/org/users.test.ts` | реалізовано |
+| AC-ORG-21 | за двох активних адміністраторів можна зняти роль із себе | `src/app/admin/users/actions.ts` (setAdminRole); `supabase/migrations/20261021120000_org_users.sql` (private.guard_profile_update) | `tests/org/users.test.ts` | реалізовано |
 | AC-PUR-01 | нова закупівля — «Чернетка», номер `PUR-N` без провідних нулів, один порожній рядок | — | — | відкладено (чекає реалізації) |
 | AC-PUR-02 | одночасне створення двох закупівель дає різні номери | — | — | відкладено (чекає реалізації) |
 | AC-PUR-04 | автор обирає лише свої відділи, адміністратор — усі | — | — | відкладено (чекає реалізації) |
@@ -64,7 +64,7 @@
 | AC-PUR-07 | кількість 0, неціла кількість чи від'ємна ціна не приймаються, повідомлення з назвою поля | — | — | відкладено (чекає реалізації) |
 | AC-PUR-08 | невідома ціна — лише 0, рядок приймається | — | — | відкладено (чекає реалізації) |
 | AC-PUR-10 | назва рядка понад 500 чи нотатка понад 2000 символів не приймаються | — | — | відкладено (чекає реалізації) |
-| AC-PUR-13 | колеги «від імені» — лише з відділу заявки, без автора й адміністраторів; адміністратор — будь-хто | — | — | відкладено (чекає реалізації) |
+| AC-PUR-13 | колеги «від імені» — лише з відділу заявки, без автора й адміністраторів; адміністратор — будь-хто | `src/lib/org/departments.ts` (onBehalfCandidates); `supabase/migrations/20261021120000_org_users.sql` (private.can_act_on_behalf) | `tests/org/users.test.ts` | реалізовано |
 | AC-PUR-34 | файли PDF, JPG, PNG, HEIC до 20 МБ; інші відхилено з причиною | — | — | відкладено (чекає реалізації) |
 | AC-PUR-30 | скасована чернетка видаляється з рядками й файлами, номер не повторюється | — | — | відкладено (чекає реалізації) |
 | AC-PUR-32 | копія — нова чернетка з усіма рядками без відхилень, без типу, дати й файлів | — | — | відкладено (чекає реалізації) |

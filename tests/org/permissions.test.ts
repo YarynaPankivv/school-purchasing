@@ -169,7 +169,7 @@ describe("тип закупівлі", () => {
     );
     const { createDraftRequest } = await requestActions();
     await expect(createDraftRequest(form({ department_id: OFFICE, type: "RMB" }))).rejects.toThrow(
-      "Не вдалося прочитати дозволи: timeout",
+      "Failed to read permissions: timeout",
     );
   });
 });

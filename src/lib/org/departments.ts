@@ -5,11 +5,11 @@ import type { AppRole } from "./roles";
 export type Department = { id: string; name: string };
 export type Membership = { department_id: string; user_id: string; auto_approve: boolean };
 export type Approver = { department_id: string; user_id: string };
-export type Person = { id: string; email: string | null; full_name: string | null; is_active: boolean };
+export type Person = { id: string; email: string | null; full_name: string | null; is_active: boolean; role: string };
 
 export const DEPARTMENT_NAME_MAX = 100;
 
-const byName = (a: Department, b: Department) => a.name.localeCompare(b.name, "uk");
+const byName = (a: Department, b: Department) => a.name.localeCompare(b.name, "en");
 
 // Назва відділу — текст до 100 символів (Припущення PM). Повертає обрізану назву або null.
 export function normalizeDepartmentName(raw: unknown): string | null {
@@ -48,6 +48,22 @@ export function approverCandidates(departmentId: string, approvers: Approver[], 
   return people.filter((p) => p.is_active && !already.has(p.id));
 }
 
+// AC-ORG-16: варіанти особи «від імені» — лише активні працівники, крім самого автора.
+// Не-admin обирає серед заявників цього відділу, крім адміністраторів (AC-PUR-13; схвалювач теж заявник відділу),
+// admin — серед усіх активних (матриця прав; private.can_act_on_behalf).
+export function onBehalfCandidates(
+  departmentId: string,
+  memberships: Pick<Membership, "department_id" | "user_id">[],
+  people: Person[],
+  authorId: string,
+  role: AppRole,
+): Person[] {
+  const members = new Set(memberships.filter((m) => m.department_id === departmentId).map((m) => m.user_id));
+  return people.filter(
+    (p) => p.is_active && p.id !== authorId && (role === "admin" || (p.role !== "admin" && members.has(p.id))),
+  );
+}
+
 // AC-ORG-14: відділ без жодного активного схвалювача позначаємо «Немає схвалювача».
 export function departmentHasActiveApprover(
   departmentId: string,
@@ -58,7 +74,7 @@ export function departmentHasActiveApprover(
   return approvers.some((a) => a.department_id === departmentId && active.has(a.user_id));
 }
 
-export const NO_APPROVER_LABEL = "Немає схвалювача";
+export const NO_APPROVER_LABEL = "No approver";
 
 // AC-ORG-03, AC-ORG-15: що ще втратить працівник, якщо прибрати його як заявника відділу
 // (у базі це робить каскад department_members → department_approvers і рядок членства з auto_approve).
