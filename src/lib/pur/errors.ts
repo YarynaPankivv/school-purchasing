@@ -20,9 +20,13 @@ export const PUR_ERROR_MESSAGES = {
   department_locked: "The department of a submitted request cannot be changed.", // AC-PUR-38 (тригер guard_request_update)
   purchase_type_forbidden: "This purchase type is not available to you.", // AC-ORG-08 (тригер guard_request_update)
   immutable: "The request type, author and number cannot be changed.", // тригер guard_request_update
+  on_behalf_invalid: "This colleague is not available for this request.", // AC-PUR-13 (submit_purchase)
+  invalid_status: "This action is not available for the current request status.",
+  not_found: "Request not found.",
+  invalid_line: "One of the selected lines does not belong to this request.",
+  invalid_action: "Unknown action.",
   // Коди, яких база не видає: перевіряє лише TS до запиту, або технічний збій.
   on_behalf_required: "Select the colleague you are submitting on behalf of", // AC-PUR-12 «Оберіть, за кого подаєте заявку» (переклад тексту PM)
-  on_behalf_invalid: "This colleague is not available for this request.", // AC-PUR-13
   invalid_input: "Some of the entered values are not valid.",
   unknown: "Could not save the changes. Please try again.",
 } as const;
@@ -48,6 +52,11 @@ const DB_CODES: ReadonlySet<string> = new Set([
   "department_locked",
   "purchase_type_forbidden",
   "immutable",
+  "on_behalf_invalid",
+  "invalid_status",
+  "not_found",
+  "invalid_line",
+  "invalid_action",
 ]);
 
 export function mapPurDbError(error: DbError): PurErrorCode {

@@ -162,6 +162,11 @@ describe("помилки бази", () => {
       "department_locked",
       "purchase_type_forbidden",
       "immutable",
+      "on_behalf_invalid",
+      "invalid_status",
+      "not_found",
+      "invalid_line",
+      "invalid_action",
     ];
     for (const code of codes) {
       expect(mapPurDbError({ code: "P0001", message: `pur:${code}` })).toBe(code);

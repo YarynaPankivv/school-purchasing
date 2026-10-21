@@ -117,9 +117,10 @@ export default async function RequestPage({ params, searchParams }: PageProps<"/
   const candidates = purchaseOnBehalfCandidates(request, memberships, people, isAppRole(user.role) ? user.role : "requester");
 
   const savedMessage = typeof saved === "string" && Object.hasOwn(SAVED, saved) ? SAVED[saved] : undefined;
+  const incomplete = error === "lines_incomplete" && typeof detail === "string" ? incompleteLinesFromDetail(detail) : [];
   const errorMessage =
-    error === "lines_incomplete" && typeof detail === "string"
-      ? `${PUR_ERROR_MESSAGES.lines_incomplete} ${incompleteLinesMessage(incompleteLinesFromDetail(detail))}`
+    incomplete.length > 0
+      ? incompleteLinesMessage(incomplete)
       : error === "invalid_input" && typeof detail === "string"
         ? detail
         : purErrorMessage(error);

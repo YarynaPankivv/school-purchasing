@@ -197,13 +197,14 @@ describe("хто може вирішити", () => {
     expect(canDecide(request, actor(AUTHOR + "-2", "requester"), approvers)).toBe(false);
   });
 
-  it("причини блокування — у порядку decide_purchase: статус, редагування автором, власна заявка", () => {
+  it("причини блокування — у порядку decide_purchase: власна заявка, право, чернетка, статус, редагування автором", () => {
     const approverActor = actor(APPROVER, "approver");
     expect(decisionBlockReason(makePurchase({ status: "approved" }), approverActor, approvers)).toBe("already_decided");
-    expect(decisionBlockReason(makePurchase({ status: "draft" }), approverActor, approvers)).toBe("already_decided");
+    expect(decisionBlockReason(makePurchase({ status: "draft" }), approverActor, approvers)).toBe("not_found");
+    expect(decisionBlockReason(makePurchase({ status: "approved" }), actor(AUTHOR + "-2", "requester"), approvers)).toBe("forbidden");
     expect(decisionBlockReason(makePurchase({ status: "pending", editing: true }), approverActor, approvers)).toBe("author_editing");
     expect(decisionBlockReason(makePurchase({ status: "pending", editing: true }), actor(AUTHOR, "requester"), approvers)).toBe(
-      "author_editing",
+      "own_request",
     );
     expect(decisionBlockReason(makePurchase({ status: "pending" }), actor(AUTHOR, "requester"), approvers)).toBe("own_request");
     expect(decisionBlockReason(makePurchase({ status: "pending" }), approverActor, approvers)).toBeNull();

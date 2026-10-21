@@ -13,17 +13,18 @@ export type DecisionAction = "approve" | "reject" | "return";
 type DecisionRequest = Pick<PurchaseRow, "author_id" | "on_behalf_of_id" | "department_id" | "status" | "editing">;
 
 // Чому актор не може вирішити зараз; null — може. Порядок — як у decide_purchase (D5):
-// неактивний → статус → редагування автором → власна заявка → право.
+// неактивний → власна заявка → право → чернетка → статус → редагування автором.
 export function decisionBlockReason(
   request: DecisionRequest,
   actor: Actor,
   approvers: readonly Approver[],
 ): PurErrorCode | null {
   if (!actor.is_active) return "forbidden";
-  if (request.status !== "pending") return "already_decided"; // AC-PUR-25: другому — «вже вирішено»
-  if (request.editing) return "author_editing"; // AC-PUR-26
   if (isParticipant(request, actor.id)) return "own_request"; // AC-PUR-24, 54: за жодної ролі
   if (!isActiveAdmin(actor) && !isApproverOf(actor, request.department_id, approvers)) return "forbidden"; // AC-PUR-35
+  if (request.status === "draft") return "not_found"; // чернетку не вирішують
+  if (request.status !== "pending") return "already_decided"; // AC-PUR-25: другому — «вже вирішено»
+  if (request.editing) return "author_editing"; // AC-PUR-26
   return null;
 }
 

@@ -35,7 +35,9 @@ function fail(path: string, code: PurErrorCode, detail?: string | null): never {
 }
 
 function failDb(path: string, error: NonNullable<DbError>): never {
-  fail(path, mapPurDbError(error), error.details ?? null);
+  const code = mapPurDbError(error);
+  // DETAIL Postgres (напр. 23514) може містити значення рядка таблиці: в адресу й на сторінку — лише розбір неповних рядків.
+  fail(path, code, code === "lines_incomplete" ? (error.details ?? null) : null);
 }
 
 function done(path: string, saved: string): never {
