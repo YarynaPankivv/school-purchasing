@@ -229,7 +229,25 @@ create policy requests_select
     )
   );
 
--- AC-ORG-13: адміністратор видаляє лише чернетки; подані заявки база не віддає на видалення.
+-- AC-ORG-13: адміністратор видаляє лише чернетки ДЕАКТИВОВАНОГО автора; подані заявки база не віддає на видалення.
+-- Стан автора перевіряє сама політика в тому ж запиті, що й видалення: перевірка в застосунку перед delete
+-- лишала б вікно, у якому інший адміністратор активує автора й чернетка активного працівника буде видалена.
+-- security definer — щоб політика читала profiles в обхід RLS; аргумент — колонка рядка, тож без обгортки (select …).
+create or replace function private.is_inactive_user(target_user uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.profiles as p where p.id = target_user and not p.is_active
+  );
+$$;
+
+revoke execute on function private.is_inactive_user(uuid) from public, anon;
+grant execute on function private.is_inactive_user(uuid) to authenticated;
+
 grant delete on table public.requests to authenticated;
 
 create policy requests_delete_draft_admin
@@ -240,4 +258,5 @@ create policy requests_delete_draft_admin
     (select private.is_active_user())
     and (select private.current_app_role()) = 'admin'
     and status = 'draft'
+    and private.is_inactive_user(author_id)
   );
