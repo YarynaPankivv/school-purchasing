@@ -37,15 +37,22 @@ export async function createDraftRequest(formData: FormData) {
   // AC-ORG-01: відділ, де не-admin не заявник, база відхиляє (private.is_member); admin — будь-який відділ (AC-ORG-22).
   // AC-ORG-16: деактивованого чи чужого (для не-admin) за відділом працівника в «від імені» відхиляє
   // private.can_act_on_behalf у requests_insert.
-  const { error } = await supabase.from("requests").insert({
-    author_id: user.id,
-    department_id: departmentId,
-    type,
-    purchase_type: purchaseType,
-    ...(onBehalfOf ? { on_behalf_of_id: onBehalfOf } : {}),
-  });
+  const { data, error } = await supabase
+    .from("requests")
+    .insert({
+      author_id: user.id,
+      department_id: departmentId,
+      type,
+      purchase_type: purchaseType,
+      ...(onBehalfOf ? { on_behalf_of_id: onBehalfOf } : {}),
+    })
+    .select("id")
+    .maybeSingle();
   if (error) redirect(`${PATH}?error=${mapOrgDbError(error, "requests")}`);
 
   revalidatePath(PATH);
+  // Зріз PUR (AC-PUR-01, 04): нова закупівля — одразу сторінка чернетки з номером PUR-N і порожнім рядком.
+  // Інші типи заявок (WS9–WS11) сторінок ще не мають — лишаємось на формі з підтвердженням.
+  if (type === "PUR" && data?.id) redirect(`/requests/${data.id}?saved=created`);
   redirect(`${PATH}?created=1`);
 }

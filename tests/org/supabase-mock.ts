@@ -4,7 +4,7 @@
 // таблиця "rpc:name", операція "rpc", payload — аргументи; відповідь — з results["rpc:name.rpc"] (за замовчуванням true).
 import { vi } from "vitest";
 
-export type MockError = { code?: string; message?: string } | null;
+export type MockError = { code?: string; message?: string; details?: string } | null;
 export type MockResult = { data?: unknown; error?: MockError };
 export type Op = "select" | "insert" | "update" | "upsert" | "delete" | "rpc";
 export type Call = { table: string; op: Op; payload?: unknown; filters: Array<[string, unknown]> };
