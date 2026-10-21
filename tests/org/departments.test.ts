@@ -258,9 +258,9 @@ describe("схвалювачі", () => {
 
   it("у виборі схвалювача — лише активні, які ще не схвалюють відділ", () => {
     const people = [
-      { id: "a", email: "a@example.test", full_name: null, is_active: true },
-      { id: "b", email: "b@example.test", full_name: null, is_active: false },
-      { id: "c", email: "c@example.test", full_name: null, is_active: true },
+      { id: "a", email: "a@example.test", full_name: null, is_active: true, role: "requester" },
+      { id: "b", email: "b@example.test", full_name: null, is_active: false, role: "requester" },
+      { id: "c", email: "c@example.test", full_name: null, is_active: true, role: "requester" },
     ];
     const approvers = [{ department_id: PRIMARY.id, user_id: "c" }];
     expect(approverCandidates(PRIMARY.id, approvers, people).map((p) => p.id)).toEqual(["a"]);
