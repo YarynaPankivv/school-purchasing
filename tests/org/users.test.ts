@@ -44,6 +44,7 @@ const WORKER = "c4e8b7a1-5d23-4a90-b1f6-9e0d3c2a8b15";
 const WORKER_2 = "e2b6d4f8-1a37-4c59-8d02-6f9a0b3c7e14";
 const DRAFT = "9d3f5b21-8c46-4e17-a0b9-4d7e2c1f6a83";
 const OFFICE = "b8a2c6e0-3f14-4d75-9a1c-5e7b0d2f4c69";
+const APPROVER = "5c9e1b34-7d02-4a68-b3f5-0e8a2d6c9f17";
 
 const admin = makeProfile({ id: ADMIN, role: "admin" });
 const worker = makeProfile({ id: WORKER, role: "requester", email: "member1@example.test", full_name: "Андрій" });
@@ -310,15 +311,17 @@ describe("чернетки деактивованого працівника", (
 
 describe("варіанти вибору", () => {
   const people: Person[] = [
-    { id: ADMIN, email: "admin@example.test", full_name: "Адмін", is_active: true },
-    { id: WORKER, email: "member1@example.test", full_name: "Андрій", is_active: true },
-    { id: WORKER_2, email: "member2@example.test", full_name: "Марія", is_active: false },
-    { id: SECOND_ADMIN, email: "colleague@example.test", full_name: "Колега", is_active: true },
+    { id: ADMIN, email: "admin@example.test", full_name: "Адмін", is_active: true, role: "admin" },
+    { id: WORKER, email: "member1@example.test", full_name: "Андрій", is_active: true, role: "requester" },
+    { id: WORKER_2, email: "member2@example.test", full_name: "Марія", is_active: false, role: "requester" },
+    { id: SECOND_ADMIN, email: "colleague@example.test", full_name: "Колега", is_active: true, role: "admin" },
+    { id: APPROVER, email: "approver@example.test", full_name: "Схвалювач", is_active: true, role: "approver" },
   ];
   const members = [
     { department_id: OFFICE, user_id: WORKER },
     { department_id: OFFICE, user_id: WORKER_2 },
     { department_id: OFFICE, user_id: ADMIN },
+    { department_id: OFFICE, user_id: APPROVER },
     { department_id: "other", user_id: SECOND_ADMIN },
   ];
 
@@ -329,12 +332,14 @@ describe("варіанти вибору", () => {
   });
 
   it("AC-ORG-16: деактивованого немає у виборі особи «від імені»; не-admin обирає лише заявників відділу", () => {
-    const forWorker = onBehalfCandidates(OFFICE, members, people, ADMIN, "requester").map((p) => p.id);
-    expect(forWorker).toEqual([WORKER]); // не WORKER_2 (деактивований), не автор, не чужий відділ
+    const forWorker = onBehalfCandidates(OFFICE, members, people, WORKER, "requester").map((p) => p.id);
+    // Не WORKER_2 (деактивований), не автор, не адміністратор ADMIN (AC-PUR-13), не SECOND_ADMIN (чужий відділ);
+    // схвалювач відділу — теж заявник цього відділу, тож його обрати можна.
+    expect(forWorker).toEqual([APPROVER]);
 
     // Admin обирає серед усіх активних, але теж без деактивованих і без себе.
     const forAdmin = onBehalfCandidates(OFFICE, members, people, ADMIN, "admin").map((p) => p.id);
-    expect(forAdmin).toEqual([WORKER, SECOND_ADMIN]);
+    expect(forAdmin).toEqual([WORKER, SECOND_ADMIN, APPROVER]);
     expect(forAdmin).not.toContain(WORKER_2);
   });
 

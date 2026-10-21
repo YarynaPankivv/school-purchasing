@@ -5,7 +5,7 @@ import type { AppRole } from "./roles";
 export type Department = { id: string; name: string };
 export type Membership = { department_id: string; user_id: string; auto_approve: boolean };
 export type Approver = { department_id: string; user_id: string };
-export type Person = { id: string; email: string | null; full_name: string | null; is_active: boolean };
+export type Person = { id: string; email: string | null; full_name: string | null; is_active: boolean; role: string };
 
 export const DEPARTMENT_NAME_MAX = 100;
 
@@ -49,7 +49,8 @@ export function approverCandidates(departmentId: string, approvers: Approver[], 
 }
 
 // AC-ORG-16: варіанти особи «від імені» — лише активні працівники, крім самого автора.
-// Не-admin обирає серед заявників цього відділу, admin — серед усіх активних (матриця прав; private.can_act_on_behalf).
+// Не-admin обирає серед заявників цього відділу, крім адміністраторів (AC-PUR-13; схвалювач теж заявник відділу),
+// admin — серед усіх активних (матриця прав; private.can_act_on_behalf).
 export function onBehalfCandidates(
   departmentId: string,
   memberships: Pick<Membership, "department_id" | "user_id">[],
@@ -58,7 +59,9 @@ export function onBehalfCandidates(
   role: AppRole,
 ): Person[] {
   const members = new Set(memberships.filter((m) => m.department_id === departmentId).map((m) => m.user_id));
-  return people.filter((p) => p.is_active && p.id !== authorId && (role === "admin" || members.has(p.id)));
+  return people.filter(
+    (p) => p.is_active && p.id !== authorId && (role === "admin" || (p.role !== "admin" && members.has(p.id))),
+  );
 }
 
 // AC-ORG-14: відділ без жодного активного схвалювача позначаємо «Немає схвалювача».

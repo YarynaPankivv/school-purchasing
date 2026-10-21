@@ -233,7 +233,9 @@ comment on column public.requests.on_behalf_of_id is
   'Особа, від імені якої автор подає заявку (AC-ORG-16): активний працівник; не-admin — лише заявник того самого відділу.';
 
 -- Чи можна вказати target_user як особу «від імені» у відділі target_department.
--- Порожня особа — завжди так; інакше активний працівник, для не-admin — ще й заявник цього відділу.
+-- Порожня особа — завжди так; інакше активний працівник, для не-admin — ще й заявник цього відділу, але не
+-- адміністратор (вимоги PM, AC-PUR-13: у списку «колеги з відділу, крім нього й адміністраторів»). Схвалювач —
+-- теж заявник відділу (складений FK department_approvers), тож його вибрати можна.
 -- TS-дзеркало: src/lib/org/departments.ts (onBehalfCandidates).
 create or replace function private.can_act_on_behalf(target_user uuid, target_department uuid)
 returns boolean
@@ -251,10 +253,13 @@ as $$
         and p.is_active
         and (
           (select private.current_app_role()) = 'admin'
-          or exists (
-            select 1
-            from public.department_members as m
-            where m.department_id = target_department and m.user_id = p.id
+          or (
+            p.role <> 'admin'
+            and exists (
+              select 1
+              from public.department_members as m
+              where m.department_id = target_department and m.user_id = p.id
+            )
           )
         )
     );
@@ -304,16 +309,26 @@ create policy requests_select
 -- Стан автора перевіряє сама політика в тому ж запиті, що й видалення: перевірка в застосунку перед delete
 -- лишала б вікно, у якому інший адміністратор активує автора й чернетка активного працівника буде видалена.
 -- security definer — щоб політика читала profiles в обхід RLS; аргумент — колонка рядка, тож без обгортки (select …).
+-- plpgsql volatile + for share: кожен виклик читає актуальний стан, а блокування рядка автора до кінця
+-- транзакції видалення змушує паралельну активацію (update profiles) чекати, тож перевірка й видалення серіалізуються.
 create or replace function private.is_inactive_user(target_user uuid)
 returns boolean
-language sql
-stable
+language plpgsql
+volatile
 security definer
 set search_path = ''
 as $$
-  select exists (
-    select 1 from public.profiles as p where p.id = target_user and not p.is_active
-  );
+declare
+  active boolean;
+begin
+  select p.is_active
+    into active
+    from public.profiles as p
+   where p.id = target_user
+     for share;
+
+  return found and not active;
+end;
 $$;
 
 revoke execute on function private.is_inactive_user(uuid) from public, anon;

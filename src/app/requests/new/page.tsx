@@ -19,7 +19,7 @@ export default async function NewRequestPage({ searchParams }: PageProps<"/reque
     supabase.from("departments").select("id, name"),
     supabase.from("department_members").select("department_id, user_id"),
     // RLS: не-admin бачить себе й активних колег зі спільних відділів (profiles_select_colleagues), admin — усіх.
-    supabase.from("profiles").select("id, email, full_name, is_active"),
+    supabase.from("profiles").select("id, email, full_name, is_active, role"),
     loadPermissions(supabase, user.id),
   ]);
   const options = selectableDepartments(departments ?? [], memberships ?? [], user.id, user.role);
