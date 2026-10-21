@@ -65,8 +65,18 @@ export function RequestForm({
       </Field>
 
       {type === purchaseTypeRequestType.value ? (
-        <Field label="Purchase type" hint={`Only for ${purchaseTypeRequestType.label} requests.`}>
-          <select name="purchase_type" required className={inputClass} data-testid="purchase-type-select">
+        <Field
+          label="Purchase type"
+          hint={`Only for ${purchaseTypeRequestType.label} requests.`}
+          hintId="purchase-type-hint"
+        >
+          <select
+            name="purchase_type"
+            required
+            aria-describedby="purchase-type-hint"
+            className={inputClass}
+            data-testid="purchase-type-select"
+          >
             {purchaseTypes.map((p) => (
               <option key={p.value} value={p.value}>
                 {p.label}
@@ -76,12 +86,17 @@ export function RequestForm({
         </Field>
       ) : null}
 
-      <Field label="On behalf of" hint="Optional: choose a colleague if you are submitting the request for them.">
+      <Field
+        label="On behalf of"
+        hint="Optional: choose a colleague if you are submitting the request for them."
+        hintId="on-behalf-hint"
+      >
         <select
           // key: при зміні відділу список варіантів інший — скидаємо вибір на «від свого імені».
           key={departmentId}
           name="on_behalf_of_id"
           defaultValue=""
+          aria-describedby="on-behalf-hint"
           className={inputClass}
           data-testid="on-behalf-select"
         >

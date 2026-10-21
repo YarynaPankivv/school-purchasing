@@ -26,6 +26,9 @@ create policy profiles_update_own
   with check (
     (select private.is_active_user())
     and id = (select auth.uid())
+    -- Захист у глибину поряд із тригером: власним рядком не змінити ні роль, ні активність.
+    and role = (select private.current_app_role())
+    and is_active
   );
 
 -- Адміністратор змінює профілі працівників (роль, активність, ім'я).

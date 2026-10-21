@@ -33,8 +33,18 @@ export default async function DepartmentsPage({ searchParams }: PageProps<"/admi
       <Card title="New department">
         <form action={createDepartment} className="flex flex-wrap items-end gap-3">
           <div className="min-w-60 flex-1">
-            <Field label="Department name" hint={`Up to ${DEPARTMENT_NAME_MAX} characters, no duplicates.`}>
-              <input name="name" required maxLength={DEPARTMENT_NAME_MAX} className={inputClass} />
+            <Field
+              label="Department name"
+              hint={`Up to ${DEPARTMENT_NAME_MAX} characters, no duplicates.`}
+              hintId="department-name-hint"
+            >
+              <input
+                name="name"
+                required
+                maxLength={DEPARTMENT_NAME_MAX}
+                aria-describedby="department-name-hint"
+                className={inputClass}
+              />
             </Field>
           </div>
           <SubmitButton>Create department</SubmitButton>

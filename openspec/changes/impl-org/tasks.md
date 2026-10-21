@@ -62,12 +62,12 @@ Done when: AC-ORG-07, AC-ORG-08, AC-ORG-17
   (`setAdminRole`, `setActive`, `deleteDraft`); `onBehalfCandidates()` і вибір особи «від імені» в `/requests/new`;
   `/admin/users` і `/admin/users/[id]` (роль, активність, чернетки); `mapOrgDbError` для винятку тригера.
   Перевірка: тести 3.3 і `npm run build`
-- [x] 3.3 `tests/org/users.test.ts`: `it("AC-ORG-09: …")`, 10, 12, 13, 16, 18, зокрема тимчасові Q1, Q2 (D10).
+- [x] 3.3 `tests/org/users.test.ts`: `it("AC-ORG-09: …")`, 10, 12, 13, 16, 18, 21, зокрема тимчасові Q1, Q2 (D10).
   Перевірка: `npm test`
 - [ ] 3.4 Рядки AC задачі в `docs/conformance.md` → «реалізовано»; ручний прохід на Preview (деактивація, останній
   адміністратор) — у PR. Перевірка: `npm run ac:coverage`
 
-Done when: AC-ORG-09, AC-ORG-10, AC-ORG-12, AC-ORG-13, AC-ORG-16, AC-ORG-18
+Done when: AC-ORG-09, AC-ORG-10, AC-ORG-12, AC-ORG-13, AC-ORG-16, AC-ORG-18, AC-ORG-21
 
 ## Workflow follow-up
 

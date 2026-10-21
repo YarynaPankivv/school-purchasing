@@ -226,14 +226,31 @@ export function EmptyState({ children, testId }: { children: ReactNode; testId?:
   );
 }
 
-// Підпис + поле форми. hint — пояснення під полем.
-export function Field({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
+// Підпис + поле форми. hint — пояснення під полем: стоїть поза <label>, щоб не потрапляти в доступне ім’я поля;
+// з hint передайте hintId і той самий id в aria-describedby поля.
+export function Field({
+  label,
+  hint,
+  hintId,
+  children,
+}: {
+  label: ReactNode;
+  hint?: ReactNode;
+  hintId?: string;
+  children: ReactNode;
+}) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">
-      {label}
-      {children}
-      {hint ? <span className="text-xs font-normal text-muted">{hint}</span> : null}
-    </label>
+    <div className="flex flex-col gap-1.5">
+      <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">
+        {label}
+        {children}
+      </label>
+      {hint ? (
+        <span id={hintId} className="text-xs font-normal text-muted">
+          {hint}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
