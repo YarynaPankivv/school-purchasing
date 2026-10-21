@@ -7,10 +7,11 @@
 -- з `(select auth.uid())`; кожна — з `(select private.is_active_user())` (D6); хелпери — у private,
 -- security definer, set search_path = ''. Попередні міграції не змінюємо.
 
--- ── D6. Зміна role / is_active: колонковий grant + політики ───────────────────
--- Колонковий grant тепер охоплює role і is_active. Захист від самопідвищення — не відсутність grant,
--- а тригер private.guard_profile_update() нижче: зміну цих колонок пропускає лише активний admin.
-grant update (full_name, role, is_active) on table public.profiles to authenticated;
+-- ── D6. Зміна role / is_active: лише через функції ────────────────────────────
+-- Прямого `grant update (role, is_active)` для authenticated НЕМАЄ (AGENTS.md → «База даних»): `authenticated`
+-- змінює в profiles лише full_name (grant із стартової міграції), а role і is_active адміністратор змінює функціями
+-- public.admin_set_role / public.admin_set_active нижче. Тригер private.guard_profile_update() лишається
+-- охоронцем інваріантів (єдиний активний admin, похідна роль) для будь-якого шляху запису.
 
 -- «Оновлюю свій рядок» теж вимагає активного користувача (D6: живий JWT деактивованого не дає запису).
 drop policy profiles_update_own on public.profiles;
@@ -29,20 +30,6 @@ create policy profiles_update_own
     -- Захист у глибину поряд із тригером: власним рядком не змінити ні роль, ні активність.
     and role = (select private.current_app_role())
     and is_active
-  );
-
--- Адміністратор змінює профілі працівників (роль, активність, ім'я).
-create policy profiles_update_admin
-  on public.profiles
-  for update
-  to authenticated
-  using (
-    (select private.is_active_user())
-    and (select private.current_app_role()) = 'admin'
-  )
-  with check (
-    (select private.is_active_user())
-    and (select private.current_app_role()) = 'admin'
   );
 
 -- ── D6. Тригер-охоронець role / is_active ─────────────────────────────────────
@@ -118,6 +105,90 @@ revoke execute on function private.guard_profile_update() from public, anon, aut
 create trigger profiles_guard_update
   before update of role, is_active on public.profiles
   for each row execute function private.guard_profile_update();
+
+-- ── D6. Зміна ролі admin й активності: функції для адміністратора ─────────────
+-- Єдиний шлях змінити role / is_active із застосунку (прямого grant немає). Логіка — у private (security definer,
+-- set search_path = ''), у public — тонка обгортка security invoker для supabase.rpc(…): Data API бачить лише public.
+-- Функція перевіряє, що викликає активний admin (42501), і повертає true, якщо профіль знайдено. Решту інваріантів
+-- (єдиний активний admin — ORG01, похідна роль) тримає тригер вище, тож AC-ORG-10, 18, 21 діють для будь-якого шляху.
+-- Знімаючи admin, ставимо похідну роль одразу, а не 'requester': для схвалювача інакше тригер відхилив би зміну.
+create or replace function private.admin_set_role(target_user uuid, make_admin boolean)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  changed integer;
+begin
+  if not (
+    (select private.is_active_user())
+    and (select private.current_app_role()) = 'admin'
+  ) then
+    raise exception 'Insufficient permissions' using errcode = '42501';
+  end if;
+
+  update public.profiles as p
+  set role = case
+    when make_admin then 'admin'
+    when exists (select 1 from public.department_approvers as a where a.user_id = p.id) then 'approver'
+    else 'requester'
+  end
+  where p.id = target_user;
+  get diagnostics changed = row_count;
+  return changed > 0;
+end;
+$$;
+
+create or replace function private.admin_set_active(target_user uuid, make_active boolean)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  changed integer;
+begin
+  if not (
+    (select private.is_active_user())
+    and (select private.current_app_role()) = 'admin'
+  ) then
+    raise exception 'Insufficient permissions' using errcode = '42501';
+  end if;
+
+  update public.profiles as p set is_active = make_active where p.id = target_user;
+  get diagnostics changed = row_count;
+  return changed > 0;
+end;
+$$;
+
+revoke execute on function private.admin_set_role(uuid, boolean) from public, anon;
+revoke execute on function private.admin_set_active(uuid, boolean) from public, anon;
+grant execute on function private.admin_set_role(uuid, boolean) to authenticated;
+grant execute on function private.admin_set_active(uuid, boolean) to authenticated;
+
+create or replace function public.admin_set_role(target_user uuid, make_admin boolean)
+returns boolean
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.admin_set_role(target_user, make_admin);
+$$;
+
+create or replace function public.admin_set_active(target_user uuid, make_active boolean)
+returns boolean
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.admin_set_active(target_user, make_active);
+$$;
+
+revoke execute on function public.admin_set_role(uuid, boolean) from public, anon;
+revoke execute on function public.admin_set_active(uuid, boolean) from public, anon;
+grant execute on function public.admin_set_role(uuid, boolean) to authenticated;
+grant execute on function public.admin_set_active(uuid, boolean) to authenticated;
 
 -- ── D7. Колеги зі спільного відділу ───────────────────────────────────────────
 -- Чи є поточний користувач і target_user заявниками одного відділу. security definer — щоб не зациклити RLS (42P17).

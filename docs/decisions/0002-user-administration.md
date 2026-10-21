@@ -13,10 +13,15 @@
 
 ## Рішення
 
+- **Прямого `grant update (role, is_active)` для `authenticated` немає** (правило AGENTS.md; зауваження CodeRabbit):
+  `authenticated` змінює в `profiles` лише `full_name`. Адміністратор змінює `role` і `is_active` функціями
+  `public.admin_set_role` / `public.admin_set_active` (`security invoker`, `supabase.rpc`), які викликають
+  `private.admin_set_role` / `private.admin_set_active` (`security definer`): вони перевіряють, що викликає активний
+  admin (42501), і повертають `true`, якщо профіль знайдено. Політики `profiles_update_admin` немає.
 - **Охоронець `private.guard_profile_update()`** (`before update of role, is_active on profiles`, міграція
-  `20261021120000_org_users.sql`). Колонковий `grant update (full_name, role, is_active)` разом із політикою «оновлюю
-  свій рядок» дав би працівнику підвищити себе, тож змінювати `role`/`is_active` у сеансі `authenticated` може лише
-  активний admin (42501); `service_role` і міграції (`auth.uid() is null`) — без цієї перевірки.
+  `20261021120000_org_users.sql`) лишається другою лінією для будь-якого шляху запису: у сеансі `authenticated` зміну
+  `role`/`is_active` пропускає лише активний admin (42501); `service_role` і міграції (`auth.uid() is null`) — без
+  цієї перевірки.
 - **Єдиний активний admin** (AC-ORG-10, 18): після зміни має лишитись інший активний admin, інакше виняток із текстом
   PM і власним SQLSTATE `ORG01`; застосунок розпізнає його за кодом (`mapOrgDbError` → `last_admin`). Дві одночасні
   зміни серіалізує `pg_advisory_xact_lock`, а не `select … for update`: блокування рядків двох адміністраторів, що

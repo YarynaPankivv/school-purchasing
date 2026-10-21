@@ -53,7 +53,7 @@ Done when: AC-ORG-07, AC-ORG-08, AC-ORG-17
 
 ## 3. Доступ лише для admin, захист єдиного адміністратора, деактивація й чернетки (`task/org-users`)
 
-- [x] 3.1 Міграція `org_users`: `grant update (full_name, role, is_active)`, політика `profiles_update_admin`, тригер
+- [x] 3.1 Міграція `org_users`: функції `public.admin_set_role` / `public.admin_set_active` (без прямого grant на `role`/`is_active`), тригер
   `private.guard_profile_update()` (не-`admin` не змінює `role`/`is_active`; «Має лишитись хоча б один активний
   адміністратор»; похідна роль після зняття `admin`), `profiles_select_colleagues` (активні і читач, і профіль-ціль — D7), `requests.on_behalf_of_id` з
   перевіркою в `requests_insert`, `requests_delete` лише для чернеток (D5, D6, D7, тимчасово Q1, Q2). Перевірка:

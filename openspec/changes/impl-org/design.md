@@ -101,7 +101,7 @@ vendor_invoice, self_purchase boolean not null default false)`. Окрема т�
 чернетками — матриця прав);
 `delete` — лише `admin` і лише `status = 'draft'` (AC-ORG-13: подані заявки не видаляються); `update` — немає (WS7).
 
-### D6. Деактивація й захист єдиного адміністратора (AC-ORG-09, 10, 12, 18; Q2)
+### D6. Деактивація й захист єдиного адміністратора (AC-ORG-09, 10, 12, 18, 21; Q2)
 
 - `profiles.is_active boolean not null default true` (у міграції задачі 1, бо AC-ORG-14 рахує лише активних
   схвалювачів); хелпер `private.is_active_user()` (`security definer`). **Кожна** політика нових таблиць і `requests` —
@@ -115,8 +115,9 @@ vendor_invoice, self_purchase boolean not null default false)`. Окрема т�
   `redirect("/login?error=invalid")` — той самий текст, що й для невірного пароля (PM тексту не задав; не розкриваємо
   стан облікового запису). Те саме робить `requireActiveUser()` у `src/lib/auth/session.ts` для кожної сторінки й
   action. Бан через Admin API — ні: потребує секретного ключа у Vercel.
-- Зміна `role`/`is_active` адміністратором: `grant update (full_name, role, is_active)` + політика
-  `profiles_update_admin`; тригер `private.guard_profile_update()` (`before update of role, is_active`):
+- Зміна `role`/`is_active` адміністратором — лише функціями `public.admin_set_role` / `public.admin_set_active`
+  (`security invoker` → `private.*` `security definer`; прямого `grant update (role, is_active)` для `authenticated`
+  немає, правило AGENTS.md); тригер `private.guard_profile_update()` (`before update of role, is_active`):
   - для сеансу `authenticated` не-`admin` зміни `role`/`is_active` — виняток (інакше «оновлюю свій рядок» дав би
     підвищити собі роль);
   - якщо після зміни не лишиться жодного активного `admin` — виняток із повідомленням «Має лишитись хоча б один
@@ -146,7 +147,7 @@ vendor_invoice, self_purchase boolean not null default false)`. Окрема т�
 |---|---|---|
 | `/admin/departments` | список, створення відділу, позначка «Немає схвалювача» | 09, 14 |
 | `/admin/departments/[id]` | заявники (додати / прибрати), автосхвалення, схвалювачі (призначити / зняти) | 01–06, 15, 16 |
-| `/admin/users`, `/admin/users/[id]` | роль `admin`, активність, дозволи, чернетки деактивованого | 07, 08, 10, 12, 13, 17, 18 |
+| `/admin/users`, `/admin/users/[id]` | роль `admin`, активність, дозволи, чернетки деактивованого | 07, 08, 10, 12, 13, 17, 18, 21 |
 | `/requests/new` | чернетка заявки: відділ, тип, тип закупівлі, особа «від імені» | 01, 07, 08, 16, 17 |
 | `/profile` | власний профіль лише для читання (відділи, дозволи) — з «Користувачі й ролі» PM, без AC | — |
 

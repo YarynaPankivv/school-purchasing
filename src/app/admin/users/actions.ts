@@ -53,8 +53,9 @@ export async function setPermissions(formData: FormData) {
   done(path, "1");
 }
 
-// AC-ORG-10, AC-ORG-18, AC-ORG-21: зміна ролі admin. Знімаємо роль → тригер ставить похідну (requester/approver)
-// і не дає лишити систему без активного адміністратора (ORG01 → «Має лишитись хоча б один активний адміністратор»).
+// AC-ORG-10, AC-ORG-18, AC-ORG-21: зміна ролі admin через public.admin_set_role (прямого grant на role немає).
+// Знімаємо роль → функція ставить похідну (requester/approver), а тригер не дає лишити систему без активного
+// адміністратора (ORG01 → «At least one active administrator must remain»).
 export async function setAdminRole(formData: FormData) {
   const userId = field(formData, "user_id");
   const path = isUuid(userId) ? userPath(userId) : LIST_PATH;
@@ -62,19 +63,15 @@ export async function setAdminRole(formData: FormData) {
   if (!isUuid(userId)) fail(LIST_PATH, "not_found");
 
   const makeAdmin = field(formData, "make_admin") === "1";
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ role: makeAdmin ? "admin" : "requester" })
-    .eq("id", userId)
-    .select("id");
+  const { data: found, error } = await supabase.rpc("admin_set_role", { target_user: userId, make_admin: makeAdmin });
   if (error) fail(path, mapOrgDbError(error, "profiles"));
-  if (!data?.length) fail(path, "not_found");
+  if (!found) fail(path, "not_found");
 
   done(path, makeAdmin ? "admin_on" : "admin_off");
 }
 
 // AC-ORG-12: деактивований не входить (login() і requireActiveUser()); AC-ORG-18: єдиний активний адміністратор
-// не деактивує себе (ORG01). Подані заявки й чернетки лишаються, доки адміністратор не видалить чернетку.
+// не деактивує себе (ORG01). Зміна — через public.admin_set_active (прямого grant на is_active немає). Подані заявки й чернетки лишаються, доки адміністратор не видалить чернетку.
 export async function setActive(formData: FormData) {
   const userId = field(formData, "user_id");
   const path = isUuid(userId) ? userPath(userId) : LIST_PATH;
@@ -82,9 +79,9 @@ export async function setActive(formData: FormData) {
   if (!isUuid(userId)) fail(LIST_PATH, "not_found");
 
   const isActive = field(formData, "active") === "1";
-  const { data, error } = await supabase.from("profiles").update({ is_active: isActive }).eq("id", userId).select("id");
+  const { data: found, error } = await supabase.rpc("admin_set_active", { target_user: userId, make_active: isActive });
   if (error) fail(path, mapOrgDbError(error, "profiles"));
-  if (!data?.length) fail(path, "not_found");
+  if (!found) fail(path, "not_found");
 
   done(path, isActive ? "activated" : "deactivated");
 }

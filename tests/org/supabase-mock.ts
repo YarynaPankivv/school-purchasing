@@ -1,11 +1,12 @@
 // Мок клієнта Supabase і next/navigation для тестів server actions (design.md D9).
 // Не тест: Vitest запускає лише *.test.ts. Записує кожен запит (таблиця, операція, payload, фільтри),
-// а відповідь бере з results за ключем "<таблиця>.<операція>".
+// а відповідь бере з results за ключем "<таблиця>.<операція>". Виклик rpc("name", args) записується як
+// таблиця "rpc:name", операція "rpc", payload — аргументи; відповідь — з results["rpc:name.rpc"] (за замовчуванням true).
 import { vi } from "vitest";
 
 export type MockError = { code?: string; message?: string } | null;
 export type MockResult = { data?: unknown; error?: MockError };
-export type Op = "select" | "insert" | "update" | "upsert" | "delete";
+export type Op = "select" | "insert" | "update" | "upsert" | "delete" | "rpc";
 export type Call = { table: string; op: Op; payload?: unknown; filters: Array<[string, unknown]> };
 
 export type MockProfile = {
@@ -76,6 +77,18 @@ export function createSupabaseMock(options: {
     return builder;
   }
 
+  function rpc(name: string, args: unknown) {
+    const call: Call = { table: `rpc:${name}`, op: "rpc", payload: args, filters: [] };
+    return {
+      then<T>(resolve: (value: { data: unknown; error: MockError }) => T, reject?: (reason: unknown) => T) {
+        calls.push(call);
+        const configured = results[`rpc:${name}.rpc`];
+        const result = { data: configured?.data ?? (configured?.error ? null : true), error: configured?.error ?? null };
+        return Promise.resolve(result).then(resolve, reject);
+      },
+    };
+  }
+
   const client = {
     auth: {
       getClaims: vi.fn(async () => ({ data: profile ? { claims: { sub: profile.id } } : null, error: null })),
@@ -83,6 +96,7 @@ export function createSupabaseMock(options: {
       signInWithPassword,
     },
     from,
+    rpc,
   };
 
   return { client, calls, signOut, signInWithPassword };

@@ -217,7 +217,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      admin_set_active: {
+        Args: { target_user: string; make_active: boolean };
+        Returns: boolean;
+      };
+      admin_set_role: {
+        Args: { target_user: string; make_admin: boolean };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;

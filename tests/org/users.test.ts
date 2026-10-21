@@ -114,14 +114,14 @@ describe("єдиний активний адміністратор", () => {
     const mock = useSupabase(
       createSupabaseMock({
         profile: admin,
-        results: { "profiles.update": { error: { code: "ORG01", message: ORG_ERROR_MESSAGES.last_admin } } },
+        results: { "rpc:admin_set_role.rpc": { error: { code: "ORG01", message: ORG_ERROR_MESSAGES.last_admin } } },
       }),
     );
     const { setAdminRole } = await userActions();
     const url = await redirectedTo(() => setAdminRole(form({ user_id: ADMIN, make_admin: "0" })));
     expect(url).toBe(`/admin/users/${ADMIN}?error=last_admin`);
     expect(orgErrorMessage("last_admin")).toBe("At least one active administrator must remain");
-    expect(mock.calls.find((c) => c.op === "update")?.payload).toEqual({ role: "requester" });
+    expect(mock.calls.find((c) => c.table === "rpc:admin_set_role")?.payload).toEqual({ target_user: ADMIN, make_admin: false });
   });
 
   it("AC-ORG-18: єдиний активний адміністратор не деактивує себе — правило, дія й текст PM", async () => {
@@ -132,13 +132,16 @@ describe("єдиний активний адміністратор", () => {
     const mock = useSupabase(
       createSupabaseMock({
         profile: admin,
-        results: { "profiles.update": { error: { code: "ORG01", message: ORG_ERROR_MESSAGES.last_admin } } },
+        results: { "rpc:admin_set_active.rpc": { error: { code: "ORG01", message: ORG_ERROR_MESSAGES.last_admin } } },
       }),
     );
     const { setActive } = await userActions();
     const url = await redirectedTo(() => setActive(form({ user_id: ADMIN, active: "0" })));
     expect(url).toBe(`/admin/users/${ADMIN}?error=last_admin`);
-    expect(mock.calls.find((c) => c.op === "update")?.payload).toEqual({ is_active: false });
+    expect(mock.calls.find((c) => c.table === "rpc:admin_set_active")?.payload).toEqual({
+      target_user: ADMIN,
+      make_active: false,
+    });
   });
 
   it("AC-ORG-10, AC-ORG-18: повідомлення тригера впізнається й без коду помилки", () => {
@@ -154,15 +157,16 @@ describe("єдиний активний адміністратор", () => {
     const afterFirst = staff([ADMIN, "requester", true], [SECOND_ADMIN, "admin", true]);
     expect(wouldLeaveNoActiveAdmin(afterFirst, SECOND_ADMIN, { makeAdmin: false })).toBe(true);
 
-    const mock = useSupabase(createSupabaseMock({ profile: admin, results: { "profiles.update": { data: [{ id: ADMIN }] } } }));
+    const mock = useSupabase(createSupabaseMock({ profile: admin }));
     const { setAdminRole } = await userActions();
     const url = await redirectedTo(() => setAdminRole(form({ user_id: ADMIN, make_admin: "0" })));
     expect(url).toBe(`/admin/users/${ADMIN}?saved=admin_off`);
 
-    // Змінюємо лише власний рядок: другий адміністратор не чіпається.
-    const updates = mock.calls.filter((c) => c.op === "update");
-    expect(updates).toHaveLength(1);
-    expect(updates[0]?.filters).toEqual([["id", ADMIN]]);
+    // Одна функція й лише для власного id: другий адміністратор не чіпається, прямого update profiles немає.
+    const calls = mock.calls.filter((c) => c.op === "rpc");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({ table: "rpc:admin_set_role", payload: { target_user: ADMIN, make_admin: false } });
+    expect(mock.calls.some((c) => c.table === "profiles" && c.op === "update")).toBe(false);
   });
 
   it("зняття ролі admin дає похідну роль від схвалення відділів (D3, D6)", () => {
@@ -171,16 +175,19 @@ describe("єдиний активний адміністратор", () => {
     expect(deriveRole("admin", 0)).toBe("admin");
   });
 
-  it("призначення адміністратором надсилає role = admin; невідомий працівник — «не знайдено»", async () => {
-    const mock = useSupabase(createSupabaseMock({ profile: admin, results: { "profiles.update": { data: [{ id: WORKER }] } } }));
+  it("призначення адміністратором викликає admin_set_role(make_admin = true); невідомий працівник — «не знайдено»", async () => {
+    const mock = useSupabase(createSupabaseMock({ profile: admin }));
     const { setAdminRole } = await userActions();
     expect(await redirectedTo(() => setAdminRole(form({ user_id: WORKER, make_admin: "1" })))).toBe(
       `/admin/users/${WORKER}?saved=admin_on`,
     );
-    expect(mock.calls.find((c) => c.op === "update")?.payload).toEqual({ role: "admin" });
+    expect(mock.calls.find((c) => c.table === "rpc:admin_set_role")?.payload).toEqual({
+      target_user: WORKER,
+      make_admin: true,
+    });
 
-    // RLS мовчки відфільтрувала рядок (0 змінених) — це не успіх.
-    useSupabase(createSupabaseMock({ profile: admin, results: { "profiles.update": { data: [] } } }));
+    // Функція не знайшла профіль (false) — це не успіх.
+    useSupabase(createSupabaseMock({ profile: admin, results: { "rpc:admin_set_role.rpc": { data: false } } }));
     expect(await redirectedTo(() => setAdminRole(form({ user_id: WORKER, make_admin: "1" })))).toBe(
       `/admin/users/${WORKER}?error=not_found`,
     );
@@ -222,8 +229,8 @@ describe("деактивація", () => {
     expect(mock.signOut).toHaveBeenCalledTimes(1);
   });
 
-  it("AC-ORG-12: адміністратор деактивує працівника — is_active = false, активує — true", async () => {
-    const mock = useSupabase(createSupabaseMock({ profile: admin, results: { "profiles.update": { data: [{ id: WORKER }] } } }));
+  it("AC-ORG-12: адміністратор деактивує працівника — admin_set_active(false), активує — (true)", async () => {
+    const mock = useSupabase(createSupabaseMock({ profile: admin }));
     const { setActive } = await userActions();
 
     expect(await redirectedTo(() => setActive(form({ user_id: WORKER, active: "0" })))).toBe(
@@ -232,9 +239,9 @@ describe("деактивація", () => {
     expect(await redirectedTo(() => setActive(form({ user_id: WORKER, active: "1" })))).toBe(
       `/admin/users/${WORKER}?saved=activated`,
     );
-    expect(mock.calls.filter((c) => c.op === "update").map((c) => c.payload)).toEqual([
-      { is_active: false },
-      { is_active: true },
+    expect(mock.calls.filter((c) => c.table === "rpc:admin_set_active").map((c) => c.payload)).toEqual([
+      { target_user: WORKER, make_active: false },
+      { target_user: WORKER, make_active: true },
     ]);
   });
 });
