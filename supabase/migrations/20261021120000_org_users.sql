@@ -234,7 +234,7 @@ comment on column public.requests.on_behalf_of_id is
 
 -- Чи можна вказати target_user як особу «від імені» у відділі target_department.
 -- Порожня особа — завжди так; інакше активний працівник, для не-admin — ще й заявник цього відділу, але не
--- адміністратор (вимоги PM, AC-PUR-13: у списку «колеги з відділу, крім нього й адміністраторів»). Схвалювач —
+-- адміністратор і не сам автор (вимоги PM, AC-PUR-13: у списку «колеги з відділу, крім нього й адміністраторів»). Схвалювач —
 -- теж заявник відділу (складений FK department_approvers), тож його вибрати можна.
 -- TS-дзеркало: src/lib/org/departments.ts (onBehalfCandidates).
 create or replace function private.can_act_on_behalf(target_user uuid, target_department uuid)
@@ -255,6 +255,7 @@ as $$
           (select private.current_app_role()) = 'admin'
           or (
             p.role <> 'admin'
+            and p.id <> (select auth.uid())
             and exists (
               select 1
               from public.department_members as m
