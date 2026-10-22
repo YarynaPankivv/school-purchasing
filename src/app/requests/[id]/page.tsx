@@ -302,9 +302,7 @@ export default async function RequestPage({ params, searchParams }: PageProps<"/
                           <SubmitButton
                             variant="danger-ghost"
                             className="px-3 py-1.5"
-                            formAction={removeLine}
-                            name="line_id_to_remove"
-                            value={line.id}
+                            formAction={removeLine.bind(null, line.id)}
                             formNoValidate
                           >
                             Remove
@@ -323,7 +321,7 @@ export default async function RequestPage({ params, searchParams }: PageProps<"/
 
           <div className="flex flex-wrap items-center gap-3">
             {request.editing ? (
-              <SubmitButton formAction={setEditing} name="editing" value="0" testId="save-changes">
+              <SubmitButton formAction={setEditing.bind(null, false)} testId="save-changes">
                 Save changes
               </SubmitButton>
             ) : (
@@ -413,13 +411,13 @@ export default async function RequestPage({ params, searchParams }: PageProps<"/
               <textarea name="reason" rows={3} aria-describedby="reason-hint" className={inputClass} />
             </Field>
             <div className="flex flex-wrap gap-3">
-              <SubmitButton formAction={decidePurchase} name="decision" value="approve" formNoValidate testId="approve">
+              <SubmitButton formAction={decidePurchase.bind(null, "approve")} formNoValidate testId="approve">
                 Approve
               </SubmitButton>
-              <SubmitButton variant="secondary" formAction={decidePurchase} name="decision" value="return" formNoValidate testId="return">
+              <SubmitButton variant="secondary" formAction={decidePurchase.bind(null, "return")} formNoValidate testId="return">
                 Return to author
               </SubmitButton>
-              <SubmitButton variant="danger" formAction={decidePurchase} name="decision" value="reject" formNoValidate testId="reject">
+              <SubmitButton variant="danger" formAction={decidePurchase.bind(null, "reject")} formNoValidate testId="reject">
                 Reject
               </SubmitButton>
             </div>
@@ -458,8 +456,7 @@ export default async function RequestPage({ params, searchParams }: PageProps<"/
             {canSetEditing(request, actor) && !request.editing ? (
               <form>
                 <input type="hidden" name="id" value={request.id} />
-                <input type="hidden" name="editing" value="1" />
-                <SubmitButton variant="secondary" formAction={setEditing} testId="edit-request">
+                <SubmitButton variant="secondary" formAction={setEditing.bind(null, true)} testId="edit-request">
                   Edit request
                 </SubmitButton>
               </form>

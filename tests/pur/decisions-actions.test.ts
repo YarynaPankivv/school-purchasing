@@ -56,6 +56,15 @@ function mockRpc(profile: ReturnType<typeof makeProfile>, name: RpcName, result:
 
 const call = (mock: ReturnType<typeof createSupabaseMock>, name: RpcName) => mock.calls.find((c) => c.table === `rpc:${name}`);
 
+// Рішення приходить першим аргументом action (його задає bind() на кнопці сторінки), а не полем форми:
+// кнопка з функцією в formAction не додає своє name/value до FormData.
+async function decide(data: FormData) {
+  const { decidePurchase } = await purActions();
+  const decision = String(data.get("decision") ?? "");
+  data.delete("decision");
+  return decidePurchase(decision, data);
+}
+
 beforeEach(() => {
   createClient.mockReset();
 });
@@ -63,8 +72,7 @@ beforeEach(() => {
 describe("рішення схвалювача", () => {
   it("AC-PUR-17: схвалення — decide_purchase(approve), перехід до статусу «Схвалено»", async () => {
     const mock = mockRpc(approver, "decide_purchase", { data: "approved" });
-    const { decidePurchase } = await purActions();
-    expect(await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "approve"]])))).toBe(
+    expect(await redirectedTo(() => decide(form([["id", REQ], ["decision", "approve"]])))).toBe(
       `${path}?saved=decided_approved`,
     );
     expect(call(mock, "decide_purchase")?.payload).toEqual({
@@ -77,9 +85,8 @@ describe("рішення схвалювача", () => {
 
   it("AC-PUR-18: схвалення з відхиленими рядками — id рядків іде у функцію, статус «Частково схвалено»", async () => {
     const mock = mockRpc(approver, "decide_purchase", { data: "partially_approved" });
-    const { decidePurchase } = await purActions();
     const url = await redirectedTo(() =>
-      decidePurchase(
+      decide(
         form([
           ["id", REQ],
           ["decision", "approve"],
@@ -93,9 +100,8 @@ describe("рішення схвалювача", () => {
 
   it("AC-PUR-19: усі рядки відхилено — схвалити не можна, помилка бази стає повідомленням", async () => {
     mockRpc(approver, "decide_purchase", { error: { code: "P0001", message: "pur:all_lines_rejected" } });
-    const { decidePurchase } = await purActions();
     const url = await redirectedTo(() =>
-      decidePurchase(
+      decide(
         form([
           ["id", REQ],
           ["decision", "approve"],
@@ -109,70 +115,62 @@ describe("рішення схвалювача", () => {
 
   it("AC-PUR-20: відхилення без причини не приймається — pur:reason_required", async () => {
     mockRpc(approver, "decide_purchase", { error: { code: "P0001", message: "pur:reason_required" } });
-    const { decidePurchase } = await purActions();
-    expect(await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "reject"], ["reason", "  "]])))).toBe(
+    expect(await redirectedTo(() => decide(form([["id", REQ], ["decision", "reject"], ["reason", "  "]])))).toBe(
       `${path}?error=reason_required`,
     );
   });
 
   it("AC-PUR-51: повернення на доопрацювання без причини не приймається — pur:reason_required", async () => {
     mockRpc(approver, "decide_purchase", { error: { code: "P0001", message: "pur:reason_required" } });
-    const { decidePurchase } = await purActions();
-    expect(await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "return"]])))).toBe(
+    expect(await redirectedTo(() => decide(form([["id", REQ], ["decision", "return"]])))).toBe(
       `${path}?error=reason_required`,
     );
   });
 
   it("AC-PUR-21: відхилення з причиною — причина (обрізана) іде у функцію, статус «Відхилено»", async () => {
     const mock = mockRpc(approver, "decide_purchase", { data: "rejected" });
-    const { decidePurchase } = await purActions();
     expect(
-      await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "reject"], ["reason", "  Over budget  "]]))),
+      await redirectedTo(() => decide(form([["id", REQ], ["decision", "reject"], ["reason", "  Over budget  "]]))),
     ).toBe(`${path}?saved=decided_rejected`);
     expect(call(mock, "decide_purchase")?.payload).toMatchObject({ decision: "reject", reason_text: "Over budget" });
   });
 
   it("AC-PUR-22: повернення на доопрацювання з причиною — статус «Повернено на доопрацювання»", async () => {
     const mock = mockRpc(approver, "decide_purchase", { data: "returned" });
-    const { decidePurchase } = await purActions();
     expect(
-      await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "return"], ["reason", "Add quotes"]]))),
+      await redirectedTo(() => decide(form([["id", REQ], ["decision", "return"], ["reason", "Add quotes"]]))),
     ).toBe(`${path}?saved=decided_returned`);
     expect(call(mock, "decide_purchase")?.payload).toMatchObject({ decision: "return", reason_text: "Add quotes" });
   });
 
   it("AC-PUR-24: автор чи особа «від імені» не вирішують власну заявку — pur:own_request", async () => {
     mockRpc(approver, "decide_purchase", { error: { code: "P0001", message: "pur:own_request" } });
-    const { decidePurchase } = await purActions();
-    expect(await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "approve"]])))).toBe(
+    expect(await redirectedTo(() => decide(form([["id", REQ], ["decision", "approve"]])))).toBe(
       `${path}?error=own_request`,
     );
   });
 
   it("AC-PUR-25: друге одночасне рішення не застосовано — pur:already_decided", async () => {
     mockRpc(approver, "decide_purchase", { error: { code: "P0001", message: "pur:already_decided" } });
-    const { decidePurchase } = await purActions();
-    expect(await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "approve"]])))).toBe(
+    expect(await redirectedTo(() => decide(form([["id", REQ], ["decision", "approve"]])))).toBe(
       `${path}?error=already_decided`,
     );
   });
 
   it("AC-PUR-26: схвалення заблоковано, поки автор редагує — pur:author_editing", async () => {
     mockRpc(approver, "decide_purchase", { error: { code: "P0001", message: "pur:author_editing" } });
-    const { decidePurchase } = await purActions();
-    expect(await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "approve"]])))).toBe(
+    expect(await redirectedTo(() => decide(form([["id", REQ], ["decision", "approve"]])))).toBe(
       `${path}?error=author_editing`,
     );
   });
 
   it("невідома дія й не-UUID рядка відхиляються до запиту", async () => {
     const mock = mockRpc(approver, "decide_purchase", { data: "approved" });
-    const { decidePurchase } = await purActions();
-    expect(await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "delete"]])))).toBe(
+    expect(await redirectedTo(() => decide(form([["id", REQ], ["decision", "delete"]])))).toBe(
       `${path}?error=invalid_input`,
     );
     expect(
-      await redirectedTo(() => decidePurchase(form([["id", REQ], ["decision", "approve"], ["rejected_line_id", "x"]]))),
+      await redirectedTo(() => decide(form([["id", REQ], ["decision", "approve"], ["rejected_line_id", "x"]]))),
     ).toBe(`${path}?error=invalid_input`);
     expect(call(mock, "decide_purchase")).toBeUndefined();
   });

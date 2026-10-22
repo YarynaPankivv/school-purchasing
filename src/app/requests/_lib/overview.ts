@@ -55,7 +55,8 @@ export async function loadOverview(supabase: Supabase, user: CurrentUser): Promi
     request,
     // Відхилені рядки в суму не входять (AC-PUR-42): далі йдуть лише схвалені.
     total: requestTotal(forwardedLines(linesByRequest.get(request.id) ?? [])),
-    departmentName: request.department_id ? (departmentNames.get(request.department_id) ?? null) : null,
+    // Відділ є, але автор його не бачить (RLS віддає відділи лише заявникам) — «—», а не «ще без відділу».
+    departmentName: request.department_id ? (departmentNames.get(request.department_id) ?? "—") : null,
     authorName: names.get(request.author_id) ?? "—",
   });
 

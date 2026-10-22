@@ -192,12 +192,7 @@ describe("створення й збереження чернетки", () => {
 
     expect(
       await redirectedTo(() =>
-        removeLine(
-          form([
-            ["id", REQ],
-            ["line_id_to_remove", LINE_2],
-          ]),
-        ),
+        removeLine(LINE_2, form([["id", REQ]])),
       ),
     ).toBe(`${path}?saved=line_removed`);
     expect(mock.calls.find((c) => c.table === "request_lines" && c.op === "delete")?.filters).toEqual([
@@ -330,7 +325,10 @@ describe("скасування, копія й редагування подан�
       }),
     );
     const actions = await purActions();
-    const url = await redirectedTo(() => actions[fn](form([["id", REQ], ...extra])));
+    // makeEditing приходить першим аргументом (bind() на кнопці), решта дій беруть лише поля форми.
+    const editing = extra.find(([key]) => key === "editing")?.[1] === "1";
+    const fields = form([["id", REQ], ...extra.filter(([key]) => key !== "editing")]);
+    const url = await redirectedTo(() => (fn === "setEditing" ? actions.setEditing(editing, fields) : actions[fn](fields)));
     return { url, mock };
   };
 
