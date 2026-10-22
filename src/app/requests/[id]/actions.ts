@@ -149,9 +149,9 @@ export async function addLine(formData: FormData) {
   done(path, "line_added");
 }
 
-export async function removeLine(formData: FormData) {
+// lineId приходить через bind() (кнопка з функцією в formAction не передає свого name/value у FormData).
+export async function removeLine(lineId: string, formData: FormData) {
   const { ctx, path, id } = await authorRequest(formData);
-  const lineId = field(formData, "line_id_to_remove");
   if (!isUuid(lineId)) fail(path, "invalid_input");
   const { error } = await ctx.supabase.from("request_lines").delete().eq("id", lineId).eq("request_id", id);
   if (error) failDb(path, error);
@@ -168,9 +168,12 @@ export async function submitPurchase(formData: FormData) {
 }
 
 // AC-PUR-26: автор відкриває подану заявку на редагування (рішення блокуються) і зберігає зміни.
-export async function setEditing(formData: FormData) {
+// makeEditing приходить через bind(): true — відкрити на редагування, false — зберегти зміни й завершити.
+// Server action публічна, а TypeScript у рантаймі нічого не перевіряє: приймаємо лише boolean (інакше `!makeEditing`
+// пропустило б збереження, а rpc отримав би не boolean).
+export async function setEditing(makeEditing: unknown, formData: FormData) {
   const { ctx, request, path, id } = await authorRequest(formData);
-  const makeEditing = field(formData, "editing") === "1";
+  if (typeof makeEditing !== "boolean") fail(path, "invalid_input");
   if (!makeEditing) await persist(ctx, request, path, formData);
   const { error } = await ctx.supabase.rpc("set_purchase_editing", { target_request: id, make_editing: makeEditing });
   if (error) failDb(path, error);
@@ -200,9 +203,9 @@ export async function copyPurchase(formData: FormData) {
 
 // AC-PUR-17…25, 36, 39…43, 51, 52, 54: рішення схвалювача чи відділу закупівель (admin). Права, причину й стан
 // перевіряє функція `decide_purchase`; тут — лише розбір форми.
-export async function decidePurchase(formData: FormData) {
+// decision приходить через bind(): "approve" | "reject" | "return".
+export async function decidePurchase(decision: string, formData: FormData) {
   const { ctx, path, id } = await authorRequest(formData);
-  const decision = field(formData, "decision");
   if (decision !== "approve" && decision !== "reject" && decision !== "return") fail(path, "invalid_input");
   const rejected = formData.getAll("rejected_line_id").map(String);
   if (!rejected.every(isUuid)) fail(path, "invalid_input");

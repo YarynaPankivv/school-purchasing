@@ -1,6 +1,7 @@
 // Smoke-тести сторінок PUR (tasks.md 1.3, 2.2): серверний рендер /requests і /requests/[id] з мок-даними Supabase.
 // Перевіряє, що сторінки не падають і показують правильні дії для ролі й статусу (чернетка, подана, на редагуванні,
 // відхилена, схвалена): TS-правила src/lib/pur/* → кнопки й форми. Логіку прав і переходів перевіряють SQL і тести правил.
+import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSupabaseMock, makeProfile } from "../org/supabase-mock";
@@ -20,6 +21,34 @@ vi.mock("next/navigation", async () => {
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
+
+// Перехоплюємо кнопки сторінки й server actions: перевіряємо не лише HTML, а й те, які аргументи кнопки передають у
+// actions через bind() (кнопка з функцією в formAction не передає свого name/value у FormData).
+type CapturedButton = {
+  children: ReactNode;
+  testId?: string;
+  formAction?: (formData: FormData) => unknown | Promise<unknown>;
+};
+const capturedButtons = vi.hoisted(() => [] as CapturedButton[]);
+const actionSpies = vi.hoisted(() => ({
+  addLine: vi.fn(),
+  adminRejectPurchase: vi.fn(),
+  cancelPurchase: vi.fn(),
+  copyPurchase: vi.fn(),
+  decidePurchase: vi.fn(),
+  removeLine: vi.fn(),
+  reopenPurchase: vi.fn(),
+  saveDraft: vi.fn(),
+  setEditing: vi.fn(),
+  submitPurchase: vi.fn(),
+}));
+vi.mock("@/app/_components/submit-button", () => ({
+  SubmitButton: (props: CapturedButton) => {
+    capturedButtons.push(props);
+    return <button data-testid={props.testId}>{props.children}</button>;
+  },
+}));
+vi.mock("@/app/requests/[id]/actions", () => actionSpies);
 
 const VIEWER = "3f0c2a5e-9b1d-4c7e-8a2f-1b6d5e4c3a21";
 const AUTHOR = "7a1d9c52-04be-4f3a-9d6e-2c8b1f0e5a47";
@@ -101,9 +130,38 @@ const authorMember = [{ department_id: DEP, user_id: AUTHOR, auto_approve: false
 
 beforeEach(() => {
   createClient.mockReset();
+  capturedButtons.length = 0;
+  Object.values(actionSpies).forEach((action) => action.mockClear());
 });
 
 describe("сторінка закупівлі /requests/[id]", () => {
+  it("кнопки передають у actions правильні аргументи через bind(): id рядка, режим редагування, рішення", async () => {
+    await renderDetail({ viewer: asAuthor, request: requestRow("draft"), members: authorMember });
+    const removeButtons = capturedButtons.filter((button) => button.children === "Remove");
+    expect(removeButtons).toHaveLength(2);
+    await removeButtons[1]!.formAction!(new FormData());
+    expect(actionSpies.removeLine).toHaveBeenCalledWith(LINE_2, expect.any(FormData));
+
+    capturedButtons.length = 0;
+    await renderDetail({ viewer: asAuthor, request: requestRow("pending", { editing: true }), members: authorMember });
+    await capturedButtons.find((button) => button.testId === "save-changes")!.formAction!(new FormData());
+    expect(actionSpies.setEditing).toHaveBeenLastCalledWith(false, expect.any(FormData));
+
+    capturedButtons.length = 0;
+    await renderDetail({ viewer: asAuthor, request: requestRow("pending"), members: authorMember });
+    await capturedButtons.find((button) => button.testId === "edit-request")!.formAction!(new FormData());
+    expect(actionSpies.setEditing).toHaveBeenLastCalledWith(true, expect.any(FormData));
+
+    capturedButtons.length = 0;
+    await renderDetail({ viewer: asApprover, request: requestRow("pending"), approvers: approverOf });
+    for (const testId of ["approve", "return", "reject"]) {
+      await capturedButtons.find((button) => button.testId === testId)!.formAction!(new FormData());
+    }
+    expect(actionSpies.decidePurchase).toHaveBeenNthCalledWith(1, "approve", expect.any(FormData));
+    expect(actionSpies.decidePurchase).toHaveBeenNthCalledWith(2, "return", expect.any(FormData));
+    expect(actionSpies.decidePurchase).toHaveBeenNthCalledWith(3, "reject", expect.any(FormData));
+  });
+
   it("AC-PUR-01: чернетка автора — форма з номером, рядками й сумою, кнопки «Save» і «Submit»", async () => {
     const html = await renderDetail({ viewer: asAuthor, request: requestRow("draft"), members: authorMember });
     expect(html).toContain("PUR-12");
@@ -179,14 +237,18 @@ describe("сторінка закупівлі /requests/[id]", () => {
 });
 
 describe("сторінка списку /requests", () => {
-  async function renderList(viewer: ReturnType<typeof makeProfile>, approvers: Array<{ department_id: string; user_id: string }>) {
+  async function renderList(
+    viewer: ReturnType<typeof makeProfile>,
+    approvers: Array<{ department_id: string; user_id: string }>,
+    departments: Array<{ id: string; name: string }> = [{ id: DEP, name: "Primary School" }],
+  ) {
     const mock = createSupabaseMock({
       profile: viewer,
       profiles: viewer.id === AUTHOR ? [] : [author],
       results: {
         "requests.select": { data: [requestRow("pending"), requestRow("approved", { id: REQ_2, number: 13, author_id: viewer.id })] },
         "request_lines.select": { data: lines },
-        "departments.select": { data: [{ id: DEP, name: "Primary School" }] },
+        "departments.select": { data: departments },
         "department_approvers.select": { data: approvers },
       },
     });
@@ -203,6 +265,29 @@ describe("сторінка списку /requests", () => {
     expect(html).toContain('data-testid="my-requests"');
     expect(html).toContain("Request approved");
     expect(html).not.toContain('data-testid="all-requests"');
+  });
+
+  // Без AC PM: це підпис у списку, а не правило. Відділи RLS віддає лише заявникам, тож автор заявки, який уже не заявник
+  // свого відділу, не бачить його назви — показуємо «—», а не «No department yet» (у заявки відділ є).
+  it("заявка з відділом, назви якого автор не бачить, показує «—», а чернетка без відділу — «No department yet»", async () => {
+    const html = await renderList(asApprover, approverOf, []);
+    expect(html).toContain("PUR-12");
+    expect(html).toContain("—");
+    expect(html).not.toContain("No department yet");
+
+    const noDepartment = makeProfile({ id: VIEWER, role: "requester" });
+    const mock = createSupabaseMock({
+      profile: noDepartment,
+      results: {
+        "requests.select": { data: [requestRow("draft", { id: REQ_2, number: 14, author_id: VIEWER, department_id: null })] },
+        "request_lines.select": { data: [] },
+        "departments.select": { data: [] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { default: Page } = await import("@/app/requests/page");
+    expect(renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never))).toContain("No department yet");
   });
 
   it("AC-PUR-33: admin бачить «Awaiting decision» (відділ без схвалювача) і «All requests»", async () => {

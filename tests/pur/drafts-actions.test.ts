@@ -192,12 +192,7 @@ describe("створення й збереження чернетки", () => {
 
     expect(
       await redirectedTo(() =>
-        removeLine(
-          form([
-            ["id", REQ],
-            ["line_id_to_remove", LINE_2],
-          ]),
-        ),
+        removeLine(LINE_2, form([["id", REQ]])),
       ),
     ).toBe(`${path}?saved=line_removed`);
     expect(mock.calls.find((c) => c.table === "request_lines" && c.op === "delete")?.filters).toEqual([
@@ -330,7 +325,10 @@ describe("скасування, копія й редагування подан�
       }),
     );
     const actions = await purActions();
-    const url = await redirectedTo(() => actions[fn](form([["id", REQ], ...extra])));
+    // makeEditing приходить першим аргументом (bind() на кнопці), решта дій беруть лише поля форми.
+    const editing = extra.find(([key]) => key === "editing")?.[1] === "1";
+    const fields = form([["id", REQ], ...extra.filter(([key]) => key !== "editing")]);
+    const url = await redirectedTo(() => (fn === "setEditing" ? actions.setEditing(editing, fields) : actions[fn](fields)));
     return { url, mock };
   };
 
@@ -363,6 +361,16 @@ describe("скасування, копія й редагування подан�
       target_request: REQ,
       make_editing: true,
     });
+  });
+
+  it("setEditing приймає лише boolean: інше значення відхилено до збереження й до rpc", async () => {
+    const mock = mockSupabase(
+      createSupabaseMock({ profile: author, results: { "requests.select": { data: row("pending", { editing: true }) } } }),
+    );
+    const { setEditing } = await purActions();
+    const url = await redirectedTo(() => setEditing({ not: "a boolean" }, form([["id", REQ]])));
+    expect(url).toBe(`${path}?error=invalid_input`);
+    expect(mock.calls.some((c) => c.op === "update" || c.op === "rpc")).toBe(false);
   });
 
   it("AC-PUR-26: збереження змін перед вимкненням редагування — спершу рядки, потім set_purchase_editing(false)", async () => {
