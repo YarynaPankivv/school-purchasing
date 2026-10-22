@@ -179,14 +179,18 @@ describe("сторінка закупівлі /requests/[id]", () => {
 });
 
 describe("сторінка списку /requests", () => {
-  async function renderList(viewer: ReturnType<typeof makeProfile>, approvers: Array<{ department_id: string; user_id: string }>) {
+  async function renderList(
+    viewer: ReturnType<typeof makeProfile>,
+    approvers: Array<{ department_id: string; user_id: string }>,
+    departments: Array<{ id: string; name: string }> = [{ id: DEP, name: "Primary School" }],
+  ) {
     const mock = createSupabaseMock({
       profile: viewer,
       profiles: viewer.id === AUTHOR ? [] : [author],
       results: {
         "requests.select": { data: [requestRow("pending"), requestRow("approved", { id: REQ_2, number: 13, author_id: viewer.id })] },
         "request_lines.select": { data: lines },
-        "departments.select": { data: [{ id: DEP, name: "Primary School" }] },
+        "departments.select": { data: departments },
         "department_approvers.select": { data: approvers },
       },
     });
@@ -203,6 +207,29 @@ describe("сторінка списку /requests", () => {
     expect(html).toContain('data-testid="my-requests"');
     expect(html).toContain("Request approved");
     expect(html).not.toContain('data-testid="all-requests"');
+  });
+
+  // Без AC PM: це підпис у списку, а не правило. Відділи RLS віддає лише заявникам, тож автор заявки, який уже не заявник
+  // свого відділу, не бачить його назви — показуємо «—», а не «No department yet» (у заявки відділ є).
+  it("заявка з відділом, назви якого автор не бачить, показує «—», а чернетка без відділу — «No department yet»", async () => {
+    const html = await renderList(asApprover, approverOf, []);
+    expect(html).toContain("PUR-12");
+    expect(html).toContain("—");
+    expect(html).not.toContain("No department yet");
+
+    const noDepartment = makeProfile({ id: VIEWER, role: "requester" });
+    const mock = createSupabaseMock({
+      profile: noDepartment,
+      results: {
+        "requests.select": { data: [requestRow("draft", { id: REQ_2, number: 14, author_id: VIEWER, department_id: null })] },
+        "request_lines.select": { data: [] },
+        "departments.select": { data: [] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { default: Page } = await import("@/app/requests/page");
+    expect(renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never))).toContain("No department yet");
   });
 
   it("AC-PUR-33: admin бачить «Awaiting decision» (відділ без схвалювача) і «All requests»", async () => {
