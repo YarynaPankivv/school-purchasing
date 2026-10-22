@@ -363,6 +363,16 @@ describe("скасування, копія й редагування подан�
     });
   });
 
+  it("setEditing приймає лише boolean: інше значення відхилено до збереження й до rpc", async () => {
+    const mock = mockSupabase(
+      createSupabaseMock({ profile: author, results: { "requests.select": { data: row("pending", { editing: true }) } } }),
+    );
+    const { setEditing } = await purActions();
+    const url = await redirectedTo(() => setEditing({ not: "a boolean" }, form([["id", REQ]])));
+    expect(url).toBe(`${path}?error=invalid_input`);
+    expect(mock.calls.some((c) => c.op === "update" || c.op === "rpc")).toBe(false);
+  });
+
   it("AC-PUR-26: збереження змін перед вимкненням редагування — спершу рядки, потім set_purchase_editing(false)", async () => {
     const { url, mock } = await run(
       { data: true },

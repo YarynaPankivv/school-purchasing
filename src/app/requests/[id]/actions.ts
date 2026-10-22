@@ -169,8 +169,11 @@ export async function submitPurchase(formData: FormData) {
 
 // AC-PUR-26: автор відкриває подану заявку на редагування (рішення блокуються) і зберігає зміни.
 // makeEditing приходить через bind(): true — відкрити на редагування, false — зберегти зміни й завершити.
-export async function setEditing(makeEditing: boolean, formData: FormData) {
+// Server action публічна, а TypeScript у рантаймі нічого не перевіряє: приймаємо лише boolean (інакше `!makeEditing`
+// пропустило б збереження, а rpc отримав би не boolean).
+export async function setEditing(makeEditing: unknown, formData: FormData) {
   const { ctx, request, path, id } = await authorRequest(formData);
+  if (typeof makeEditing !== "boolean") fail(path, "invalid_input");
   if (!makeEditing) await persist(ctx, request, path, formData);
   const { error } = await ctx.supabase.rpc("set_purchase_editing", { target_request: id, make_editing: makeEditing });
   if (error) failDb(path, error);
