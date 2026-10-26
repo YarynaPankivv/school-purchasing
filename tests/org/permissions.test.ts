@@ -47,7 +47,7 @@ beforeEach(() => {
 });
 
 describe("дозволи на типи заявок", () => {
-  it("AC-ORG-07: без дозволу на «Витрату карткою» цього типу немає у виборі", async () => {
+  it("без дозволу на «Витрату карткою» цього типу немає у виборі", async () => {
     expect(allowedRequestTypes("requester", NO_PERMISSIONS)).toEqual(["PUR", "RMB"]);
     expect(allowedRequestTypes("approver", NO_PERMISSIONS)).not.toContain("CRE");
     expect(permissionsFrom(null)).toEqual(NO_PERMISSIONS); // немає рядка — немає дозволів
@@ -107,7 +107,7 @@ describe("дозволи на типи заявок", () => {
 });
 
 describe("тип закупівлі", () => {
-  it("AC-ORG-08: без дозволу «Самостійна закупівля» — лише тип закупівлі «Відділ закупівель»", async () => {
+  it("без дозволу «Самостійна закупівля» — лише тип закупівлі «Відділ закупівель»", async () => {
     expect(allowedPurchaseTypes("requester", NO_PERMISSIONS)).toEqual(["procurement"]);
     expect(allowedPurchaseTypes("requester", withSelf)).toEqual(["procurement", "self"]);
 
