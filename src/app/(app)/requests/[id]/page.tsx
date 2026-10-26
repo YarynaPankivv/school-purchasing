@@ -62,8 +62,6 @@ import { safeBack } from "../_lib/nav";
 const SAVED: Record<string, string> = {
   created: "Draft created. Fill in the lines, then submit it.",
   draft: "Changes saved.",
-  submitted: "Purchase submitted", // AC-FRM-11 (текст із таблиці PM)
-  submitted_approved: "Purchase submitted and approved automatically (Auto-approval)",
   editing_on: "You are editing the request. Decisions are paused until you save.",
   editing_off: "Changes saved. The request is waiting for approval again.",
   cancelled: "Request cancelled.",

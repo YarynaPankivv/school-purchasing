@@ -177,12 +177,14 @@ export async function removeLine(lineId: string, formData: FormData) {
 }
 
 // AC-PUR-05, 09, 14, 16, 23, 37, 45: подання — функція Postgres; перед нею зберігаємо те, що в формі.
+// AC-FRM-11: після подання автор потрапляє на сторінку «Мої заявки» (список) з повідомленням «Purchase submitted».
 export async function submitPurchase(formData: FormData) {
   const { ctx, request, path, id } = await authorRequest(formData);
   await persist(ctx, request, path, formData);
   const { data, error } = await ctx.supabase.rpc("submit_purchase", { target_request: id });
   if (error) failDb(path, error);
-  done(path, data === "approved" ? "submitted_approved" : "submitted");
+  revalidatePath(LIST_PATH, "layout");
+  redirect(`${LIST_PATH}?saved=${data === "approved" ? "submitted_approved" : "submitted"}`);
 }
 
 // AC-PUR-26: автор відкриває подану заявку на редагування (рішення блокуються) і зберігає зміни.

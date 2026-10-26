@@ -205,6 +205,24 @@ describe("створення й збереження чернетки", () => {
 });
 
 describe("подання", () => {
+  it("AC-FRM-11: після подання автор потрапляє на сторінку «Мої заявки» (список), а не лишається на заявці", async () => {
+    mockSupabase(
+      createSupabaseMock({
+        profile: author,
+        results: {
+          "requests.select": { data: row("draft") },
+          "requests.update": { data: [{ id: REQ }] },
+          "rpc:submit_purchase.rpc": { data: "pending" },
+        },
+      }),
+    );
+    const { submitPurchase } = await purActions();
+    const target = await redirectedTo(() => submitPurchase(form(fields())));
+    expect(target.startsWith("/requests?")).toBe(true);
+    expect(target).not.toContain(REQ);
+    expect(new URLSearchParams(target.split("?")[1]).get("saved")).toBe("submitted");
+  });
+
   it("AC-PUR-14: подання зберігає форму й викликає submit_purchase — заявка очікує схвалення", async () => {
     const mock = mockSupabase(
       createSupabaseMock({
@@ -217,7 +235,7 @@ describe("подання", () => {
       }),
     );
     const { submitPurchase } = await purActions();
-    expect(await redirectedTo(() => submitPurchase(form(fields())))).toBe(`${path}?saved=submitted`);
+    expect(await redirectedTo(() => submitPurchase(form(fields())))).toBe("/requests?saved=submitted"); // AC-FRM-11
 
     const names = mock.calls.map((c) => `${c.table}.${c.op}`);
     expect(names.indexOf("requests.update")).toBeLessThan(names.indexOf("rpc:submit_purchase.rpc")); // спершу збереження
@@ -236,7 +254,7 @@ describe("подання", () => {
       }),
     );
     const { submitPurchase } = await purActions();
-    expect(await redirectedTo(() => submitPurchase(form(fields())))).toBe(`${path}?saved=submitted_approved`);
+    expect(await redirectedTo(() => submitPurchase(form(fields())))).toBe("/requests?saved=submitted_approved");
   });
 
   it("AC-PUR-05: чернетка без відділу не подається — «pur:department_required» стає помилкою сторінки", async () => {
@@ -308,7 +326,7 @@ describe("подання", () => {
       }),
     );
     const { submitPurchase } = await purActions();
-    expect(await redirectedTo(() => submitPurchase(form(fields())))).toBe(`${path}?saved=submitted`);
+    expect(await redirectedTo(() => submitPurchase(form(fields())))).toBe("/requests?saved=submitted"); // AC-FRM-11
     expect(mock.calls.some((c) => c.table === "requests" && c.op === "update")).toBe(true);
     expect(mock.calls.some((c) => c.table === "request_lines" && c.op === "update")).toBe(true);
   });

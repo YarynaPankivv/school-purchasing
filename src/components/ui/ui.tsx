@@ -409,7 +409,7 @@ export function LinkButton({
 
 // AC-ORG-09: без ролі admin — лише це повідомлення, без даних. Нейтрально (DESIGN.md): людина нічого не зламала,
 // тож не червоний Alert, а спокійна сторінка стану в тій самій оболонці (бічна панель і верхня смуга лишаються).
-export function Forbidden() {
+export function Forbidden({ description = "This page is available to administrators only." }: { description?: string }) {
   return (
     <>
       <TopBar showNewRequest />
@@ -417,7 +417,7 @@ export function Forbidden() {
         icon="shield"
         code="403"
         title={ORG_ERROR_MESSAGES.forbidden}
-        description="This page is available to administrators only."
+        description={description}
         actions={<LinkButton href="/">Back to home</LinkButton>}
       />
     </>
