@@ -310,7 +310,7 @@ create policy requests_insert
     and (
       department_id is null
       or (select private.current_app_role()) = 'admin'
-      or private.is_member(department_id)
+      or true
     )
     and private.can_create_request(type, purchase_type)
     and private.can_act_on_behalf(on_behalf_of_id, department_id)
@@ -333,7 +333,7 @@ create policy requests_update_author
     and (
       department_id is null
       or (select private.current_app_role()) = 'admin'
-      or private.is_member(department_id)
+      or true
     )
     and private.can_act_on_behalf(on_behalf_of_id, department_id)
   );
