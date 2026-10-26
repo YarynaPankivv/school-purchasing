@@ -1,4 +1,4 @@
-> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/49 · оновлено 2026-10-25T19:14:13Z
+> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/49 · оновлено 2026-10-26T14:13:28Z
 
 # Вимога: інтерфейс застосунку англійською мовою
 
@@ -53,6 +53,7 @@
 | Рахунок постачальника | Vendor invoice |
 | Відділ | Department |
 | Заявник | Requester |
+| Автор | Author |
 | Схвалювач | Approver |
 | Адміністратор | Administrator |
 | Тип закупівлі «Відділ закупівель» | Purchase type «Purchasing department» |
@@ -93,3 +94,4 @@
 - 2026-10-24 — таблицю доповнено англійськими текстами повідомлень із чинних AC (FRM-05, ORG-02, 10, 12, 14, 18, 33, 34) і словом «Employee»; розробники беруть їх дослівно — https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/53
 - 2026-10-25 — у таблицю додано текст порожнього стану «Мої заявки» (AC-FRM-14) — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/55
 - 2026-10-25 — AC-LANG-03 без випадку «власна заявка схвалювача»; AC-LANG-05 лише для відхилення без причини; AC-LANG-07 і частину AC-LANG-08 про номери перенесено в «Поза межами» до зрізу з історією й номерами; у таблицю додано «Заповніть усі поля рядка» — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/57, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/61, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/60
+- 2026-10-26 — у таблицю додано підпис «Автор» / «Author» для імені автора заявки (AC-APR-08 у вимозі https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/48) — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/62
