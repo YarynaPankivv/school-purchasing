@@ -61,8 +61,8 @@ export interface PurchasingDb {
 }
 
 async function inTransaction<T>(db: PGlite, role: string, userId: string | null, sql: string, params: unknown[]) {
-  await db.exec(`begin; set local role ${role};`);
   try {
+    await db.exec(`begin; set local role ${role};`);
     if (userId) await db.query("select set_config('request.jwt.claim.sub', $1, true)", [userId]);
     const result = await db.query<T>(sql, params);
     // COMMIT теж може впасти: відкладені constraint trigger-и спрацьовують саме тут.
@@ -96,13 +96,11 @@ export async function createPurchasingDb(): Promise<PurchasingDb> {
       counter += 1;
       const id = `a0000000-0000-0000-0000-${String(counter).padStart(12, "0")}`;
       const fullName = options.fullName === undefined ? email.split("@")[0] : options.fullName;
-      await db.exec("begin; set local role supabase_auth_admin;");
-      await db.query("insert into auth.users (id, email, raw_user_meta_data) values ($1, $2, $3)", [
+      await inTransaction(db, "supabase_auth_admin", null, "insert into auth.users (id, email, raw_user_meta_data) values ($1, $2, $3)", [
         id,
         email,
         fullName === null ? {} : { full_name: fullName },
       ]);
-      await db.exec("commit");
       if (options.admin) await asService("update public.profiles set role = 'admin' where id = $1", [id]);
       if (options.isActive === false) await asService("update public.profiles set is_active = false where id = $1", [id]);
       return id;
