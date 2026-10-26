@@ -13,5 +13,10 @@
     "email": "member2@example.test",
     "full_name": "Maria Demo-Second",
     "role": "requester"
+  },
+  {
+    "email": "approver@example.test",
+    "full_name": "Petro Demo-Approver",
+    "role": "requester"
   }
 ]
