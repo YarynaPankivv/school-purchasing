@@ -16,6 +16,8 @@ vi.mock("next/navigation", async () => {
       throw new RedirectSignal("not-found");
     },
     usePathname: () => "/requests",
+    // Рядок пошуку у верхній смузі (клієнтський компонент) бере роутер для переходу на підказку.
+    useRouter: () => ({ push: () => undefined }),
   };
 });
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -42,13 +44,13 @@ const actionSpies = vi.hoisted(() => ({
   setEditing: vi.fn(),
   submitPurchase: vi.fn(),
 }));
-vi.mock("@/app/_components/submit-button", () => ({
+vi.mock("@/components/ui/submit-button", () => ({
   SubmitButton: (props: CapturedButton) => {
     capturedButtons.push(props);
     return <button data-testid={props.testId}>{props.children}</button>;
   },
 }));
-vi.mock("@/app/requests/[id]/actions", () => actionSpies);
+vi.mock("@/app/(app)/requests/[id]/actions", () => actionSpies);
 
 const VIEWER = "3f0c2a5e-9b1d-4c7e-8a2f-1b6d5e4c3a21";
 const AUTHOR = "7a1d9c52-04be-4f3a-9d6e-2c8b1f0e5a47";
@@ -117,7 +119,7 @@ async function renderDetail({ viewer, request, approvers = [], members = [] }: S
     },
   });
   createClient.mockResolvedValue(mock.client);
-  const { default: Page } = await import("@/app/requests/[id]/page");
+  const { RequestPageContent: Page } = await import("@/app/(app)/requests/[id]/page");
   const element = await Page({ params: Promise.resolve({ id: REQ }), searchParams: Promise.resolve({}) } as never);
   return renderToStaticMarkup(element);
 }
@@ -253,7 +255,7 @@ describe("сторінка списку /requests", () => {
       },
     });
     createClient.mockResolvedValue(mock.client);
-    const { default: Page } = await import("@/app/requests/page");
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
     return renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
   }
 
@@ -265,6 +267,16 @@ describe("сторінка списку /requests", () => {
     expect(html).toContain('data-testid="my-requests"');
     expect(html).toContain("Request approved");
     expect(html).not.toContain('data-testid="all-requests"');
+  });
+
+  // Без AC PM: опис сторінки не обіцяє звичайному заявнику чужих заявок і рішень, яких він не бачить.
+  it("опис сторінки залежить від ролі: заявник без права рішення не бачить згадки про адміністраторів і рішення", async () => {
+    const requester = await renderList(asAuthor, []);
+    expect(requester).toContain("Purchase requests you submitted.");
+    expect(requester).not.toContain("administrators");
+    expect(requester).not.toContain("waiting for your decision");
+    const approver = await renderList(asApprover, approverOf);
+    expect(approver).toContain("Purchase requests you submitted and requests waiting for your decision.");
   });
 
   // Без AC PM: це підпис у списку, а не правило. Відділи RLS віддає лише заявникам, тож автор заявки, який уже не заявник
@@ -286,7 +298,7 @@ describe("сторінка списку /requests", () => {
       },
     });
     createClient.mockResolvedValue(mock.client);
-    const { default: Page } = await import("@/app/requests/page");
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
     expect(renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never))).toContain("No department yet");
   });
 
@@ -295,5 +307,111 @@ describe("сторінка списку /requests", () => {
     expect(html).toContain('data-testid="awaiting-decision"');
     expect(html).toContain("No approver");
     expect(html).toContain('data-testid="all-requests"');
+  });
+
+  // Без AC PM: це подання списку (сторінки, нумерація, сортування), а не правило.
+  it("довгий список: 20 рядків на сторінку, наскрізна нумерація, сортування за колонкою й фільтр за статусом", async () => {
+    const requester = makeProfile({ id: VIEWER, role: "requester" });
+    const many = Array.from({ length: 25 }, (_, i) =>
+      requestRow(i < 22 ? "draft" : "pending", { id: `00000000-0000-4000-8000-0000000000${String(i).padStart(2, "0")}`, number: i + 1, author_id: VIEWER, department_id: null }),
+    );
+    const mock = createSupabaseMock({
+      profile: requester,
+      results: {
+        "requests.select": { data: many },
+        "request_lines.select": { data: [] },
+        "departments.select": { data: [] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
+
+    const first = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ sort: "number", dir: "asc" }) } as never));
+    expect(first).toContain("Showing 1–20 of 25");
+    expect(first).toContain('aria-sort="ascending"');
+    expect(first).toContain("PUR-1<");
+    expect(first).not.toContain("PUR-21<");
+
+    const second = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ sort: "number", dir: "asc", p_mine: "2" }) } as never));
+    expect(second).toContain("Showing 21–25 of 25");
+    expect(second).toContain("PUR-25<");
+    expect(second).not.toContain("PUR-1<");
+
+    const drafts = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ status: "pending" }) } as never));
+    expect(drafts).toContain("3 results");
+    expect(drafts).not.toContain("Showing");
+  });
+});
+
+// Тексти з таблиці PM (requirements/49-…): порожній стан, статуси й відмова в доступі на справжніх сторінках.
+describe("тексти інтерфейсу на сторінках (таблиця PM)", () => {
+  it("AC-FRM-14: порожня сторінка «Мої заявки» — «You have not submitted any requests yet»", async () => {
+    const requester = makeProfile({ id: VIEWER, role: "requester" });
+    const mock = createSupabaseMock({
+      profile: requester,
+      results: {
+        "requests.select": { data: [] },
+        "request_lines.select": { data: [] },
+        "departments.select": { data: [] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
+    expect(html).toContain("My requests");
+    expect(html).toContain("You have not submitted any requests yet");
+    expect(html).not.toContain("You have no requests yet");
+  });
+
+  it("AC-LANG-06: статуси «Awaiting approval» і «Approved» підписано текстом у списку й на сторінці заявки", async () => {
+    const mock = createSupabaseMock({
+      profile: asApprover,
+      profiles: [author],
+      results: {
+        "requests.select": { data: [requestRow("pending"), requestRow("approved", { id: REQ_2, number: 13, author_id: asApprover.id })] },
+        "request_lines.select": { data: lines },
+        "departments.select": { data: [{ id: DEP, name: "Primary School" }] },
+        "department_approvers.select": { data: approverOf },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent } = await import("@/app/(app)/requests/(list)/page");
+    const list = renderToStaticMarkup(await RequestsPageContent({ searchParams: Promise.resolve({}) } as never));
+    expect(list).toContain("Awaiting approval");
+    expect(list).toContain("Approved");
+
+    const rejected = await renderDetail({ viewer: asAuthor, request: requestRow("rejected"), members: authorMember });
+    expect(rejected).toContain("Rejected");
+    const pending = await renderDetail({ viewer: asAuthor, request: requestRow("pending"), members: authorMember });
+    expect(pending).toContain("Awaiting approval");
+  });
+
+  it("AC-LANG-03: не-адміністратор на сторінці відділів бачить «Not enough permissions» без даних", async () => {
+    const mock = createSupabaseMock({
+      profile: makeProfile({ id: VIEWER, role: "requester" }),
+      results: { "departments.select": { data: [{ id: DEP, name: "Primary School" }] } },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { DepartmentsPageContent: Page } = await import("@/app/(app)/admin/departments/(list)/page");
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
+    expect(html).toContain("Not enough permissions");
+    expect(html).toContain("This page is available to administrators only.");
+    // Відмова спокійна, не червоне повідомлення про помилку (DESIGN.md).
+    expect(html).not.toContain('role="alert"');
+    expect(html).not.toContain("Primary School");
+  });
+
+  // Без AC PM: збережений тип закупівлі не підміняється в полі, якщо дозвіл на нього зняли після створення.
+  it("чернетка зі збереженим типом «Self-purchase» без дозволу показує цей тип у полі, а не підміняє його", async () => {
+    const html = await renderDetail({
+      viewer: asAuthor,
+      request: requestRow("draft", { purchase_type: "self" }),
+      members: authorMember,
+    });
+    expect(html).toContain('value="self"');
+    expect(html).toContain("Self-purchase");
+    expect(html).toContain('value="procurement"');
   });
 });

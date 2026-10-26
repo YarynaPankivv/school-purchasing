@@ -2,6 +2,7 @@
 // Vitest без бази (design.md D9): що надсилає action у `update`/`rpc` і як перетворює `pur:<код>` на помилку сторінки.
 // SQL-дзеркало — функції `submit_purchase`/`cancel_purchase`/`copy_purchase`, тригери й RLS міграції
 // 20261021140000_pur_drafts.sql; їх перевіряє db-check і прогін сценаріїв AC на Postgres (опис — у PR).
+import { revalidatePath } from "next/cache";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSupabaseMock, makeProfile, redirectedTo } from "../org/supabase-mock";
 
@@ -20,8 +21,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
 
-const purActions = () => import("@/app/requests/[id]/actions");
-const newActions = () => import("@/app/requests/new/actions");
+const purActions = () => import("@/app/(app)/requests/[id]/actions");
+const newActions = () => import("@/app/(app)/requests/new/actions");
 
 const USER = "3f0c2a5e-9b1d-4c7e-8a2f-1b6d5e4c3a21";
 const OTHER = "7a1d9c52-04be-4f3a-9d6e-2c8b1f0e5a47";
@@ -187,14 +188,15 @@ describe("створення й збереження чернетки", () => {
       }),
     );
     const { addLine, removeLine } = await purActions();
-    expect(await redirectedTo(() => addLine(form(fields())))).toBe(`${path}?saved=line_added`);
+    // Без переходу й без банера: сторінка оновлюється на місці (revalidatePath), тож немає ні redirect, ні ?saved=.
+    vi.mocked(revalidatePath).mockClear();
+    await addLine(form(fields()));
+    expect(revalidatePath).toHaveBeenCalledTimes(1);
     expect(mock.calls.find((c) => c.table === "request_lines" && c.op === "insert")?.payload).toEqual({ request_id: REQ });
 
-    expect(
-      await redirectedTo(() =>
-        removeLine(LINE_2, form([["id", REQ]])),
-      ),
-    ).toBe(`${path}?saved=line_removed`);
+    vi.mocked(revalidatePath).mockClear();
+    await removeLine(LINE_2, form([["id", REQ]]));
+    expect(revalidatePath).toHaveBeenCalledTimes(1);
     expect(mock.calls.find((c) => c.table === "request_lines" && c.op === "delete")?.filters).toEqual([
       ["id", LINE_2],
       ["request_id", REQ],

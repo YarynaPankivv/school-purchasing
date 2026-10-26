@@ -3,9 +3,9 @@
 // англійським перекладом, не дослівно: PM їх задав українською.
 
 export const ORG_ERROR_MESSAGES = {
-  not_member: "First add the employee to the department as a requester", // AC-ORG-02 (переклад тексту PM)
-  forbidden: "Insufficient permissions", // AC-ORG-09 (переклад тексту PM)
-  duplicate_name: "A department with this name already exists.",
+  not_member: "Add the employee to the department as a requester first", // AC-ORG-02 (переклад тексту PM)
+  forbidden: "Not enough permissions", // AC-ORG-09, AC-LANG-03 (текст із таблиці PM)
+  duplicate_name: "A department with this name already exists",
   invalid_name: "Department name must be 1 to 100 characters.",
   invalid_request: "This department, request type or on-behalf person is not available to you.",
   last_admin: "At least one active administrator must remain", // AC-ORG-10, AC-ORG-18 (переклад тексту PM)

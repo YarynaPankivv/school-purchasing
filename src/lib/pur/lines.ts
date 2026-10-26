@@ -158,5 +158,5 @@ export function incompleteLinesFromDetail(detail: string | null | undefined): In
 // «Line 1: name, purpose; Line 3: unit price» — повідомлення називає всі рядки й поля (AC-PUR-09).
 export function incompleteLinesMessage(list: readonly IncompleteLine[]): string {
   const parts = list.map((l) => `Line ${l.number}: ${l.fields.map((f) => LINE_FIELD_LABELS[f]).join(", ")}`);
-  return `Fill in all line fields before submitting. ${parts.join("; ")}.`;
+  return `Fill in all line fields. ${parts.join("; ")}.`;
 }

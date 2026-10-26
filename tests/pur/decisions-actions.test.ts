@@ -20,7 +20,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
 
-const purActions = () => import("@/app/requests/[id]/actions");
+const purActions = () => import("@/app/(app)/requests/[id]/actions");
 
 const APPROVER = "3f0c2a5e-9b1d-4c7e-8a2f-1b6d5e4c3a21";
 const REQ = "9d3f5b21-8c46-4e17-a0b9-4d7e2c1f6a83";

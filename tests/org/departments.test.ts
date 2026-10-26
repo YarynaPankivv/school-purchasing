@@ -32,8 +32,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
 
-const actions = () => import("@/app/admin/departments/actions");
-const requestActions = () => import("@/app/requests/new/actions");
+const actions = () => import("@/app/(app)/admin/departments/actions");
+const requestActions = () => import("@/app/(app)/requests/new/actions");
 
 const PRIMARY = { id: "dep-primary", name: "Початкова школа" };
 const HIGH = { id: "dep-high", name: "Вища школа" };
@@ -134,7 +134,7 @@ describe("схвалювачі", () => {
     const url = await redirectedTo(() => addApprover(form({ department_id: HIGH.id, user_id: WORKER })));
 
     expect(url).toBe(`/admin/departments/${HIGH.id}?error=not_member`);
-    expect(orgErrorMessage("not_member")).toBe("First add the employee to the department as a requester");
+    expect(orgErrorMessage("not_member")).toBe("Add the employee to the department as a requester first");
     expect(mock.calls.find((c) => c.table === "department_approvers")).toMatchObject({
       op: "insert",
       payload: { department_id: HIGH.id, user_id: WORKER },
@@ -324,7 +324,7 @@ describe("автосхвалення", () => {
 
 describe("тексти помилок", () => {
   it("текст «Недостатньо прав» — дослівно з вимог PM", () => {
-    expect(ORG_ERROR_MESSAGES.forbidden).toBe("Insufficient permissions");
+    expect(ORG_ERROR_MESSAGES.forbidden).toBe("Not enough permissions");
     expect(orgErrorMessage("nonsense")).toBeUndefined();
   });
 

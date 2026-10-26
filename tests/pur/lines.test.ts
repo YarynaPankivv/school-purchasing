@@ -139,7 +139,7 @@ describe("повнота рядків для подання", () => {
       { number: 3, position: 3, fields: ["quantity", "unit_price"] },
     ]);
     expect(incompleteLinesMessage(list)).toBe(
-      "Fill in all line fields before submitting. Line 2: name, purpose; Line 3: quantity, unit price.",
+      "Fill in all line fields. Line 2: name, purpose; Line 3: quantity, unit price.",
     );
   });
 

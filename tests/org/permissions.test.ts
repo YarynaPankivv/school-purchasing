@@ -28,8 +28,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
 
-const requestActions = () => import("@/app/requests/new/actions");
-const userActions = () => import("@/app/admin/users/actions");
+const requestActions = () => import("@/app/(app)/requests/new/actions");
+const userActions = () => import("@/app/(app)/admin/users/actions");
 
 const WORKER = "user-worker";
 const OFFICE = "dep-office";
