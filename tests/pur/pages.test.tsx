@@ -143,6 +143,20 @@ const lineRows = (html: string) =>
     .slice(1)
     .map((row) => row.slice(0, row.indexOf("</tr>")));
 
+// Таблиця списку за data-testid ("my-requests", "to-decide", …) і її рядок за номером заявки: перевірки не виходять за секцію.
+const tableOf = (html: string, testId: string) => {
+  const start = html.indexOf(`data-testid="${testId}"`);
+  if (start === -1) return "";
+  const end = html.indexOf("</table>", start);
+  return html.slice(start, end === -1 ? html.length : end);
+};
+const rowOf = (table: string, number: string) =>
+  table
+    .split('data-testid="request-row"')
+    .slice(1)
+    .map((row) => row.slice(0, row.indexOf("</tr>")))
+    .find((row) => row.includes(number)) ?? "";
+
 const LINE_3 = "a7c1e9d3-6b48-4f20-9e5a-3d8f0b2c4a61";
 // Заявка з 3 рядками, де схвалювач відхилив рядок 2.
 const partiallyApprovedLines = [
@@ -402,9 +416,9 @@ describe("сторінка списку /requests", () => {
     const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
     const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
 
-    const mine = html.slice(html.indexOf('data-testid="my-requests"'));
-    expect(mine).toContain("PUR-12");
-    expect(mine).toContain("Awaiting approval");
+    const own = rowOf(tableOf(html, "my-requests"), "PUR-12");
+    expect(own).toContain("PUR-12");
+    expect(own).toContain("Awaiting approval");
     expect(html).not.toContain("PUR-14");
     expect(html).not.toContain("Anna Author");
   });
@@ -412,8 +426,12 @@ describe("сторінка списку /requests", () => {
   it("AC-PUR-40: автор схваленої заявки бачить позначку «Request approved», а чужі заявки її не мають", async () => {
     // Схвалена PUR-13 — власна заявка глядача, PUR-12 (pending) — чужа в «To decide».
     const html = await renderList(asApprover, approverOf);
-    expect(html.match(/Request approved/g)).toHaveLength(1);
-    expect(html).toContain("PUR-13");
+    const own = rowOf(tableOf(html, "my-requests"), "PUR-13");
+    const foreign = rowOf(tableOf(html, "to-decide"), "PUR-12");
+    expect(own).toContain("PUR-13");
+    expect(own).toContain("Request approved");
+    expect(foreign).toContain("PUR-12");
+    expect(foreign).not.toContain("Request approved");
   });
 
   // Без AC PM: це підпис у списку, а не правило. Відділи RLS віддає лише заявникам, тож автор заявки, який уже не заявник

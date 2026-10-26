@@ -66,7 +66,7 @@ describe("видимість у межах відділів", () => {
     expect(canReopen({ status: "rejected" }, primaryApprover)).toBe(false);
   });
 
-  it("AC-PUR-35, 49 у базі: can_view_request віддає не-чернетку лише схвалювачу її відділу, а не будь-якому заявнику відділу", () => {
+  it("AC-PUR-35, 49 у схемі (текст міграції): can_view_request віддає не-чернетку лише схвалювачу її відділу, а не будь-якому заявнику відділу", () => {
     const sql = readFileSync(join(process.cwd(), "supabase/migrations/20261021140000_pur_drafts.sql"), "utf8");
     const body = sql.slice(sql.indexOf("create or replace function private.can_view_request"));
     const fn = body.slice(0, body.indexOf("$$;", body.indexOf("as $$") + 5));
