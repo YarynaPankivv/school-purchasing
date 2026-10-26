@@ -165,7 +165,7 @@ export function AppSidebar({ user }: { user: ShellUser | null }) {
           <UserBlock user={user} />
         </div>
       </aside>
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-4 py-2 lg:hidden">
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-card px-4 py-2 lg:hidden">
         <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
           <BrandMark />
           School Purchasing
