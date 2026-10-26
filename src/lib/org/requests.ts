@@ -11,7 +11,7 @@ export const REQUEST_TYPE_LABELS = {
 export type RequestType = keyof typeof REQUEST_TYPE_LABELS;
 
 export const PURCHASE_TYPE_LABELS = {
-  procurement: "Procurement department",
+  procurement: "Purchasing department",
   self: "Self-purchase",
 } as const;
 

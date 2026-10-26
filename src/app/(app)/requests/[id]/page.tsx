@@ -62,8 +62,8 @@ import { safeBack } from "../_lib/nav";
 const SAVED: Record<string, string> = {
   created: "Draft created. Fill in the lines, then submit it.",
   draft: "Changes saved.",
-  submitted: "Request submitted and waiting for approval.",
-  submitted_approved: "Request submitted and approved right away (auto-approval).",
+  submitted: "Purchase submitted", // AC-FRM-11 (текст із таблиці PM)
+  submitted_approved: "Purchase submitted and approved automatically (Auto-approval)",
   editing_on: "You are editing the request. Decisions are paused until you save.",
   editing_off: "Changes saved. The request is waiting for approval again.",
   cancelled: "Request cancelled.",
@@ -412,7 +412,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                 </SubmitButton>
                 {canSubmit(request, actor) ? (
                   <SubmitButton formAction={submitPurchase} testId="submit">
-                    Submit for approval
+                    Submit
                   </SubmitButton>
                 ) : null}
               </>
@@ -505,7 +505,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                 Approve
               </SubmitButton>
               <SubmitButton variant="outline" formAction={decidePurchase.bind(null, "return")} formNoValidate testId="return">
-                Return to author
+                Return for revision
               </SubmitButton>
               <SubmitButton
                 variant="destructive"
@@ -522,7 +522,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
       ) : null}
 
       {canReopen(request, actor) ? (
-        <Card title="Procurement department" description="Send this request back to the approvers.">
+        <Card title="Purchasing department" description="Send this request back to the approvers.">
           <form>
             <input type="hidden" name="id" value={request.id} />
             <SubmitButton variant="outline" formAction={reopenPurchase} testId="reopen">

@@ -4,7 +4,7 @@
 
 export const PURCHASE_STATUS_LABELS = {
   draft: "Draft", // «Чернетка»
-  pending: "Pending approval", // «Очікує схвалення»
+  pending: "Awaiting approval", // «Очікує схвалення» (таблиця PM, AC-LANG-06)
   approved: "Approved", // «Схвалено»
   partially_approved: "Partially approved", // «Частково схвалено»
   rejected: "Rejected", // «Відхилено»

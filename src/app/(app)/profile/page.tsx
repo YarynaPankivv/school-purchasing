@@ -72,7 +72,7 @@ export async function ProfilePageContent() {
           </p>
         ) : granted.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No extra permissions: Purchase and Reimbursement are available, with the Procurement department purchase type.
+            No extra permissions: Purchase and Reimbursement are available, with the Purchasing department purchase type.
           </p>
         ) : (
           <ul className="flex flex-wrap gap-2" data-testid="profile-permissions">

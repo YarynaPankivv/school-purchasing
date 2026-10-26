@@ -63,8 +63,8 @@ beforeEach(() => {
 
 describe("доступ до адміністрування", () => {
   it("AC-ORG-09: без ролі admin дії адміністрування відхилено з «Недостатньо прав», дані не змінюються", async () => {
-    expect(ORG_ERROR_MESSAGES.forbidden).toBe("Insufficient permissions");
-    expect(orgErrorMessage("forbidden")).toBe("Insufficient permissions");
+    expect(ORG_ERROR_MESSAGES.forbidden).toBe("Not enough permissions");
+    expect(orgErrorMessage("forbidden")).toBe("Not enough permissions");
 
     const mock = useSupabase(createSupabaseMock({ profile: worker }));
     const { setAdminRole, setActive, deleteDraft } = await userActions();

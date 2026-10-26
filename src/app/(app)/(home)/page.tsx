@@ -98,7 +98,7 @@ export async function HomeContent() {
               title="To decide"
               description="Pending requests from departments you approve, oldest first."
               items={[...overview.toDecide].sort(byOldestUpdate)}
-              empty="Nothing is waiting for your decision."
+              empty="No requests awaiting your decision"
               testId="to-decide"
               limit={5}
               viewAllHref={requestsHref({ view: "decide" })}
@@ -110,7 +110,7 @@ export async function HomeContent() {
               title="Awaiting decision"
               description="Pending requests whose department has no approver who can decide."
               items={[...overview.awaiting].sort(byOldestUpdate)}
-              empty="No requests are waiting for the procurement department."
+              empty="No requests are waiting for the purchasing department."
               testId="awaiting-decision"
               noApprover
               limit={5}
@@ -124,7 +124,7 @@ export async function HomeContent() {
             items={[...overview.mine].sort(draftsLast)}
             empty={
               <>
-                <span>You have no requests yet.</span>
+                <span>You have not submitted any requests yet</span>
                 <LinkButton href="/requests/new" variant="outline">
                   New request
                 </LinkButton>

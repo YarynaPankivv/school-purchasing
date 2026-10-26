@@ -333,3 +333,60 @@ describe("сторінка списку /requests", () => {
     expect(drafts).not.toContain("Showing");
   });
 });
+
+// Тексти з таблиці PM (requirements/49-…): порожній стан, статуси й відмова в доступі на справжніх сторінках.
+describe("тексти інтерфейсу на сторінках (таблиця PM)", () => {
+  it("AC-FRM-14: порожня сторінка «Мої заявки» — «You have not submitted any requests yet»", async () => {
+    const requester = makeProfile({ id: VIEWER, role: "requester" });
+    const mock = createSupabaseMock({
+      profile: requester,
+      results: {
+        "requests.select": { data: [] },
+        "request_lines.select": { data: [] },
+        "departments.select": { data: [] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
+    expect(html).toContain("My requests");
+    expect(html).toContain("You have not submitted any requests yet");
+    expect(html).not.toContain("You have no requests yet");
+  });
+
+  it("AC-LANG-06: статуси «Awaiting approval» і «Approved» підписано текстом у списку й на сторінці заявки", async () => {
+    const mock = createSupabaseMock({
+      profile: asApprover,
+      profiles: [author],
+      results: {
+        "requests.select": { data: [requestRow("pending"), requestRow("approved", { id: REQ_2, number: 13, author_id: asApprover.id })] },
+        "request_lines.select": { data: lines },
+        "departments.select": { data: [{ id: DEP, name: "Primary School" }] },
+        "department_approvers.select": { data: approverOf },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent } = await import("@/app/(app)/requests/(list)/page");
+    const list = renderToStaticMarkup(await RequestsPageContent({ searchParams: Promise.resolve({}) } as never));
+    expect(list).toContain("Awaiting approval");
+    expect(list).toContain("Approved");
+
+    const rejected = await renderDetail({ viewer: asAuthor, request: requestRow("rejected"), members: authorMember });
+    expect(rejected).toContain("Rejected");
+    const pending = await renderDetail({ viewer: asAuthor, request: requestRow("pending"), members: authorMember });
+    expect(pending).toContain("Awaiting approval");
+  });
+
+  it("AC-LANG-03: не-адміністратор на сторінці відділів бачить «Not enough permissions» без даних", async () => {
+    const mock = createSupabaseMock({
+      profile: makeProfile({ id: VIEWER, role: "requester" }),
+      results: { "departments.select": { data: [{ id: DEP, name: "Primary School" }] } },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { DepartmentsPageContent: Page } = await import("@/app/(app)/admin/departments/(list)/page");
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
+    expect(html).toContain("Not enough permissions");
+    expect(html).not.toContain("Primary School");
+  });
+});

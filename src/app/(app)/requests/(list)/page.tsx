@@ -194,7 +194,7 @@ export async function RequestsPageContent({ searchParams }: PageProps<"/requests
           title="To decide"
           description="Pending requests from departments you approve."
           items={overview.toDecide}
-          empty="Nothing is waiting for your decision."
+          empty="No requests awaiting your decision"
           testId="to-decide"
           {...table("decide")}
         />
@@ -205,7 +205,7 @@ export async function RequestsPageContent({ searchParams }: PageProps<"/requests
           title="Awaiting decision"
           description="Pending requests whose department has no approver who can decide."
           items={overview.awaiting}
-          empty="No requests are waiting for the procurement department."
+          empty="No requests are waiting for the purchasing department."
           testId="awaiting-decision"
           noApprover
           {...table("awaiting")}
@@ -217,7 +217,7 @@ export async function RequestsPageContent({ searchParams }: PageProps<"/requests
           title="My requests"
           description="Requests you created or that were submitted on your behalf."
           items={overview.mine}
-          empty="You have no requests yet."
+          empty="You have not submitted any requests yet"
           testId="my-requests"
           mine
           {...table("mine")}

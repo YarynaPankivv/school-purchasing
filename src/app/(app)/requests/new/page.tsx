@@ -54,7 +54,7 @@ export async function NewRequestPageContent({ searchParams }: PageProps<"/reques
           <EmptyState testId="no-departments">
             {user.role === "admin"
               ? "There are no departments yet, so a request cannot be created."
-              : "You have not been added to any department as a requester, so a request cannot be created."}
+              : "You have not been added to any department. Contact your administrator."}
           </EmptyState>
         ) : (
           <RequestForm

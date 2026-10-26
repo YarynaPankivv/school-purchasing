@@ -7,9 +7,9 @@ import { incompleteLinesFromDetail, incompleteLinesMessage } from "./lines";
 export const PUR_ERROR_MESSAGES = {
   // Коди функцій Postgres (D5): `raise exception 'pur:<код>'`, SQLSTATE P0001.
   department_required: "Select a department", // AC-PUR-05 «Оберіть відділ» (переклад тексту PM)
-  lines_incomplete: "Fill in all line fields before submitting.", // AC-PUR-09; конкретні рядки — incompleteLinesMessage
-  lines_required: "Add at least one line before submitting.", // submit_purchase: у заявці немає жодного рядка
-  forbidden: "Insufficient permissions",
+  lines_incomplete: "Fill in all line fields", // AC-PUR-09, AC-FRM-15 (текст із таблиці PM); конкретні рядки — incompleteLinesMessage
+  lines_required: "Add at least one line", // AC-LANG-04 (текст із таблиці PM); submit_purchase: у заявці немає жодного рядка
+  forbidden: "Not enough permissions", // AC-LANG-03 (текст із таблиці PM)
   author_editing: "The author is editing this request. It can be decided once they save or discard the changes.", // AC-PUR-26
   already_decided: "This request has already been decided.", // AC-PUR-25
   own_request: "You cannot decide on your own request.", // AC-PUR-24, 54

@@ -34,7 +34,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           <LoginForm action={login} message={message} />
 
           <p className="text-sm text-muted-foreground">
-            Accounts are created by your school’s procurement department. If you cannot sign in, ask them to check your
+            Accounts are created by your school’s purchasing department. If you cannot sign in, ask them to check your
             account.
           </p>
         </div>
@@ -57,7 +57,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               From request to order, in one place.
             </p>
             <p className="max-w-md text-pretty text-lg text-brand-muted-foreground">
-              Staff submit purchases, department heads decide, and procurement takes it from there.
+              Staff submit purchases, department heads decide, and the purchasing department takes it from there.
             </p>
           </div>
 

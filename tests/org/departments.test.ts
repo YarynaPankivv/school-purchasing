@@ -134,7 +134,7 @@ describe("схвалювачі", () => {
     const url = await redirectedTo(() => addApprover(form({ department_id: HIGH.id, user_id: WORKER })));
 
     expect(url).toBe(`/admin/departments/${HIGH.id}?error=not_member`);
-    expect(orgErrorMessage("not_member")).toBe("First add the employee to the department as a requester");
+    expect(orgErrorMessage("not_member")).toBe("Add the employee to the department as a requester first");
     expect(mock.calls.find((c) => c.table === "department_approvers")).toMatchObject({
       op: "insert",
       payload: { department_id: HIGH.id, user_id: WORKER },
@@ -324,7 +324,7 @@ describe("автосхвалення", () => {
 
 describe("тексти помилок", () => {
   it("текст «Недостатньо прав» — дослівно з вимог PM", () => {
-    expect(ORG_ERROR_MESSAGES.forbidden).toBe("Insufficient permissions");
+    expect(ORG_ERROR_MESSAGES.forbidden).toBe("Not enough permissions");
     expect(orgErrorMessage("nonsense")).toBeUndefined();
   });
 

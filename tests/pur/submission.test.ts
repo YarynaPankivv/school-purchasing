@@ -177,7 +177,7 @@ describe("помилки бази", () => {
   it("pur:lines_incomplete з DETAIL «позиція:поля;…» дає повідомлення з рядками й полями (AC-PUR-09)", () => {
     const error = { code: "P0001", message: "pur:lines_incomplete", details: "1:name,purpose;3:quantity,unit_price" };
     expect(purErrorText(error)).toBe(
-      "Fill in all line fields before submitting. Line 1: name, purpose; Line 3: quantity, unit price.",
+      "Fill in all line fields. Line 1: name, purpose; Line 3: quantity, unit price.",
     );
     expect(purErrorText({ code: "P0001", message: "pur:lines_incomplete", details: null })).toBe(
       PUR_ERROR_MESSAGES.lines_incomplete,
