@@ -134,7 +134,10 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   const showActions =
     (canSetEditing(request, actor) && !request.editing) || canCopy(request, actor) || canCancel(request, actor);
   const departmentOptions = selectableDepartments(departments, memberships, user.id, user.role);
-  const purchaseTypes = allowedPurchaseTypes(user.role, permissions);
+  // Збережений тип лишається в списку, навіть якщо дозвіл на нього зняли вже після створення (тригер guard_request_update
+  // перевіряє дозвіл лише за зміни типу): інакше поле показало б інший тип, а збереження тихо його замінило б.
+  const allowedTypes = allowedPurchaseTypes(user.role, permissions);
+  const purchaseTypes = request.purchase_type && !allowedTypes.includes(request.purchase_type) ? [request.purchase_type, ...allowedTypes] : allowedTypes;
   const candidates = purchaseOnBehalfCandidates(request, memberships, people, isAppRole(user.role) ? user.role : "requester");
 
   // Підзаголовок: відділ і тип закупівлі, а за ними що саме купують (перша назва й «+N more») — той самий рядок, що у списках.

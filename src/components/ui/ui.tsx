@@ -13,6 +13,7 @@ import { SearchBox } from "./search-box";
 import { Icon, type IconName } from "./icons";
 import { MobileMenu } from "./mobile-menu";
 import { NavLinks, type NavItem } from "./nav-links";
+import { StatusPage } from "./status-page";
 
 export type ShellUser = { email: string | null; fullName: string | null; role: AppRole };
 
@@ -406,21 +407,19 @@ export function LinkButton({
   );
 }
 
-// AC-ORG-09: без ролі admin — лише це повідомлення, без даних.
+// AC-ORG-09: без ролі admin — лише це повідомлення, без даних. Нейтрально (DESIGN.md): людина нічого не зламала,
+// тож не червоний Alert, а спокійна сторінка стану в тій самій оболонці (бічна панель і верхня смуга лишаються).
 export function Forbidden() {
   return (
-    <PageShell title="Access denied" back={{ href: "/", label: "Back to home" }}>
-      <Card>
-        <div className="flex items-start gap-3">
-          <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-status-rejected text-status-rejected-foreground">
-            <Icon name="shield" className="size-5" />
-          </span>
-          <div className="flex flex-1 flex-col gap-1">
-            <Alert message={ORG_ERROR_MESSAGES.forbidden} />
-            <p className="mt-2 text-sm text-muted-foreground">This page is available to administrators only.</p>
-          </div>
-        </div>
-      </Card>
-    </PageShell>
+    <>
+      <TopBar showNewRequest />
+      <StatusPage
+        icon="shield"
+        code="403"
+        title={ORG_ERROR_MESSAGES.forbidden}
+        description="This page is available to administrators only."
+        actions={<LinkButton href="/">Back to home</LinkButton>}
+      />
+    </>
   );
 }

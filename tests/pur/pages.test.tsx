@@ -269,6 +269,16 @@ describe("сторінка списку /requests", () => {
     expect(html).not.toContain('data-testid="all-requests"');
   });
 
+  // Без AC PM: опис сторінки не обіцяє звичайному заявнику чужих заявок і рішень, яких він не бачить.
+  it("опис сторінки залежить від ролі: заявник без права рішення не бачить згадки про адміністраторів і рішення", async () => {
+    const requester = await renderList(asAuthor, []);
+    expect(requester).toContain("Purchase requests you submitted.");
+    expect(requester).not.toContain("administrators");
+    expect(requester).not.toContain("waiting for your decision");
+    const approver = await renderList(asApprover, approverOf);
+    expect(approver).toContain("Purchase requests you submitted and requests waiting for your decision.");
+  });
+
   // Без AC PM: це підпис у списку, а не правило. Відділи RLS віддає лише заявникам, тож автор заявки, який уже не заявник
   // свого відділу, не бачить його назви — показуємо «—», а не «No department yet» (у заявки відділ є).
   it("заявка з відділом, назви якого автор не бачить, показує «—», а чернетка без відділу — «No department yet»", async () => {
@@ -387,6 +397,21 @@ describe("тексти інтерфейсу на сторінках (табли�
     const { DepartmentsPageContent: Page } = await import("@/app/(app)/admin/departments/(list)/page");
     const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
     expect(html).toContain("Not enough permissions");
+    expect(html).toContain("This page is available to administrators only.");
+    // Відмова спокійна, не червоне повідомлення про помилку (DESIGN.md).
+    expect(html).not.toContain('role="alert"');
     expect(html).not.toContain("Primary School");
+  });
+
+  // Без AC PM: збережений тип закупівлі не підміняється в полі, якщо дозвіл на нього зняли після створення.
+  it("чернетка зі збереженим типом «Self-purchase» без дозволу показує цей тип у полі, а не підміняє його", async () => {
+    const html = await renderDetail({
+      viewer: asAuthor,
+      request: requestRow("draft", { purchase_type: "self" }),
+      members: authorMember,
+    });
+    expect(html).toContain('value="self"');
+    expect(html).toContain("Self-purchase");
+    expect(html).toContain('value="procurement"');
   });
 });

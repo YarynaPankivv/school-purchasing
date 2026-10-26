@@ -157,7 +157,11 @@ export async function RequestsPageContent({ searchParams }: PageProps<"/requests
             </Link>
           </>
         ) : (
-          "Purchase requests you submitted, requests waiting for your decision and, for administrators, everything."
+          isAdmin
+            ? "Purchase requests you submitted, requests waiting for your decision and everything else in the school."
+            : showDecisions
+              ? "Purchase requests you submitted and requests waiting for your decision."
+              : "Purchase requests you submitted."
         )
       }
       searchQuery={query}
