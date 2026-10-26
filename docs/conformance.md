@@ -46,16 +46,14 @@
 | AC-ORG-20 | адміністратор, призначений схвалювачем, лишається admin | `supabase/migrations/20261018182200_org_departments.sql` (private.sync_role) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-22 | адміністратор без відділів обирає будь-який відділ | `supabase/migrations/20261020182013_org_admin_any_department.sql` (requests_insert); `src/lib/org/departments.ts` (selectableDepartments) | `tests/org/departments.test.ts` | реалізовано |
 | AC-ORG-24 | зняття заявника, що схвалював лише цей відділ, дає роль requester | `supabase/migrations/20261018182200_org_departments.sql` (private.sync_role; каскад FK) | `tests/org/departments.test.ts` | реалізовано |
-| AC-ORG-07 | без дозволу «Витрати карткою» немає у виборі типу заявки | `src/lib/org/request-options.ts` (allowedRequestTypes; RLS requests_insert → private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
-| AC-ORG-17 | з дозволом «Витрата карткою» є у виборі типу заявки | `src/app/(app)/admin/users/actions.ts` (setPermissions; allowedRequestTypes) | `tests/org/permissions.test.ts` | реалізовано |
-| AC-ORG-08 | не-admin без дозволу «Самостійна закупівля» — лише тип «Відділ закупівель» | `src/lib/org/request-options.ts` (allowedPurchaseTypes; private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
+| AC-ORG-17 | з дозволом «Витрата карткою» вона серед дозволених типів працівника (профіль) | `src/app/(app)/admin/users/actions.ts` (setPermissions; allowedRequestTypes) | `tests/org/permissions.test.ts` | реалізовано |
 | AC-ORG-23 | адміністратор без дозволу обирає «Самостійну закупівлю» | `src/lib/org/request-options.ts` (allowedPurchaseTypes; private.can_create_request) | `tests/org/permissions.test.ts` | реалізовано |
 | AC-ORG-09 | без ролі admin немає доступу до працівників і відділів, «Недостатньо прав» | `src/lib/auth/session.ts` (requireAdmin); `src/components/ui/ui.tsx` (Forbidden); `src/app/(app)/admin/users/actions.ts` | `tests/org/users.test.ts` | реалізовано |
 | AC-ORG-10 | єдиний активний адміністратор не знімає з себе роль admin | `src/app/(app)/admin/users/actions.ts` (setAdminRole); `supabase/migrations/20261021120000_org_users.sql` (admin_set_role; private.guard_profile_update) | `tests/org/users.test.ts` | реалізовано |
 | AC-ORG-18 | єдиний активний адміністратор не деактивує себе | `src/app/(app)/admin/users/actions.ts` (setActive); `supabase/migrations/20261021120000_org_users.sql` (private.guard_profile_update) | `tests/org/users.test.ts` | реалізовано |
-| AC-ORG-12 | деактивований працівник не може увійти | `src/app/login/actions.ts` (login); `src/lib/auth/session.ts` (requireActiveUser); `src/app/(app)/admin/users/actions.ts` (setActive) | `tests/org/users.test.ts` | реалізовано |
+| AC-ORG-12 | деактивований працівник не може увійти | `src/app/login/actions.ts` (login); `src/lib/auth/session.ts` (requireActiveUser); `src/app/(app)/admin/users/actions.ts` (setActive) | `tests/org/users.test.ts` | відкладено (PM 2026-10-22 вимагає повідомлення «Обліковий запис деактивовано. Зверніться до адміністратора» при вході; реалізація свідомо показує «invalid», ValiaBihun/2026-quitcode-dream-team#39) |
 | AC-ORG-13 | видалення чернетки деактивованого не зачіпає поданих заявок | `src/app/(app)/admin/users/actions.ts` (deleteDraft); `supabase/migrations/20261021120000_org_users.sql` (requests_delete_draft_admin) | `tests/org/users.test.ts` | реалізовано |
-| AC-ORG-16 | деактивованого немає у виборі схвалювача й особи «від імені» | `src/lib/org/departments.ts` (approverCandidates, onBehalfCandidates); `supabase/migrations/20261021120000_org_users.sql` (private.can_act_on_behalf, profiles_select_colleagues) | `tests/org/users.test.ts` | реалізовано |
+| AC-ORG-16 | деактивованого немає у виборі схвалювача | `src/lib/org/departments.ts` (approverCandidates, onBehalfCandidates); `supabase/migrations/20261021120000_org_users.sql` (private.can_act_on_behalf, profiles_select_colleagues) | `tests/org/users.test.ts` | реалізовано |
 | AC-ORG-21 | за двох активних адміністраторів можна зняти роль із себе | `src/app/(app)/admin/users/actions.ts` (setAdminRole); `supabase/migrations/20261021120000_org_users.sql` (private.guard_profile_update) | `tests/org/users.test.ts` | реалізовано |
 | AC-PUR-01 | нова закупівля — «Чернетка», номер `PUR-N` без провідних нулів, один порожній рядок | `supabase/migrations/20261021140000_pur_drafts.sql`; `src/app/(app)/requests/[id]/actions.ts`; `src/app/(app)/requests/[id]/page.tsx` | `tests/pur/drafts-actions.test.ts`; `tests/pur/pages.test.tsx` | реалізовано |
 | AC-PUR-02 | одночасне створення двох закупівель дає різні номери | `supabase/migrations/20261021140000_pur_drafts.sql`; `src/app/(app)/requests/new/actions.ts` (createDraftRequest); `src/app/(app)/requests/[id]/actions.ts`; `src/app/(app)/requests/[id]/page.tsx` | `tests/pur/numbering.test.ts` | реалізовано |
@@ -177,3 +175,16 @@
 | AC-FRM-14 | порожня сторінка «Мої заявки»: «Ви ще не подали жодної заявки» | `src/app/(app)/requests/(list)/page.tsx` | `tests/pur/pages.test.tsx` | реалізовано |
 | AC-FRM-15 | рядок лише з назвою не подається, «Заповніть усі поля рядка» | — | — | відкладено (чекає реалізації) |
 | AC-APR-07 | відхилення з причиною: статус «Відхилено», причину збережено й показано | — | — | відкладено (чекає реалізації) |
+| AC-APR-08 | схвалювач бачить автора заявки за іменем у списку для рішення й на сторінці заявки | — | — | відкладено (чекає реалізації) |
+| AC-APR-09 | без імені в профілі автора вказано його email | — | — | відкладено (чекає реалізації) |
+| AC-APR-10 | ролі, відділів і дозволів автора схвалювач не бачить | — | — | відкладено (чекає реалізації) |
+| AC-ORG-25 | адміністратор без дозволу має «Витрату карткою» серед дозволених типів у профілі | — | — | відкладено (чекає реалізації) |
+| AC-ORG-26 | працівник без дозволу не має «Витрати карткою» серед дозволених типів у профілі | — | — | відкладено (чекає реалізації) |
+| AC-ORG-27 | без дозволу «Самостійна закупівля» серед дозволених типів закупівлі лише «Відділ закупівель» | — | — | відкладено (чекає реалізації) |
+| AC-ORG-28 | деактивованого немає у виборі особи «від імені» | — | — | відкладено (чекає реалізації) |
+| AC-ORG-29 | адміністратор із відділом обирає будь-який відділ, зокрема чужий | — | — | відкладено (чекає реалізації) |
+| AC-ORG-30 | повторно активований схвалювач лишається схвалювачем з роллю approver | — | — | відкладено (чекає реалізації) |
+| AC-ORG-31 | зняття ролі admin іншим адміністратором: без схвалення відділів — requester | — | — | відкладено (чекає реалізації) |
+| AC-ORG-32 | зняття ролі admin іншим адміністратором: схвалює відділ — approver | — | — | відкладено (чекає реалізації) |
+| AC-ORG-33 | автосхвалення не вмикається не-заявнику відділу, повідомлення про додавання заявником | — | — | відкладено (чекає реалізації) |
+| AC-ORG-34 | дубль назви відділу без урахування регістру відхилено, «Відділ з такою назвою вже є» | — | — | відкладено (чекає реалізації) |
