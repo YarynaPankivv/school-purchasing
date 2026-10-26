@@ -274,20 +274,26 @@ describe("сторінка закупівлі /requests/[id]", () => {
     expect(html).not.toContain('data-testid="purchase-form"');
   });
 
-  it("AC-PUR-03: чужу чернетку RLS не віддає — сторінка дає «не знайдено»", async () => {
-    await expect(renderDetail({ viewer: asApprover, request: null, approvers: approverOf })).rejects.toThrow("not-found");
+  it("AC-PUR-03: чужу чернетку RLS не віддає — сторінка дає «Not enough permissions» без даних", async () => {
+    const html = await renderDetail({ viewer: asApprover, request: null, approvers: approverOf });
+    expect(html).toContain("Not enough permissions");
+    expect(html).not.toContain("Autumn supplies");
   });
 
-  it("AC-PUR-49: заявник того самого відділу, що не автор і не схвалювач, не бачить чужої поданої заявки — «не знайдено»", async () => {
+  it("AC-PUR-49: заявник того самого відділу, що не автор і не схвалювач, не бачить чужої поданої заявки — «Not enough permissions»", async () => {
     const colleague = makeProfile({ id: VIEWER, role: "requester", email: "colleague@example.test" });
     // RLS (private.can_view_request) не віддає рядок, хоча відділ у колеги спільний.
     const members = [{ department_id: DEP, user_id: VIEWER, auto_approve: false }, ...authorMember];
-    await expect(renderDetail({ viewer: colleague, request: null, members })).rejects.toThrow("not-found");
+    const html = await renderDetail({ viewer: colleague, request: null, members });
+    expect(html).toContain("Not enough permissions");
+    expect(html).not.toContain("Autumn supplies");
   });
 
-  it("AC-PUR-35: схвалювач іншого відділу не бачить закупівлі й не отримує дій — «не знайдено»", async () => {
+  it("AC-PUR-35: схвалювач іншого відділу не бачить закупівлі й не отримує дій — «Not enough permissions»", async () => {
     const otherDepartment = [{ department_id: "dep-office", user_id: VIEWER }];
-    await expect(renderDetail({ viewer: asApprover, request: null, approvers: otherDepartment })).rejects.toThrow("not-found");
+    const html = await renderDetail({ viewer: asApprover, request: null, approvers: otherDepartment });
+    expect(html).toContain("Not enough permissions");
+    expect(html).not.toContain('data-testid="approve"');
   });
 
   it("AC-PUR-37: в історії поданої заявки є запис «Submitted» з автором і часом", async () => {

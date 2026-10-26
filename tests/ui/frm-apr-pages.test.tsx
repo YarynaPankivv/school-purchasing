@@ -268,3 +268,38 @@ describe("AC-APR: список для рішення", () => {
     }
   });
 });
+
+describe("AC-FRM-08, AC-APR-03: чужа заявка за прямим посиланням", () => {
+  async function openForeign(viewer: ReturnType<typeof makeProfile>, members: Array<{ department_id: string; user_id: string; auto_approve: boolean }>, approvers: Array<{ department_id: string; user_id: string }>) {
+    // RLS не віддає заявку: requests.select порожній, тож сторінка не має жодних даних.
+    const mock = createSupabaseMock({
+      profile: viewer,
+      results: {
+        "requests.select": { data: null },
+        "departments.select": { data: [] },
+        "department_approvers.select": { data: approvers },
+        "department_members.select": { data: members },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestPageContent } = await import("@/app/(app)/requests/[id]/page");
+    return renderToStaticMarkup(await RequestPageContent({ params: Promise.resolve({ id: REQ }), searchParams: Promise.resolve({}) } as never));
+  }
+
+  it("AC-FRM-08: заявник того ж відділу, не автор і не схвалювач, бачить «Not enough permissions», даних закупівлі немає", async () => {
+    const colleague = makeProfile({ id: ME, role: "requester", email: "member2@example.test" });
+    const html = await openForeign(colleague, [{ department_id: PRIMARY, user_id: ME, auto_approve: false }], []);
+
+    expect(html).toContain("Not enough permissions");
+    expect(html).not.toContain("PUR-12");
+    expect(html).not.toContain('data-testid="lines"');
+  });
+
+  it("AC-APR-03: схвалювач «Primary School» за прямим посиланням на заявку «Office» бачить «Not enough permissions», дій рішення немає", async () => {
+    const html = await openForeign(approver, [{ department_id: PRIMARY, user_id: ME, auto_approve: false }], [{ department_id: PRIMARY, user_id: ME }]);
+
+    expect(html).toContain("Not enough permissions");
+    expect(html).not.toContain('data-testid="approve"');
+    expect(html).not.toContain('data-testid="lines"');
+  });
+});

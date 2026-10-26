@@ -11,6 +11,7 @@ import {
   DetailList,
   EmptyState,
   Field,
+  Forbidden,
   Input,
   PageShell,
   Select,
@@ -111,7 +112,9 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
     if (result.error) throw new Error(`Failed to read the request: ${result.error.message}`);
   }
   const request = requestRes.data ? toPurchaseRow(requestRes.data) : null;
-  if (!request) notFound();
+  // AC-FRM-08, AC-APR-03: RLS не віддала рядок (чужа заявка чи чужий відділ) — «Not enough permissions», без даних заявки.
+  // Те саме, що й для неіснуючого id: наявність чужої заявки не розкриваємо.
+  if (!request) return <Forbidden description="You do not have access to this request." />;
 
   const actor: Actor = { id: user.id, role: user.role, is_active: user.isActive };
   const lines = (linesRes.data ?? []).map(toLineRow).filter((l): l is LineRow => l !== null);
