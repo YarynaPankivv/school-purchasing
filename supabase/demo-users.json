@@ -18,5 +18,20 @@
     "email": "approver@example.test",
     "full_name": "Petro Demo-Approver",
     "role": "requester"
+  },
+  {
+    "email": "pm-requester@example.test",
+    "full_name": "PM Requester",
+    "role": "requester"
+  },
+  {
+    "email": "pm-approver@example.test",
+    "full_name": "PM Approver",
+    "role": "requester"
+  },
+  {
+    "email": "pm-admin@example.test",
+    "full_name": "PM Admin",
+    "role": "admin"
   }
 ]
