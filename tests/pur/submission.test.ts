@@ -128,6 +128,11 @@ describe("результат подання", () => {
     });
   });
 
+  it("AC-PUR-37: подання без автосхвалення додає в історію один запис «Подано» (автора й час додає база)", () => {
+    const outcome = submitOutcome({ author_id: AUTHOR, department_id: PRIMARY }, memberships);
+    expect(outcome.history).toEqual(["submitted"]);
+  });
+
   it("без автосхвалення (чужий відділ, чуже членство) — «Очікує схвалення» й запис «Подано»", () => {
     const expected = { status: "pending", history: ["submitted"], lineStatus: "pending" };
     expect(submitOutcome({ author_id: AUTHOR, department_id: PRIMARY }, memberships)).toEqual(expected);
