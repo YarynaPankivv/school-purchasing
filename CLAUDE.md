@@ -1,4 +1,5 @@
 @AGENTS.md
+@DESIGN.md
 
 - Мова відповідей і документації — українська; код, команди й імена файлів — англійською.
 - Скіли: `.claude/skills/` (spec-clarify, spec-review, openspec-*); команди: `/requirements-sync`, `/conformance`, `/opsx:*`.

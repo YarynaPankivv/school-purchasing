@@ -1,110 +1,153 @@
 @import "tailwindcss";
 
-/* Дизайн-токени застосунку. Колір завжди беремо з токена (bg-surface, text-muted, border-line …),
-   щоб світла й темна теми перемикались в одному місці. */
+/* Дизайн-токени застосунку (DESIGN.md, розділ 2). Напрям «теплий шкільний»: папірцеве тло з теплим відтінком, чорнильний
+   текст, один насичений колір дії (петроль — глибокий сіро-бірюзовий) і спокійні статуси. Імена — семантичні, як у shadcn/ui:
+   сторінки й компоненти беруть колір лише з токена (bg-card, text-muted-foreground, border-border …), ніколи hex чи сирі
+   палітри Tailwind. Світла й темна теми перемикаються за системою (prefers-color-scheme). Значення — OKLCH; hex — у коментарі. */
 :root {
-  --background: #f5f6fa;
-  --foreground: #12151f;
-
-  --surface: #ffffff;
-  --surface-muted: #f0f2f8;
-  --line: #e3e6ef;
-  --line-strong: #cdd2e0;
-  --ink: #12151f;
-  --muted: #5d6579;
-
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-ink: #ffffff;
-  --primary-soft: #eceefe;
-  --primary-soft-ink: #3730a3;
-
-  --ok-soft: #e4f6ec;
-  --ok-ink: #14633a;
-  --warn-soft: #fdf1d8;
-  --warn-ink: #8a5300;
-  --danger: #c4283c;
-  --danger-hover: #a81f31;
-  --danger-soft: #fce8eb;
-  --danger-ink: #8f1a2b;
-  --info-soft: #e5f0fd;
-  --info-ink: #1b4f9c;
-
+  color-scheme: light dark;
+  --background: oklch(0.972 0.010 85.0); /* #f9f5ee */
+  --foreground: oklch(0.235 0.020 70.0); /* #241d14 */
+  --card: oklch(0.992 0.005 85.0); /* #fefcf9 */
+  --card-foreground: oklch(0.235 0.020 70.0); /* #241d14 */
+  --muted: oklch(0.950 0.013 85.0); /* #f2eee5 */
+  --muted-foreground: oklch(0.485 0.025 70.0); /* #685d50 */
+  --secondary: oklch(0.950 0.013 85.0); /* #f2eee5 */
+  --secondary-foreground: oklch(0.235 0.020 70.0); /* #241d14 */
+  --accent: oklch(0.945 0.026 205.0); /* #daf2f5 */
+  --accent-foreground: oklch(0.340 0.062 215.0); /* #00404c */
+  --primary: oklch(0.420 0.074 215.0); /* #015766 */
+  --primary-hover: oklch(0.360 0.068 215.0); /* #004653 */
+  --primary-foreground: oklch(0.985 0.006 85.0); /* #fcfaf6 */
+  --destructive: oklch(0.520 0.165 28.0); /* #b5352d */
+  --destructive-hover: oklch(0.460 0.155 28.0); /* #9c2620 */
+  --destructive-foreground: oklch(0.985 0.006 85.0); /* #fcfaf6 */
+  --border: oklch(0.895 0.016 85.0); /* #e1dcd1 */
+  --input: oklch(0.600 0.030 75.0); /* #8b7e6d */
+  --ring: oklch(0.420 0.074 215.0); /* #015766 */
+  --status-pending: oklch(0.950 0.055 90.0); /* #fdeec5 */
+  --status-pending-foreground: oklch(0.410 0.090 70.0); /* #694000 */
+  --status-approved: oklch(0.942 0.045 155.0); /* #d5f5df */
+  --status-approved-foreground: oklch(0.370 0.080 155.0); /* #124c2c */
+  --status-rejected: oklch(0.940 0.026 25.0); /* #fce5e2 */
+  --status-rejected-foreground: oklch(0.420 0.140 25.0); /* #892122 */
+  --status-info: oklch(0.942 0.026 245.0); /* #deeefd */
+  --status-info-foreground: oklch(0.400 0.100 250.0); /* #124a7b */
+  --brand: oklch(0.300 0.055 215.0); /* #00343f */
+  --brand-foreground: oklch(0.975 0.008 85.0); /* #f9f6f1 */
+  --brand-muted-foreground: oklch(0.840 0.030 200.0); /* #b5d1d2 */
+  --tint-lavender: oklch(0.930 0.035 295.0); /* #e9e4fe */
+  --tint-peach: oklch(0.940 0.040 55.0); /* #ffe5d2 */
+  --tint-butter: oklch(0.955 0.060 95.0); /* #fdf1c3 */
+  --tint-sky: oklch(0.935 0.035 235.0); /* #d4eefe */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b0d14;
-    --foreground: #e8eaf2;
-
-    --surface: #131622;
-    --surface-muted: #1a1e2e;
-    --line: #262b3d;
-    --line-strong: #363c54;
-    --ink: #e8eaf2;
-    --muted: #9aa2b8;
-
-    --primary: #8b86f9;
-    --primary-hover: #a09cfb;
-    --primary-ink: #0b0d14;
-    --primary-soft: #23264a;
-    --primary-soft-ink: #c3c1fd;
-
-    --ok-soft: #12301f;
-    --ok-ink: #7fdba5;
-    --warn-soft: #36290c;
-    --warn-ink: #f0c36a;
-    --danger: #ee5a6e;
-    --danger-hover: #f47b8b;
-    --danger-soft: #3a141b;
-    --danger-ink: #f4a0ad;
-    --info-soft: #11264a;
-    --info-ink: #8fbaf3;
+    --background: oklch(0.190 0.012 70.0); /* #17130e */
+    --foreground: oklch(0.930 0.010 85.0); /* #ebe7e0 */
+    --card: oklch(0.235 0.014 70.0); /* #221d17 */
+    --card-foreground: oklch(0.930 0.010 85.0); /* #ebe7e0 */
+    --muted: oklch(0.275 0.016 70.0); /* #2d261f */
+    --muted-foreground: oklch(0.720 0.020 80.0); /* #aba397 */
+    --secondary: oklch(0.275 0.016 70.0); /* #2d261f */
+    --secondary-foreground: oklch(0.930 0.010 85.0); /* #ebe7e0 */
+    --accent: oklch(0.320 0.034 210.0); /* #1d383c */
+    --accent-foreground: oklch(0.870 0.050 205.0); /* #afdee4 */
+    --primary: oklch(0.730 0.082 205.0); /* #64b7c0 */
+    --primary-hover: oklch(0.790 0.074 205.0); /* #7fc9d1 */
+    --primary-foreground: oklch(0.200 0.020 220.0); /* #0b181c */
+    --destructive: oklch(0.700 0.150 25.0); /* #ed756e */
+    --destructive-hover: oklch(0.760 0.130 25.0); /* #f98f87 */
+    --destructive-foreground: oklch(0.200 0.020 25.0); /* #1e1311 */
+    --border: oklch(0.320 0.015 70.0); /* #38322b */
+    --input: oklch(0.580 0.030 75.0); /* #857867 */
+    --ring: oklch(0.730 0.082 205.0); /* #64b7c0 */
+    --status-pending: oklch(0.300 0.050 85.0); /* #392c0c */
+    --status-pending-foreground: oklch(0.850 0.120 85.0); /* #f2c86c */
+    --status-approved: oklch(0.290 0.050 155.0); /* #143320 */
+    --status-approved-foreground: oklch(0.840 0.110 155.0); /* #8ee0ab */
+    --status-rejected: oklch(0.290 0.060 25.0); /* #451e1c */
+    --status-rejected-foreground: oklch(0.820 0.090 25.0); /* #f9aea7 */
+    --status-info: oklch(0.290 0.050 245.0); /* #142e43 */
+    --status-info-foreground: oklch(0.820 0.080 245.0); /* #98caf5 */
+    --brand: oklch(0.270 0.050 215.0); /* #002c36 */
+    --brand-foreground: oklch(0.940 0.010 85.0); /* #eeebe4 */
+    --brand-muted-foreground: oklch(0.800 0.030 200.0); /* #a8c4c5 */
+    --tint-lavender: oklch(0.320 0.050 295.0); /* #352e4a */
+    --tint-peach: oklch(0.330 0.050 55.0); /* #492e1b */
+    --tint-butter: oklch(0.330 0.055 90.0); /* #403410 */
+    --tint-sky: oklch(0.310 0.050 235.0); /* #133446 */
   }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
-  --color-surface-muted: var(--surface-muted);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
-  --color-ink: var(--ink);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
-  --color-primary-ink: var(--primary-ink);
-  --color-primary-soft: var(--primary-soft);
-  --color-primary-soft-ink: var(--primary-soft-ink);
-  --color-ok-soft: var(--ok-soft);
-  --color-ok-ink: var(--ok-ink);
-  --color-warn-soft: var(--warn-soft);
-  --color-warn-ink: var(--warn-ink);
-  --color-danger: var(--danger);
-  --color-danger-hover: var(--danger-hover);
-  --color-danger-soft: var(--danger-soft);
-  --color-danger-ink: var(--danger-ink);
-  --color-info-soft: var(--info-soft);
-  --color-info-ink: var(--info-ink);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-primary-foreground: var(--primary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-foreground: var(--status-pending-foreground);
+  --color-status-approved: var(--status-approved);
+  --color-status-approved-foreground: var(--status-approved-foreground);
+  --color-status-rejected: var(--status-rejected);
+  --color-status-rejected-foreground: var(--status-rejected-foreground);
+  --color-status-info: var(--status-info);
+  --color-status-info-foreground: var(--status-info-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted-foreground: var(--brand-muted-foreground);
+  --color-tint-lavender: var(--tint-lavender);
+  --color-tint-peach: var(--tint-peach);
+  --color-tint-butter: var(--tint-butter);
+  --color-tint-sky: var(--tint-sky);
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 @theme {
-  --shadow-card: 0 1px 2px rgb(18 21 31 / 0.05), 0 1px 3px rgb(18 21 31 / 0.07);
+  --shadow-card: 0 1px 2px oklch(0.3 0.03 70 / 0.06), 0 2px 6px oklch(0.3 0.03 70 / 0.06);
+}
+
+/* Місце під смугу прокрутки резервуємо завжди: інакше вміст зсувається на пів ширини смуги, коли перехід веде з довгої
+   сторінки на коротку (і навпаки), і верхня смуга «стрибає» між вкладками. */
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  scrollbar-color: var(--input) transparent;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 
 /* Видимий фокус для клавіатури на всіх інтерактивних елементах. */
 :where(a, button, input, select, textarea, summary):focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -116,7 +159,7 @@ body {
   width: 2.5rem;
   height: 1.5rem;
   border-radius: 9999px;
-  background: var(--line-strong);
+  background: var(--input);
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
@@ -128,8 +171,8 @@ body {
   width: 1.125rem;
   height: 1.125rem;
   border-radius: 9999px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  background: var(--card);
+  box-shadow: 0 1px 2px oklch(0.2 0.02 70 / 0.3);
   transition: transform 0.15s ease;
 }
 .toggle:checked {
@@ -143,9 +186,35 @@ body {
   cursor: not-allowed;
 }
 
+/* Мінімальний рух (лише opacity і transform, до 180 мс, ease-out): поява вмісту сторінки й повідомлень, спливання меню.
+   Нічого не рухається при натисканні клавіш і повторних діях; з prefers-reduced-motion — без руху. */
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-2px);
+  }
+}
+.anim-enter {
+  animation: enter 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.anim-pop {
+  transform-origin: top;
+  animation: pop 120ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .toggle,
   .toggle::after {
     transition: none;
+  }
+  .anim-enter,
+  .anim-pop {
+    animation: none;
   }
 }

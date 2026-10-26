@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Дані для тестів скриптів (навмисно «зламані» файли).
     "tests/fixtures/**",
+    // Скіли й агенти Claude Code (локально, у т.ч. Impeccable) — не код застосунку.
+    ".claude/**",
   ]),
 ]);
 

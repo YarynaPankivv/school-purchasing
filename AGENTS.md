@@ -17,6 +17,17 @@ merge. Вимоги пише PM людською мовою у своєму ре
 тими самими AC ID. Наприкінці PM порівнює реалізації розробників команди. Продукт, ролі й матриця прав, глосарій —
 `requirements/product.md`.
 
+## Дизайн-система (WS7)
+
+- Колір беремо **лише з семантичних токенів** (`bg-background`, `text-foreground`, `bg-card`, `text-muted-foreground`, `bg-primary`,
+  `text-primary-foreground`, `border-border`, `border-input`, `bg-destructive`, `bg-status-*`): жодних hex, `bg-[#…]`, сирих палітр
+  (`zinc-500`, `bg-white`, `text-white`) і кольорів у `style={{ … }}`. Правила й таблиця токенів — у `DESIGN.md`.
+- Компоненти — лише з `@/components/ui` (`Button`, `SubmitButton`, `Input`, `Select`, `Textarea`, `Checkbox`, `Switch`, `Label`/`Field`,
+  `Card`, `Badge`, `Alert` …): у сторінках немає власних `<button>`/`<input>` зі стилями (`type="hidden"` — можна).
+- Новий токен — через `DESIGN.md` (розділ 9) і `src/app/globals.css`, нічого «лише для однієї сторінки».
+- Перевірка: `npm run check:design` (CI: `.github/workflows/architecture.yml`, job «Дизайн-система: лише токени»).
+  Виняток — коментар `design-ok: <причина>` у тому ж рядку, з реальною причиною.
+
 ## Стек і версії (не оновлювати без ADR)
 
 Node 24.x · Next.js 16.4 (App Router, `src/`, без Cache Components) · React 19.3 · TypeScript ^5 · ESLint ^9 ·

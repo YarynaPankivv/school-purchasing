@@ -1,0 +1,34 @@
+# Архітектурні правила — окремий workflow, щоб не чіпати назви jobs у ci.yml (на них спирається ruleset).
+# Кожне правило — швидкий скрипт без залежностей; пояснення — в ADR у docs/decisions/.
+name: architecture
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  design-tokens:
+    name: "Дизайн-система: лише токени"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node scripts/check-design-tokens.mjs
+
+  server-boundary:
+    name: "Секретний ключ лише на сервері"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node scripts/check-server-boundary.mjs
