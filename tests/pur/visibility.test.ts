@@ -1,7 +1,10 @@
 // Задача 1 зрізу PUR (tasks.md 1.2, 1.4): дзеркала правил видимості й дій автора.
 // Останнє слово — RLS (private.can_view_request, політики requests/request_lines) і функції D5: їх перевіряє
 // ручний прохід після db-deploy; AC-PUR-03, 11, 32, 35, 38, 44, 45, 49 закриває координатор разом зі сторінками й actions.
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { canAdminReject, canDecide, canReopen, decisionBlockReason } from "@/lib/pur/decisions";
 import {
   canCancel,
   canChangeDepartment,
@@ -37,6 +40,40 @@ describe("хто бачить закупівлю", () => {
     expect(canViewRequest(submitted, actor(OUTSIDER, "requester"), approvers)).toBe(false);
     // Роль approver без рядка department_approvers не дає доступу: склад береться з відділу.
     expect(canViewRequest(submitted, actor("user-ex-approver", "approver"), approvers)).toBe(false);
+  });
+});
+
+describe("видимість у межах відділів", () => {
+  const colleagueB = actor("user-colleague-b", "requester");
+
+  it("AC-PUR-49: заявник того самого відділу, що не автор, не «від імені» й не схвалювач, не бачить чужої поданої заявки", () => {
+    for (const status of ["pending", "approved", "partially_approved", "rejected", "returned"] as const) {
+      const submitted = makePurchase({ status, department_id: PRIMARY, on_behalf_of_id: null });
+      expect(canViewRequest(submitted, colleagueB, approvers)).toBe(false);
+      // Автор і схвалювач відділу її бачать.
+      expect(canViewRequest(submitted, author, approvers)).toBe(true);
+      expect(canViewRequest(submitted, actor(APPROVER, "approver"), approvers)).toBe(true);
+    }
+  });
+
+  it("AC-PUR-35: схвалювач відділу «Початкова школа» не бачить закупівлі відділу «Офіс» і не може діяти", () => {
+    const officePurchase = makePurchase({ status: "pending", department_id: OFFICE });
+    const primaryApprover = actor(APPROVER, "approver");
+    expect(canViewRequest(officePurchase, primaryApprover, approvers)).toBe(false);
+    expect(canDecide(officePurchase, primaryApprover, approvers)).toBe(false);
+    expect(decisionBlockReason(officePurchase, primaryApprover, approvers)).toBe("forbidden");
+    expect(canAdminReject({ status: "approved" }, primaryApprover)).toBe(false);
+    expect(canReopen({ status: "rejected" }, primaryApprover)).toBe(false);
+  });
+
+  it("AC-PUR-35, 49 у базі: can_view_request віддає не-чернетку лише схвалювачу її відділу, а не будь-якому заявнику відділу", () => {
+    const sql = readFileSync(join(process.cwd(), "supabase/migrations/20261021140000_pur_drafts.sql"), "utf8");
+    const body = sql.slice(sql.indexOf("create or replace function private.can_view_request"));
+    const fn = body.slice(0, body.indexOf("$$;", body.indexOf("as $$") + 5));
+    expect(fn).toContain("r.status <> 'draft'");
+    expect(fn).toContain("private.is_department_approver(r.department_id)");
+    // Членство у відділі не дає доступу до чужих заявок.
+    expect(fn).not.toContain("department_members");
   });
 });
 

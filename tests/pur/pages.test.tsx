@@ -4,6 +4,7 @@
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { formatDateTime } from "@/lib/pur/time";
 import { createSupabaseMock, makeProfile } from "../org/supabase-mock";
 
 vi.mock("next/navigation", async () => {
@@ -91,28 +92,38 @@ type Setup = {
   request: ReturnType<typeof requestRow> | null;
   approvers?: Array<{ department_id: string; user_id: string }>;
   members?: Array<{ department_id: string; user_id: string; auto_approve: boolean }>;
+  // Рядки й історія за замовчуванням — два рядки «pending» і один запис «Подано»; тести AC-PUR-37…43 підміняють їх.
+  lines?: typeof lines;
+  history?: typeof defaultHistory;
 };
 
-async function renderDetail({ viewer, request, approvers = [], members = [] }: Setup): Promise<string> {
+const defaultHistory = [
+  {
+    id: "h1",
+    request_id: REQ,
+    actor_id: AUTHOR,
+    actor_name: "Anna Author" as string | null,
+    action: "submitted",
+    reason: null as string | null,
+    created_at: "2026-10-21T12:10:00Z",
+  },
+];
+
+async function renderDetail({
+  viewer,
+  request,
+  approvers = [],
+  members = [],
+  lines: lineRows = lines,
+  history = defaultHistory,
+}: Setup): Promise<string> {
   const mock = createSupabaseMock({
     profile: viewer,
     profiles: viewer.id === AUTHOR ? [] : [author],
     results: {
       "requests.select": { data: request },
-      "request_lines.select": { data: lines },
-      "request_history.select": {
-        data: [
-          {
-            id: "h1",
-            request_id: REQ,
-            actor_id: AUTHOR,
-            actor_name: "Anna Author",
-            action: "submitted",
-            reason: null,
-            created_at: "2026-10-21T12:10:00Z",
-          },
-        ],
-      },
+      "request_lines.select": { data: lineRows },
+      "request_history.select": { data: history },
       "departments.select": { data: [{ id: DEP, name: "Primary School" }] },
       "department_approvers.select": { data: approvers },
       "department_members.select": { data: members },
@@ -123,6 +134,22 @@ async function renderDetail({ viewer, request, approvers = [], members = [] }: S
   const element = await Page({ params: Promise.resolve({ id: REQ }), searchParams: Promise.resolve({}) } as never);
   return renderToStaticMarkup(element);
 }
+
+// Запис історії й рядки таблиці — із відрендереної сторінки (data-testid="history", "line-row").
+const historyOf = (html: string) => html.slice(html.indexOf('data-testid="history"'));
+const lineRows = (html: string) =>
+  html
+    .split('data-testid="line-row"')
+    .slice(1)
+    .map((row) => row.slice(0, row.indexOf("</tr>")));
+
+const LINE_3 = "a7c1e9d3-6b48-4f20-9e5a-3d8f0b2c4a61";
+// Заявка з 3 рядками, де схвалювач відхилив рядок 2.
+const partiallyApprovedLines = [
+  { ...lines[0], status: "approved" },
+  { ...lines[1], status: "rejected" },
+  { id: LINE_3, request_id: REQ, position: 3, name: "Glue", purpose: "Crafts", quantity: 1, unit_price: 7, status: "approved", created_at: "" },
+];
 
 const approverOf = [{ department_id: DEP, user_id: VIEWER }];
 const asAuthor = makeProfile({ id: AUTHOR, role: "requester", email: "author@example.test" });
@@ -236,6 +263,83 @@ describe("сторінка закупівлі /requests/[id]", () => {
   it("AC-PUR-03: чужу чернетку RLS не віддає — сторінка дає «не знайдено»", async () => {
     await expect(renderDetail({ viewer: asApprover, request: null, approvers: approverOf })).rejects.toThrow("not-found");
   });
+
+  it("AC-PUR-49: заявник того самого відділу, що не автор і не схвалювач, не бачить чужої поданої заявки — «не знайдено»", async () => {
+    const colleague = makeProfile({ id: VIEWER, role: "requester", email: "colleague@example.test" });
+    // RLS (private.can_view_request) не віддає рядок, хоча відділ у колеги спільний.
+    const members = [{ department_id: DEP, user_id: VIEWER, auto_approve: false }, ...authorMember];
+    await expect(renderDetail({ viewer: colleague, request: null, members })).rejects.toThrow("not-found");
+  });
+
+  it("AC-PUR-35: схвалювач іншого відділу не бачить закупівлі й не отримує дій — «не знайдено»", async () => {
+    const otherDepartment = [{ department_id: "dep-office", user_id: VIEWER }];
+    await expect(renderDetail({ viewer: asApprover, request: null, approvers: otherDepartment })).rejects.toThrow("not-found");
+  });
+
+  it("AC-PUR-37: в історії поданої заявки є запис «Submitted» з автором і часом", async () => {
+    const html = await renderDetail({ viewer: asApprover, request: requestRow("pending"), approvers: approverOf });
+    const history = historyOf(html);
+    expect(history).toContain("Submitted");
+    expect(history).toContain("Anna Author");
+    expect(history).toContain(formatDateTime("2026-10-21T12:10:00Z"));
+  });
+
+  it("AC-PUR-39: після схвалення в історії є запис «Approved» з ім'ям схвалювача й часом", async () => {
+    const approvedAt = "2026-10-22T09:15:00Z";
+    const history = [
+      { ...defaultHistory[0] },
+      { id: "h2", request_id: REQ, actor_id: VIEWER, actor_name: "Ivan Approver", action: "approved", reason: null, created_at: approvedAt },
+    ];
+    const html = await renderDetail({ viewer: asAuthor, request: requestRow("approved"), members: authorMember, history });
+    const entries = historyOf(html);
+    expect(entries).toContain("Approved");
+    expect(entries).toContain("Ivan Approver");
+    expect(entries).toContain(formatDateTime(approvedAt));
+  });
+
+  it("AC-PUR-41: автор бачить, що відхилено рядок 2: у ньому «Rejected», в рядках 1 і 3 — «Approved»", async () => {
+    const html = await renderDetail({
+      viewer: asAuthor,
+      request: requestRow("partially_approved"),
+      members: authorMember,
+      lines: partiallyApprovedLines,
+    });
+    const [row1, row2, row3] = lineRows(html);
+    expect(row1).toContain("Approved");
+    expect(row1).not.toContain("Rejected");
+    expect(row2).toContain("Rejected");
+    expect(row2).not.toContain("Approved");
+    expect(row3).toContain("Approved");
+    expect(row3).not.toContain("Rejected");
+  });
+
+  it("AC-PUR-42: далі до відділу закупівель ідуть лише схвалені рядки — у сумі заявки відхилений рядок не враховано", async () => {
+    const html = await renderDetail({
+      viewer: asAuthor,
+      request: requestRow("partially_approved"),
+      members: authorMember,
+      lines: partiallyApprovedLines,
+    });
+    // 3 × 20 + 1 × 7 = $67.00; з відхиленим рядком 2 (2 × 5) було б $77.00.
+    expect(html).toContain("$67.00");
+    expect(html).not.toContain("$77.00");
+  });
+
+  it("AC-PUR-43: автор відхиленої заявки бачить причину «Не передбачено бюджетом»", async () => {
+    const reason = "Не передбачено бюджетом";
+    const history = [
+      { ...defaultHistory[0] },
+      { id: "h2", request_id: REQ, actor_id: VIEWER, actor_name: "Ivan Approver", action: "rejected", reason, created_at: "2026-10-22T09:15:00Z" },
+    ];
+    const html = await renderDetail({
+      viewer: asAuthor,
+      request: requestRow("rejected", { decision_reason: reason }),
+      members: authorMember,
+      history,
+    });
+    expect(html).toContain(`Reason: ${reason}`);
+    expect(historyOf(html)).toContain(reason);
+  });
 });
 
 describe("сторінка списку /requests", () => {
@@ -277,6 +381,13 @@ describe("сторінка списку /requests", () => {
     expect(requester).not.toContain("waiting for your decision");
     const approver = await renderList(asApprover, approverOf);
     expect(approver).toContain("Purchase requests you submitted and requests waiting for your decision.");
+  });
+
+  it("AC-PUR-40: автор схваленої заявки бачить позначку «Request approved», а чужі заявки її не мають", async () => {
+    // Схвалена PUR-13 — власна заявка глядача, PUR-12 (pending) — чужа в «To decide».
+    const html = await renderList(asApprover, approverOf);
+    expect(html.match(/Request approved/g)).toHaveLength(1);
+    expect(html).toContain("PUR-13");
   });
 
   // Без AC PM: це підпис у списку, а не правило. Відділи RLS віддає лише заявникам, тож автор заявки, який уже не заявник

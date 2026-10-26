@@ -14,10 +14,10 @@
   кандидати «від імені», списки D6, коди помилок; `database.types.ts`. Перевірка: тести 1.4
 - [x] 1.3 `/requests`, `/requests/new` → чернетка, `/requests/[id]` (редагування, подання, редагування поданої,
   скасування, копія, історія); посилання й лічильники на головній. Перевірка: `npm run build`
-- [ ] 1.4 `tests/pur/drafts-actions.test.ts`, `lines.test.ts`, `submission.test.ts`, `visibility.test.ts`,
+- [x] 1.4 `tests/pur/drafts-actions.test.ts`, `lines.test.ts`, `numbering.test.ts`, `submission.test.ts`, `visibility.test.ts`,
   `decision-rules.test.ts`, `pages.test.tsx`: AC-PUR-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 16, 23, 26, 29, 30,
   31, 32, 33, 35, 37, 38, 44, 45, 47, 48, 49, 53, 54. Перевірка: `npm test`
-- [ ] 1.5 Рядки AC задачі в `docs/conformance.md` → «реалізовано»; AC-PUR-34 — «відкладено (D8)». Галочка — коли
+- [x] 1.5 Рядки AC задачі в `docs/conformance.md` → «реалізовано»; AC-PUR-34 — «відкладено (D8)». Галочка — коли
   `npm run ac:coverage` не показує прогалин по AC задачі, а відкладені AC позначені в матриці
 
 Done when: AC-PUR-01, AC-PUR-02, AC-PUR-03, AC-PUR-04, AC-PUR-05, AC-PUR-06, AC-PUR-07, AC-PUR-08, AC-PUR-09, AC-PUR-10,
@@ -30,7 +30,7 @@ AC-PUR-33, AC-PUR-35, AC-PUR-37, AC-PUR-38, AC-PUR-44, AC-PUR-45, AC-PUR-47, AC-
   міграції `pur_drafts` (окремої `pur_decisions` немає). Перевірка: зелений `db-check`
 - [x] 2.2 Панелі рішень на `/requests/[id]` (рядки на відхилення, причина, схвалити / відхилити / повернути), дії
   `admin` (повернути на схвалення, відхилити схвалену), «На рішення» в `/requests`. Перевірка: `npm run build`
-- [ ] 2.3 `tests/pur/decisions-actions.test.ts`, `decision-rules.test.ts`, `pages.test.tsx`: AC-PUR-15, 17, 18, 19, 20, 21, 22, 24, 25, 27, 28, 36, 39, 40, 41, 42, 43, 50,
+- [x] 2.3 `tests/pur/decisions-actions.test.ts`, `decision-rules.test.ts`, `pages.test.tsx`: AC-PUR-15, 17, 18, 19, 20, 21, 22, 24, 25, 27, 28, 36, 39, 40, 41, 42, 43, 50,
   51, 52. Перевірка: `npm test`
 - [ ] 2.4 Рядки AC задачі в `docs/conformance.md` → «реалізовано»; ручний прохід на проді після `db-deploy`;
   archive `impl-pur`. Галочка — лише коли виконано все перелічене, а не лише зміни матриці

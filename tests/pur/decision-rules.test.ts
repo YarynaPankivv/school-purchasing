@@ -17,6 +17,7 @@ import {
   forwardedLines,
   reopenAllowed,
 } from "@/lib/pur/decisions";
+import { submitOutcome } from "@/lib/pur/submission";
 import { ADMIN, APPROVER, AUTHOR, COLLEAGUE, OFFICE, OTHER_APPROVER, PRIMARY, actor, approver, makeLine, makePurchase, person } from "./helpers";
 
 const approvers = [approver(PRIMARY, APPROVER), approver(PRIMARY, OTHER_APPROVER), approver(OFFICE, "user-office-head")];
@@ -154,6 +155,31 @@ describe("рішення схвалювача", () => {
     }
   });
 
+  it("AC-PUR-39: схвалення без відхилених рядків додає в історію запис «approved» (автора й час додає база)", () => {
+    const outcome = decisionOutcome({ action: "approve", lines });
+    expect(outcome).toMatchObject({ ok: true, status: "approved", historyAction: "approved" });
+  });
+
+  it("AC-PUR-41: відхилений рядок 2 з 3 позначено «rejected», рядки 1 і 3 — «approved»", () => {
+    const outcome = decisionOutcome({ action: "approve", lines, rejectedLineIds: ["l2"] });
+    expect(outcome).toMatchObject({ ok: true, status: "partially_approved" });
+    if (outcome.ok) expect(outcome.lineStatuses).toEqual({ l1: "approved", l2: "rejected", l3: "approved" });
+  });
+
+  it("AC-PUR-42: далі до відділу закупівель ідуть лише 2 схвалені рядки з 3, відхилений рядок 2 — ні", () => {
+    const outcome = decisionOutcome({ action: "approve", lines, rejectedLineIds: ["l2"] });
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      const decided = lines.map((l) => ({ ...l, status: outcome.lineStatuses[l.id] }));
+      expect(forwardedLines(decided).map((l) => l.id)).toEqual(["l1", "l3"]);
+    }
+  });
+
+  it("AC-PUR-43: відхилення з причиною «Не передбачено бюджетом» зберігає її для автора", () => {
+    const outcome = decisionOutcome({ action: "reject", reason: "Не передбачено бюджетом", lines });
+    expect(outcome).toMatchObject({ ok: true, status: "rejected", reason: "Не передбачено бюджетом" });
+  });
+
   it("відхилення й повернення з причиною: статус, запис історії, рядки не змінюються", () => {
     expect(decisionOutcome({ action: "reject", reason: " Не передбачено бюджетом ", lines })).toEqual({
       ok: true,
@@ -222,6 +248,25 @@ describe("автосхвалення", () => {
     expect(autoApproves({ author_id: AUTHOR, department_id: PRIMARY }, memberships)).toBe(false);
     expect(autoApproves({ author_id: COLLEAGUE, department_id: OFFICE }, memberships)).toBe(false);
     expect(autoApproves({ author_id: AUTHOR, department_id: null }, memberships)).toBe(false);
+  });
+});
+
+describe("автосхвалення єдиного схвалювача", () => {
+  // Автор — водночас єдиний схвалювач відділу «Офіс» і має там автосхвалення.
+  const memberships = [{ department_id: OFFICE, user_id: APPROVER, auto_approve: true }];
+  const soleApprover = [approver(OFFICE, APPROVER)];
+  const own = makePurchase({ author_id: APPROVER, department_id: OFFICE, status: "pending" });
+
+  it("AC-PUR-53: власна закупівля єдиного схвалювача з автосхваленням — одразу «Схвалено», не «Чекають рішення»", () => {
+    const outcome = submitOutcome(own, memberships);
+    expect(outcome.status).toBe("approved");
+
+    // Після подання заявка вже approved: у списках рішення її немає ні в схвалювача, ні в admin.
+    const submitted = { ...own, status: outcome.status };
+    const approverActor = actor(APPROVER, "approver");
+    expect(decisionQueue([submitted], approverActor, soleApprover)).toEqual([]);
+    expect(awaitingDecision([submitted], actor(ADMIN, "admin"), soleApprover, people)).toEqual([]);
+    expect(canDecide(submitted, approverActor, soleApprover)).toBe(false);
   });
 });
 
