@@ -44,3 +44,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Локальний файл з тестовими акаунтами (паролі в репо не потрапляють)
+accounts.txt
+accounts.zip
