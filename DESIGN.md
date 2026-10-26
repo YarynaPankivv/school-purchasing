@@ -125,6 +125,7 @@
 | `TopBar`, `SearchBox` (у `PageShell`) | — | робоча панель над вмістом: пошук заявок (`GET /requests?q=`: номер, відділ, автор, статус) на приглушеному тлі з підказкою «/» (фокус), кнопкою очищення й Esc, праворуч одна основна дія «New request»; на `/requests` результати фільтруються, є «Clear search» |
 | `NavLinks`, `MobileMenu` | — | активний пункт: `bg-muted`, іконка `text-primary`, `aria-current="page"`; без кольорових плиток |
 | `BrandMark` | `primary`, `on-brand` | знак продукту (SVG на токенах) |
+| `StatusPage` | `tone` `neutral`/`danger`, `standalone` | сторінка стану: плашка з іконкою, код, заголовок, пояснення, дії; `not-found.tsx` і `error.tsx` у `src/app` і `src/app/(app)` (у застосунку — з бічною панеллю й верхньою смугою), `global-error.tsx` — остання межа |
 | `Avatar`, `DetailList`, `Forbidden`, `Icon` | — | аватар (нейтральний), список «підпис — значення», сторінка відмови, іконки |
 
 ## 6. Стани
@@ -135,6 +136,8 @@
 |---|---|---|
 | Порожній список | `EmptyState` (плашка `bg-muted`) або один рядок під заголовком секції, якщо секція порожня | «No requests awaiting your decision» |
 | Помилка дії | `Alert` (error) над формою; введене лишається у формі | «Add at least one line», «Provide a reason» |
+| Сторінки немає (404) | `StatusPage` (нейтральна іконка), дії «Go to requests», «Back to home» | «Page not found» |
+| Помилка сторінки | `StatusPage` (`danger`), «Try again» і код `Reference`, без технічних деталей | «Something went wrong» |
 | Відмова в доступі | `Forbidden`: сторінка з поясненням, без даних | «Not enough permissions» |
 | Виконання | `SubmitButton` блокується, `aria-busy` | «Please wait…» |
 | Успіх | `Alert` (ok) | «Purchase submitted» |

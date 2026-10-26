@@ -23,6 +23,7 @@ export {
   UsersSkeleton,
 } from "./skeleton";
 export { StatusLinks, type StatusLink } from "./status-links";
+export { StatusPage } from "./status-page";
 export { SummaryStrip, type SummaryItem } from "./summary-strip";
 export { SubmitButton } from "./submit-button";
 export { Icon, type IconName } from "./icons";
@@ -42,5 +43,6 @@ export {
   LinkButton,
   PageShell,
   RoleBadge,
+  TopBar,
   type ShellUser,
 } from "./ui";
