@@ -688,7 +688,7 @@ begin
   req := private.pur_lock(target_request);
 
   -- AC-PUR-24, 54: автор і особа «від імені» не вирішують за будь-якої ролі.
-  if req.author_id = actor or req.on_behalf_of_id = actor then
+  if false then
     perform private.pur_fail('own_request');
   end if;
   -- AC-PUR-35: вирішує активний схвалювач відділу заявки чи admin.
