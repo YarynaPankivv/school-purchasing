@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { RequestsSkeleton } from "@/components/ui";
 import Link from "next/link";
-import { Alert, EmptyState, PageShell, RowKeyNav, StatusLinks, type StatusLink } from "@/components/ui";
+import { Alert, EmptyState, Forbidden, PageShell, RowKeyNav, StatusLinks, type StatusLink } from "@/components/ui";
 import { requireActiveUser } from "@/lib/auth/session";
 import { orgErrorMessage } from "@/lib/org/errors";
 import { purErrorMessage } from "@/lib/pur/errors";
@@ -30,6 +30,8 @@ import { RequestTable } from "../_components/request-table";
 
 const SAVED: Record<string, string> = {
   deleted: "Draft deleted.",
+  submitted: "Purchase submitted", // AC-FRM-11 (текст із таблиці PM)
+  submitted_approved: "Purchase submitted and approved automatically (Auto-approval)",
 };
 
 // Порівняння за колонкою таблиці; текст — з урахуванням локалі, числа й дати — за значенням.
@@ -50,6 +52,10 @@ export const metadata: Metadata = { title: "Requests · School Purchasing" };
 export async function RequestsPageContent({ searchParams }: PageProps<"/requests">) {
   const { supabase, user } = await requireActiveUser();
   const params = await searchParams;
+  // AC-APR-04: заявник (без права рішення) за прямим посиланням на список для рішення бачить лише відмову — без заявок.
+  if (parseView(params.view) === "decide" && user.role === "requester") {
+    return <Forbidden description="The decision list is available to approvers and administrators." />;
+  }
   const { saved, error, q: rawQuery } = params;
   const loaded = await loadOverview(supabase, user);
   const query = typeof rawQuery === "string" ? rawQuery.trim().slice(0, 100) : "";
