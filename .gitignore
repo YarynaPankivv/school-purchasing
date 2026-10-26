@@ -45,6 +45,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Локальний файл з тестовими акаунтами (паролі в репо не потрапляють)
+# Локальний файл з тестовими акаунтами; у репо лише зашифрований accounts.zip
 accounts.txt
-accounts.zip
