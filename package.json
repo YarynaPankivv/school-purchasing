@@ -17,7 +17,8 @@
     "users:demo": "node --env-file=.env.local scripts/create-demo-users.mjs",
     "check:design": "node scripts/check-design-tokens.mjs",
     "check:boundary": "node scripts/check-server-boundary.mjs",
-    "shots": "node --env-file=.env.local scripts/capture-screenshots.mjs"
+    "shots": "node --env-file=.env.local scripts/capture-screenshots.mjs",
+    "check:actions": "node scripts/check-server-actions.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

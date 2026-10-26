@@ -28,9 +28,9 @@ AC-APR-05, AC-APR-06, AC-APR-07, AC-APR-08, AC-APR-09, AC-APR-10
 
 ## 3. ADR і архітектурне правило (`task/adr-actions-rule`)
 
-- [ ] 3.1 `docs/decisions/0003-permissions-in-database.md`: права — в базі, а не лише в Server Action чи proxy; варіанти,
+- [x] 3.1 `docs/decisions/0003-permissions-in-database.md`: права — в базі, а не лише в Server Action чи proxy; варіанти,
   «Як перевіряємо». Перевірка: ADR посилається на AC і правило
-- [ ] 3.2 `scripts/check-server-actions.mjs`, `npm run check:actions`, job в `architecture.yml`; доказ — червоний прогін на
+- [x] 3.2 `scripts/check-server-actions.mjs`, `npm run check:actions`, job в `architecture.yml`; доказ — червоний прогін на
   навмисному порушенні. Перевірка: `npm run check:actions`
 
 Done when: AC-FRM-02, AC-FRM-04, AC-APR-03, AC-APR-05
