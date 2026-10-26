@@ -12,6 +12,14 @@ const dateTime = new Intl.DateTimeFormat("en-US", {
   timeZoneName: "short",
 });
 
+// День без часу для переліків («Oct 21, 2026»): момент у тому самому часовому поясі, що й повний запис.
+const day = new Intl.DateTimeFormat("en-US", {
+  timeZone: APP_TIME_ZONE,
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+});
+
 // Дата без часу (delivery_date date): це календарна дата, а не момент, тож часовий пояс її не зсуває.
 const dateOnly = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
@@ -27,6 +35,13 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   if (value === null || value === undefined) return "—";
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? "—" : dateTime.format(date);
+}
+
+// «Oct 21, 2026» для моменту в переліку: рядок списку не потребує хвилин, повний запис — у підказці.
+export function formatDay(value: string | Date | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : day.format(date);
 }
 
 // «Oct 21, 2026» для бажаної дати доставки ('YYYY-MM-DD').

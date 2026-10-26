@@ -33,9 +33,9 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
 
-const userActions = () => import("@/app/admin/users/actions");
+const userActions = () => import("@/app/(app)/admin/users/actions");
 const loginActions = () => import("@/app/login/actions");
-const requestActions = () => import("@/app/requests/new/actions");
+const requestActions = () => import("@/app/(app)/requests/new/actions");
 const sessionModule = () => import("@/lib/auth/session");
 
 const ADMIN = "3f0c2a5e-9b1d-4c7e-8a2f-1b6d5e4c3a21";
@@ -68,7 +68,7 @@ describe("доступ до адміністрування", () => {
 
     const mock = useSupabase(createSupabaseMock({ profile: worker }));
     const { setAdminRole, setActive, deleteDraft } = await userActions();
-    const departments = await import("@/app/admin/departments/actions");
+    const departments = await import("@/app/(app)/admin/departments/actions");
 
     expect(await redirectedTo(() => setAdminRole(form({ user_id: WORKER, make_admin: "1" })))).toBe(
       `/admin/users/${WORKER}?error=forbidden`,

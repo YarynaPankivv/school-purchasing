@@ -32,8 +32,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
 
-const actions = () => import("@/app/admin/departments/actions");
-const requestActions = () => import("@/app/requests/new/actions");
+const actions = () => import("@/app/(app)/admin/departments/actions");
+const requestActions = () => import("@/app/(app)/requests/new/actions");
 
 const PRIMARY = { id: "dep-primary", name: "Початкова школа" };
 const HIGH = { id: "dep-high", name: "Вища школа" };

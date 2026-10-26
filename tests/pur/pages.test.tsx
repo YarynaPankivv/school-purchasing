@@ -16,6 +16,8 @@ vi.mock("next/navigation", async () => {
       throw new RedirectSignal("not-found");
     },
     usePathname: () => "/requests",
+    // Рядок пошуку у верхній смузі (клієнтський компонент) бере роутер для переходу на підказку.
+    useRouter: () => ({ push: () => undefined }),
   };
 });
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -42,13 +44,13 @@ const actionSpies = vi.hoisted(() => ({
   setEditing: vi.fn(),
   submitPurchase: vi.fn(),
 }));
-vi.mock("@/app/_components/submit-button", () => ({
+vi.mock("@/components/ui/submit-button", () => ({
   SubmitButton: (props: CapturedButton) => {
     capturedButtons.push(props);
     return <button data-testid={props.testId}>{props.children}</button>;
   },
 }));
-vi.mock("@/app/requests/[id]/actions", () => actionSpies);
+vi.mock("@/app/(app)/requests/[id]/actions", () => actionSpies);
 
 const VIEWER = "3f0c2a5e-9b1d-4c7e-8a2f-1b6d5e4c3a21";
 const AUTHOR = "7a1d9c52-04be-4f3a-9d6e-2c8b1f0e5a47";
@@ -117,7 +119,7 @@ async function renderDetail({ viewer, request, approvers = [], members = [] }: S
     },
   });
   createClient.mockResolvedValue(mock.client);
-  const { default: Page } = await import("@/app/requests/[id]/page");
+  const { RequestPageContent: Page } = await import("@/app/(app)/requests/[id]/page");
   const element = await Page({ params: Promise.resolve({ id: REQ }), searchParams: Promise.resolve({}) } as never);
   return renderToStaticMarkup(element);
 }
@@ -253,7 +255,7 @@ describe("сторінка списку /requests", () => {
       },
     });
     createClient.mockResolvedValue(mock.client);
-    const { default: Page } = await import("@/app/requests/page");
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
     return renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
   }
 
@@ -286,7 +288,7 @@ describe("сторінка списку /requests", () => {
       },
     });
     createClient.mockResolvedValue(mock.client);
-    const { default: Page } = await import("@/app/requests/page");
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
     expect(renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never))).toContain("No department yet");
   });
 
@@ -295,5 +297,39 @@ describe("сторінка списку /requests", () => {
     expect(html).toContain('data-testid="awaiting-decision"');
     expect(html).toContain("No approver");
     expect(html).toContain('data-testid="all-requests"');
+  });
+
+  // Без AC PM: це подання списку (сторінки, нумерація, сортування), а не правило.
+  it("довгий список: 20 рядків на сторінку, наскрізна нумерація, сортування за колонкою й фільтр за статусом", async () => {
+    const requester = makeProfile({ id: VIEWER, role: "requester" });
+    const many = Array.from({ length: 25 }, (_, i) =>
+      requestRow(i < 22 ? "draft" : "pending", { id: `00000000-0000-4000-8000-0000000000${String(i).padStart(2, "0")}`, number: i + 1, author_id: VIEWER, department_id: null }),
+    );
+    const mock = createSupabaseMock({
+      profile: requester,
+      results: {
+        "requests.select": { data: many },
+        "request_lines.select": { data: [] },
+        "departments.select": { data: [] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
+
+    const first = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ sort: "number", dir: "asc" }) } as never));
+    expect(first).toContain("Showing 1–20 of 25");
+    expect(first).toContain('aria-sort="ascending"');
+    expect(first).toContain("PUR-1<");
+    expect(first).not.toContain("PUR-21<");
+
+    const second = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ sort: "number", dir: "asc", p_mine: "2" }) } as never));
+    expect(second).toContain("Showing 21–25 of 25");
+    expect(second).toContain("PUR-25<");
+    expect(second).not.toContain("PUR-1<");
+
+    const drafts = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({ status: "pending" }) } as never));
+    expect(drafts).toContain("3 results");
+    expect(drafts).not.toContain("Showing");
   });
 });
