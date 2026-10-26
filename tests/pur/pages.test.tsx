@@ -383,6 +383,32 @@ describe("сторінка списку /requests", () => {
     expect(approver).toContain("Purchase requests you submitted and requests waiting for your decision.");
   });
 
+  it("AC-FRM-10: «My requests» показує подану закупівлю працівника зі статусом «Awaiting approval», а заявок інших працівників немає", async () => {
+    const employee = makeProfile({ id: VIEWER, role: "requester", email: "member1@example.test" });
+    const mock = createSupabaseMock({
+      profile: employee,
+      profiles: [author],
+      results: {
+        // Власна подана закупівля PUR-12 і чужа PUR-14 (RLS її не віддала б; сторінка не покаже її й сама).
+        "requests.select": {
+          data: [requestRow("pending", { author_id: VIEWER }), requestRow("pending", { id: REQ_2, number: 14, author_id: AUTHOR })],
+        },
+        "request_lines.select": { data: lines },
+        "departments.select": { data: [{ id: DEP, name: "Primary School" }] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
+
+    const mine = html.slice(html.indexOf('data-testid="my-requests"'));
+    expect(mine).toContain("PUR-12");
+    expect(mine).toContain("Awaiting approval");
+    expect(html).not.toContain("PUR-14");
+    expect(html).not.toContain("Anna Author");
+  });
+
   it("AC-PUR-40: автор схваленої заявки бачить позначку «Request approved», а чужі заявки її не мають", async () => {
     // Схвалена PUR-13 — власна заявка глядача, PUR-12 (pending) — чужа в «To decide».
     const html = await renderList(asApprover, approverOf);
