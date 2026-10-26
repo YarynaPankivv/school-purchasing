@@ -37,9 +37,9 @@ Done when: AC-FRM-02, AC-FRM-04, AC-APR-03, AC-APR-05
 
 ## 4. Прод і приймання PM (`task/pm-accounts`)
 
-- [ ] 4.1 Акаунти `pm-requester`, `pm-approver`, `pm-admin` (`@example.test`) у `supabase/demo-users.json`; скріни за ролями
+- [x] 4.1 Акаунти `pm-requester`, `pm-approver`, `pm-admin` (`@example.test`) у `supabase/demo-users.json`; скріни за ролями
   (головна сторінка зрізу й одна відмова) у `docs/img/`. Перевірка: `npm run users:demo`
-- [ ] 4.2 Ручний прохід відмов на прод-URL після `db-deploy`; відповіді на issues «Відхилення від вимог»; archive
+- [x] 4.2 Ручний прохід відмов на прод-URL після `db-deploy`; відповіді на issues «Відхилення від вимог»; archive
   `impl-frm-apr`. Галочка — лише коли виконано все перелічене
 
 Done when: AC-FRM-08, AC-APR-03, AC-APR-04
