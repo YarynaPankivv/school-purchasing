@@ -50,7 +50,7 @@ export async function wipe(formData: FormData) {
     });
     const { code, out } = runScript("check-server-actions.mjs", root);
     expect(code).toBe(1);
-    expect(out).toContain("wipe: немає перевірки користувача");
+    expect(out).toContain("wipe: немає виклику перевірки користувача");
     expect(out).not.toContain("submit: немає");
   });
 
@@ -87,6 +87,73 @@ export async function login(formData: FormData) {
 `,
     });
     expect(runScript("check-server-actions.mjs", root).code).toBe(0);
+  });
+
+  it("exempts only login and signOut by name: a second unguarded export in the login file is flagged", () => {
+    const root = project({
+      "app/login/actions.ts": `"use server";
+export async function login() {}
+export async function signOut() {}
+export async function deleteAccount() {
+  await supabase.from("profiles").delete().neq("id", "");
+}
+`,
+    });
+    const { code, out } = runScript("check-server-actions.mjs", root);
+    expect(code).toBe(1);
+    expect(out).toContain("deleteAccount: немає виклику");
+    expect(out).not.toContain("login: немає");
+    expect(out).not.toContain("signOut: немає");
+  });
+
+  it("checks exported arrow functions too", () => {
+    const root = project({
+      "app/requests/actions.ts": `"use server";
+export const wipe = async (formData: FormData) => {
+  await supabase.from("requests").delete().neq("id", "");
+};
+export const fine = async () => {
+  await requireActiveUser();
+};
+`,
+    });
+    const { code, out } = runScript("check-server-actions.mjs", root);
+    expect(code).toBe(1);
+    expect(out).toContain("wipe: немає виклику");
+    expect(out).not.toContain("fine: немає");
+  });
+
+  it("requires the guard before the first write, not just somewhere in the body", () => {
+    const root = project({
+      "app/requests/actions.ts": `"use server";
+export async function late() {
+  const supabase = await createClient();
+  await supabase.from("requests").delete().neq("id", "");
+  await requireActiveUser();
+}
+`,
+    });
+    const { code, out } = runScript("check-server-actions.mjs", root);
+    expect(code).toBe(1);
+    expect(out).toContain("late: запис чи запит до бази раніше за перевірку");
+  });
+
+  it("does not accept a guard name that appears only inside a string", () => {
+    const root = project({
+      "app/requests/actions.ts": `"use server";
+export async function sneaky() {
+  const note = "requireActiveUser()";
+  await supabase.from("requests").delete().neq("id", "");
+}
+`,
+    });
+    expect(runScript("check-server-actions.mjs", root).code).toBe(1);
+  });
+
+  it("exits with code 2 when there is no src to check", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "check-actions-empty-"));
+    roots.push(root);
+    expect(runScript("check-server-actions.mjs", root).code).toBe(2);
   });
 
   it("passes on this repository", () => {
