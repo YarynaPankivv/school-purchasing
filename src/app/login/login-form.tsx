@@ -19,15 +19,17 @@ export function LoginForm({
 }) {
   const email = useRef<HTMLInputElement>(null);
 
+  // Без масиву залежностей: повторна помилка приходить з тим самим `message`, а React 19 очищає неконтрольовану форму
+  // після дії, тож відновлювати email треба після кожного рендеру (лише коли поле порожнє — введене не затираємо).
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem(KEY);
       if (message && saved && email.current && !email.current.value) email.current.value = saved;
-      if (!message) sessionStorage.removeItem(KEY);
+      if (!message && !email.current?.value) sessionStorage.removeItem(KEY);
     } catch {
       // sessionStorage недоступний (приватне вікно) — просто не відновлюємо.
     }
-  }, [message]);
+  });
 
   const invalid = message ? true : undefined;
   return (

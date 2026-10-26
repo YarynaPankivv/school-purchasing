@@ -21,12 +21,20 @@ export async function DepartmentsPageContent({ searchParams }: PageProps<"/admin
   const { supabase } = ctx;
   const { error } = await searchParams;
 
-  const [{ data: departments }, { data: approvers }, { data: people }, { data: members }] = await Promise.all([
+  const [departmentsRes, approversRes, peopleRes, membersRes] = await Promise.all([
     supabase.from("departments").select("id, name").order("name"),
     supabase.from("department_approvers").select("department_id, user_id"),
     supabase.from("profiles").select("id, is_active"),
     supabase.from("department_members").select("department_id, user_id"),
   ]);
+  // Збій будь-якого читання — це збій сторінки (покаже error.tsx), а не «No departments yet» чи відділ без схвалювача.
+  if (departmentsRes.error || approversRes.error || peopleRes.error || membersRes.error) {
+    throw new Error("Could not load departments");
+  }
+  const { data: departments } = departmentsRes;
+  const { data: approvers } = approversRes;
+  const { data: people } = peopleRes;
+  const { data: members } = membersRes;
 
   const rows = (departments ?? [])
     .map((d) => ({
@@ -56,7 +64,7 @@ export async function DepartmentsPageContent({ searchParams }: PageProps<"/admin
       ) : (
         <Card className="overflow-hidden">
           <div className="-mx-5 -my-4 overflow-x-auto" role="region" aria-label="Departments" tabIndex={0}>
-            <table className="w-full text-left text-sm" data-testid="departments">
+            <table className="w-full text-left text-sm" data-testid="departments" aria-label="Departments">
               <thead className="border-b border-border">
                 <tr>
                   <th scope="col" className={`${HEAD} pl-5`}>

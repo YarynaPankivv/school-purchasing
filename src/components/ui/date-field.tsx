@@ -112,10 +112,13 @@ export function DateField({
     if (event.key in moves) {
       event.preventDefault();
       setFocusIso(moves[event.key]!);
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      close(true);
     }
+  };
+  // Escape закриває весь календар, де б не був фокус (день, місяць, «Today», «Clear»), а не лише коли він у сітці днів.
+  const onDialogKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    close(true);
   };
 
   const viewIso = monthStart(focusIso || value || todayIso());
@@ -127,7 +130,7 @@ export function DateField({
 
   return (
     <span ref={root} className="relative block">
-      {name ? <input type="hidden" name={name} value={value} /> : null}
+      {name ? <input type="hidden" name={name} value={value} disabled={disabled} /> : null}
       <button
         ref={trigger}
         type="button"
@@ -155,6 +158,7 @@ export function DateField({
           aria-label="Choose a date"
           // Календар лежить усередині <label> (Field): без preventDefault клік «активує» мітку й повторно тисне кнопку.
           onClick={(event) => event.preventDefault()}
+          onKeyDown={onDialogKeyDown}
           className="anim-pop absolute left-0 top-full z-30 mt-1 w-72 rounded-lg border border-border bg-card p-3 shadow-card"
         >
           <div className="mb-2 flex items-center justify-between">

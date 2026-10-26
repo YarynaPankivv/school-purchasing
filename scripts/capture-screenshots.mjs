@@ -23,6 +23,26 @@ const EMAIL = arg("--as") ?? process.env.DEMO_USER_EMAIL ?? "admin@example.test"
 const LABEL = arg("--label");
 const PASSWORD = process.env.DEMO_USER_PASSWORD ?? "";
 
+// Запобіжники до будь-якого входу: пароль іде лише на localhost (або по https), лише синтетичному користувачеві,
+// а мітка файлу — це роль, не шлях (інакше `--label ../x` виходить за межі docs/img/).
+{
+  const fail = (message) => {
+    console.error(message);
+    process.exit(1);
+  };
+  let baseUrl;
+  try {
+    baseUrl = new URL(BASE);
+  } catch {
+    fail(`BASE_URL не схожий на адресу: «${BASE}».`);
+  }
+  const isLocal = ["localhost", "127.0.0.1", "[::1]"].includes(baseUrl.hostname);
+  if (!isLocal && baseUrl.protocol !== "https:") fail("BASE_URL поза localhost має бути https://, інакше пароль піде відкритим текстом.");
+  if (PASSWORD && !/^[^@\s]+@example\.test$/i.test(EMAIL)) fail("Дозволені лише синтетичні користувачі (*@example.test).");
+  if (Boolean(arg("--as")) !== Boolean(LABEL)) fail("Параметри --as і --label потрібні разом (або жоден з них).");
+  if (LABEL && !/^[a-z0-9-]+$/.test(LABEL)) fail("--label: лише малі латинські літери, цифри й дефіс.");
+}
+
 const VIEWPORTS = {
   desktop: { width: 1280, height: 800, mobile: false },
   mobile: { width: 390, height: 844, mobile: true },
@@ -64,22 +84,42 @@ async function launch() {
     [`--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--headless=new", "--hide-scrollbars", "--no-first-run", "--disable-gpu", "about:blank"],
     { stdio: "ignore" },
   );
-  let target;
-  for (let attempt = 0; attempt < 60 && !target; attempt++) {
-    await sleep(250);
+  let socket;
+  const close = () => {
     try {
-      const list = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
-      target = list.find((entry) => entry.type === "page");
+      socket?.close();
     } catch {
-      // браузер ще стартує
+      // уже закрито
     }
+    child.kill();
+    try {
+      rmSync(profile, { recursive: true, force: true });
+    } catch {
+      // профіль ще зайнятий — не критично
+    }
+  };
+  try {
+    let target;
+    for (let attempt = 0; attempt < 60 && !target; attempt++) {
+      await sleep(250);
+      try {
+        const list = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
+        target = list.find((entry) => entry.type === "page");
+      } catch {
+        // браузер ще стартує
+      }
+    }
+    if (!target) throw new Error("Браузер не відповів на DevTools-порту.");
+    socket = new WebSocket(target.webSocketDebuggerUrl);
+    await new Promise((resolve, reject) => {
+      socket.onopen = resolve;
+      socket.onerror = () => reject(new Error("Не вдалося відкрити WebSocket до браузера."));
+    });
+  } catch (error) {
+    // Без цього браузер і тека профілю лишились би після помилки запуску (main().catch лише виходить).
+    close();
+    throw error;
   }
-  if (!target) throw new Error("Браузер не відповів на DevTools-порту.");
-  const socket = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise((resolve, reject) => {
-    socket.onopen = resolve;
-    socket.onerror = reject;
-  });
   let id = 0;
   const pending = new Map();
   socket.onmessage = (event) => {
@@ -97,19 +137,6 @@ async function launch() {
       pending.set(messageId, { resolve, reject });
       socket.send(JSON.stringify({ id: messageId, method, params }));
     });
-  const close = () => {
-    try {
-      socket.close();
-    } catch {
-      // уже закрито
-    }
-    child.kill();
-    try {
-      rmSync(profile, { recursive: true, force: true });
-    } catch {
-      // профіль ще зайнятий — не критично
-    }
-  };
   return { send, close };
 }
 
@@ -126,19 +153,28 @@ async function main() {
   }
 
   const { send, close } = await launch();
+  // CDP не відхиляє проміс, коли вираз кидає виняток: помилку віддає exceptionDetails — без перевірки вона мовчки губиться.
   const evaluate = async (expression) => {
     const result = await send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+    if (result.exceptionDetails) {
+      throw new Error(`Помилка в сторінці: ${result.exceptionDetails.exception?.description ?? result.exceptionDetails.text}`);
+    }
     return result.result?.value;
   };
   const goto = async (path) => {
-    await send("Page.navigate", { url: `${BASE}${path}` });
-    for (let attempt = 0; attempt < 80; attempt++) {
+    // Маркер на старому документі: готовою вважаємо лише нову сторінку (інакше знімається ще попередня).
+    await evaluate("window.__stale = true").catch(() => {});
+    const { errorText } = await send("Page.navigate", { url: `${BASE}${path}` });
+    if (errorText) throw new Error(`Не вдалося відкрити ${path}: ${errorText}. Чи запущено npm run dev?`);
+    let ready = false;
+    for (let attempt = 0; attempt < 80 && !ready; attempt++) {
       await sleep(250);
-      const ready = await evaluate(
-        `document.readyState === "complete" && !!document.querySelector("h1, form") && !document.querySelector('[class*="animate-pulse"]')`,
-      );
-      if (ready) break;
+      // Під час навігації контекст знищується — це «ще не готово», а не помилка.
+      ready = await evaluate(
+        `!window.__stale && document.readyState === "complete" && !!document.querySelector("h1, form") && !document.querySelector('[class*="animate-pulse"]')`,
+      ).catch(() => false);
     }
+    if (!ready) throw new Error(`Сторінка ${path} не завантажилась за 20 с: знімок не збережено.`);
     // Індикатор dev-режиму Next.js у кадр не потрапляє.
     await evaluate(`document.querySelectorAll("nextjs-portal").forEach((element) => element.remove()); 0`);
     await sleep(300);

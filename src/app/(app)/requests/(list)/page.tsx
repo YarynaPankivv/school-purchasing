@@ -24,7 +24,7 @@ import {
   type SortKey,
 } from "../_lib/nav";
 import { loadOverview, type RequestListItem } from "../_lib/overview";
-import { matchesRequest } from "../_lib/search";
+import { matchesRequest, uniqueRequests as unique } from "../_lib/search";
 import { DepartmentFilter } from "../_components/department-filter";
 import { RequestTable } from "../_components/request-table";
 
@@ -68,7 +68,6 @@ export async function RequestsPageContent({ searchParams }: PageProps<"/requests
     awaiting: search(loaded.awaiting),
     all: search(loaded.all),
   };
-  const unique = (lists: RequestListItem[][]) => [...new Map(lists.flat().map((item) => [item.request.id, item])).values()];
   // Відділи для фільтра — з усього, що людина бачить за пошуком (щоб вибір не зникав після вибору відділу).
   const departments = [
     ...new Map(

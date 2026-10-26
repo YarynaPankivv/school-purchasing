@@ -38,7 +38,8 @@ export async function HomeContent() {
 
   // Підсумок говорить лише те, що підтверджують дані: «caught up» — коли немає ні рішень, ні власних чернеток.
   const plural = (n: number) => (n === 1 ? "request is" : "requests are");
-  let summary = "You are all caught up.";
+  // Збій читання — не «все гаразд»: підсумок прямо каже, що даних немає.
+  let summary = overview === null ? "Your request summary is unavailable." : "You are all caught up.";
   if (toDecide > 0) summary = `${toDecide} ${plural(toDecide)} waiting for your decision.`;
   else if (awaiting > 0) summary = `${awaiting} ${plural(awaiting)} waiting because the department has no approver who can decide.`;
   else if (drafts > 0) summary = `You have ${drafts} ${drafts === 1 ? "draft" : "drafts"} to submit.`;

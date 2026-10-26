@@ -14,6 +14,11 @@ export function AddDepartment({ count }: { count: number }) {
   const root = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const hintId = `${panelId}-hint`;
+  // Закрили з клавіатури — фокус повертається на кнопку, а не зникає разом із полем (інакше Tab починається з початку сторінки).
+  const closeToTrigger = () => {
+    setOpen(false);
+    root.current?.querySelector("button")?.focus();
+  };
 
   // Відділ додано (список виріс) — закриваємо форму, не чекаючи кліку.
   if (seenCount !== count) {
@@ -27,7 +32,7 @@ export function AddDepartment({ count }: { count: number }) {
       if (!root.current?.contains(event.target as Node)) setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") closeToTrigger();
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKey);
@@ -64,7 +69,7 @@ export function AddDepartment({ count }: { count: number }) {
               <Input name="name" required autoFocus maxLength={DEPARTMENT_NAME_MAX} aria-describedby={hintId} />
             </Field>
             <div className="flex items-center justify-end gap-2">
-              <Button variant="ghost" onClick={() => setOpen(false)}>
+              <Button variant="ghost" onClick={closeToTrigger}>
                 Cancel
               </Button>
               <SubmitButton>Create department</SubmitButton>

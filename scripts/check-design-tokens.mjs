@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // Архітектурне правило «дизайн-система»: у застосунку кольори лише через семантичні токени.
-// Шукає в src/ (поза src/components/ui і src/app/globals.css). Якщо теки src/ немає — у app/, components/ і lib/
-// кореня (поза components/ui і app/globals.css); що саме перевірено, скрипт пише у виводі.
+// Шукає в src/ (поза src/app/globals.css, де токени оголошені; компоненти в src/components/ui перевіряються так само).
+// Якщо теки src/ немає — у app/, components/ і lib/ кореня (поза app/globals.css); що саме перевірено, скрипт пише у виводі.
 //   1) hex-кольори (#fff, #0f6b6e); якір у посиланні (href="#add") — не колір;
 //   2) довільні кольори в класах Tailwind (bg-[#…], text-[oklch(…)]);
 //   3) сирі палітри Tailwind (bg-zinc-900, text-rose-700, bg-white, text-black);
 //   4) кольори в inline style — лише всередині style={{ … }} (style={{ color: "…" }}). Мапа класів поза style,
 //      наприклад { label: "На розгляді", color: "bg-status-pending text-status-pending-foreground" }, — не порушення.
-// Виняток — коментар `design-ok: <причина>` у тому самому рядку.
+// Виняток — коментар `// design-ok: <причина>` у тому самому рядку (з непорожньою причиною).
 // Використання: node scripts/check-design-tokens.mjs [--root <dir>] [--json]
 // Код виходу: 0 — порушень немає, 1 — є порушення, 2 — немає чого перевіряти (ні src/, ні app/, components/, lib/).
 
@@ -37,10 +37,8 @@ if (BASES.length === 0) {
 const BASE = hasSrc ? "src" : "";
 const SCANNED = BASES.map((b) => `${b}/`);
 const SKIP_DIRS = new Set(["node_modules", ".next"]);
-const SKIP_FILES = [
-  join(BASE, "components", "ui") + sep, // компоненти дизайн-системи — тут токени визначають вигляд
-  join(BASE, "app", "globals.css"), // тут токени оголошені
-];
+// Пропускаємо лише globals.css, де токени оголошені: компоненти в src/components/ui теж беруть колір із токенів.
+const SKIP_FILES = [join(BASE, "app", "globals.css")];
 const EXT = /\.(tsx|ts|jsx|js|css)$/;
 
 const PREFIX =
@@ -66,10 +64,15 @@ const RULES = [
   },
 ];
 
+// Значення — рядок («#fff») або вираз (`color: statusColor`): обидва порушення. Єдиний дозволений вигляд — var(--токен).
+// Виняток — лише коментар `// design-ok: <причина>` (або `/* design-ok: … */`, `{/* … */}`) з непорожньою причиною:
+// сам підрядок у рядковому літералі чи «design-ok:» без причини винятком не є.
+const DESIGN_OK = /(?:\/\/|\/\*)\s*design-ok:\s*\S/;
+
 const INLINE_STYLE = {
   id: "inline-style-color",
   message: "колір в inline style — використайте клас із токеном",
-  re: /(?:\bcolor|backgroundColor|borderColor|background)\s*:\s*["'`](?!var\(--)[^"'`]+["'`]/g,
+  re: /(?:\bcolor|backgroundColor|borderColor|background)\s*:\s*(?!["'`]?var\(--)[^,}\s][^,}]*/g,
 };
 
 // Діапазони тексту всередині style={{ … }}: від другої «{» до парної «}», з урахуванням вкладених дужок і рядків.
@@ -135,7 +138,7 @@ for (const file of BASES.flatMap((b) => walk(join(root, b)))) {
   const add = (i, rule, match) =>
     findings.push({ file: rel.split(sep).join("/"), line: i + 1, rule: rule.id, match, message: rule.message });
   lines.forEach((line, i) => {
-    if (/design-ok:/.test(line)) return;
+    if (DESIGN_OK.test(line)) return;
     for (const rule of RULES) {
       for (const m of line.matchAll(rule.re)) add(i, rule, m[0]);
     }
@@ -143,13 +146,12 @@ for (const file of BASES.flatMap((b) => walk(join(root, b)))) {
   });
 }
 
-const where = hasSrc ? "src/components/ui" : "components/ui";
 if (asJson) {
   console.log(JSON.stringify({ ok: findings.length === 0, scanned: SCANNED, findings }, null, 2));
 } else {
   if (!hasSrc) console.log(`check-design-tokens: теки src/ немає — перевіряю ${SCANNED.join(", ")}.`);
   if (findings.length === 0) {
-    console.log(`check-design-tokens: OK — сирих кольорів поза ${where} немає.`);
+    console.log(`check-design-tokens: OK — сирих кольорів у ${SCANNED.join(", ")} немає.`);
   } else {
     for (const f of findings) console.log(`${f.file}:${f.line}  [${f.rule}]  ${f.match}  — ${f.message}`);
     const files = new Set(findings.map((f) => f.file)).size;

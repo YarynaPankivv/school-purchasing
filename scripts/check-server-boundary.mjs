@@ -72,19 +72,24 @@ for (const file of BASES.flatMap((b) => walk(join(root, b)))) {
     if (/SUPABASE_SECRET_KEY|SERVICE_ROLE_KEY/.test(line) && rel !== ADMIN_FILE) {
       report(rel, i + 1, `секретний ключ читається поза ${ADMIN_SHOWN}`);
     }
-    if (/from\s+["'](@\/lib\/supabase\/admin|(\.\.\/)+lib\/supabase\/admin|\.\/admin)["']/.test(line) && rel !== ADMIN_FILE) {
-      if (isClient) report(rel, i + 1, 'admin-клієнт імпортовано у файлі з "use client"');
+  });
+
+  // Імпорт шукаємо в усьому тексті, а не по рядках: `import { x }\n  from "@/lib/supabase/admin"` теж має спрацювати.
+  if (rel !== ADMIN_FILE) {
+    for (const m of text.matchAll(/\bfrom\s+["'](?:@\/lib\/supabase\/admin|(?:\.\.\/)+lib\/supabase\/admin|\.\/admin)["']/g)) {
+      const line = text.slice(0, m.index).split("\n").length;
+      if (isClient) report(rel, line, 'admin-клієнт імпортовано у файлі з "use client"');
       else if (!isServerFile) {
         report(
           rel,
-          i + 1,
+          line,
           'admin-клієнт імпортовано не з actions.ts / route.ts / "use server" — викликайте його з Server Action чи Route ' +
             'Handler після перевірки ролі. Не додавайте "use server" у допоміжний модуль: кожен його експорт стане ' +
             "публічним ендпойнтом",
         );
       }
     }
-  });
+  }
 }
 
 const adminPath = join(root, ADMIN_FILE);

@@ -59,6 +59,10 @@ export function SubmitButton({
           event.preventDefault();
           return;
         }
+        // Якщо браузер зупинить подання нативною валідацією (порожнє required-поле), подання не почнеться й pending не
+        // стане true: «натиснуту» кнопку не позначаємо, інакше вона б показала «Please wait…» при наступному поданні іншої.
+        const form = event.currentTarget.form;
+        if (form && !formNoValidate && !form.noValidate && !form.checkValidity()) return;
         setClicked(true);
       }}
     >
