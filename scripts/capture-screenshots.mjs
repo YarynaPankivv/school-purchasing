@@ -5,6 +5,7 @@
 //   npm run dev                                   # застосунок на http://localhost:3000
 //   node scripts/capture-screenshots.mjs --only login          # сторінка входу — без пароля
 //   node --env-file=.env.local scripts/capture-screenshots.mjs # усе, з входом під admin@example.test
+//   node --env-file=.env.local scripts/capture-screenshots.mjs --as member1@example.test --label requester  # інша роль: design-after-requester-*
 //
 // Пароль — лише з DEMO_USER_PASSWORD (наприклад, з .env.local, як у `npm run users:demo`); скрипт його не друкує.
 // Лише синтетичний користувач: DEMO_USER_EMAIL за замовчуванням admin@example.test. Змінні: BASE_URL, BROWSER_PATH.
@@ -15,8 +16,11 @@ import { join } from "node:path";
 
 const BASE = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const OUT = new URL("../docs/img/", import.meta.url);
-const only = process.argv.includes("--only") ? process.argv[process.argv.indexOf("--only") + 1] : null;
-const EMAIL = process.env.DEMO_USER_EMAIL ?? "admin@example.test";
+const arg = (name) => (process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : null);
+const only = arg("--only");
+// --as <email> — вхід під іншим демо-користувачем, --label <роль> — префікс імені файлу (без нього — адміністратор).
+const EMAIL = arg("--as") ?? process.env.DEMO_USER_EMAIL ?? "admin@example.test";
+const LABEL = arg("--label");
 const PASSWORD = process.env.DEMO_USER_PASSWORD ?? "";
 
 const VIEWPORTS = {
@@ -30,7 +34,9 @@ const PAGES = [
   { name: "requests", path: "/requests", auth: true, devices: ["desktop", "mobile"] },
   { name: "requests-new", path: "/requests/new", auth: true, devices: ["desktop"] },
   { name: "request-detail", path: "detail", auth: true, devices: ["desktop"] },
-  { name: "users", path: "/admin/users", auth: true, devices: ["desktop"] },
+  { name: "users", path: "/admin/users", auth: true, devices: ["desktop"], forAdmin: true },
+  // Не адміністратор відкриває адмін-сторінку: сторінка відмови.
+  { name: "forbidden", path: "/admin/users", auth: true, devices: ["desktop"], forAdmin: false },
 ];
 
 function findBrowser() {
@@ -108,7 +114,10 @@ async function launch() {
 }
 
 async function main() {
-  const wanted = PAGES.filter((page) => !only || page.name === only);
+  // Для іншої ролі сторінка входу не повторюється; адмінські сторінки — лише для адміна, сторінка відмови — лише для інших.
+  const wanted = PAGES.filter(
+    (page) => (!only || page.name === only) && (page.forAdmin === undefined || page.forAdmin === !LABEL) && (page.auth || !LABEL),
+  );
   if (wanted.length === 0) throw new Error(`Немає сторінки «${only}». Доступні: ${PAGES.map((p) => p.name).join(", ")}`);
   const needsAuth = wanted.some((page) => page.auth);
   if (needsAuth && !PASSWORD) {
@@ -141,7 +150,7 @@ async function main() {
   };
   const shot = async (name, device, theme) => {
     const { data } = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    const file = `design-after-${device === "mobile" ? "mobile-" : ""}${name}-${theme}.png`;
+    const file = `design-after-${LABEL ? `${LABEL}-` : ""}${device === "mobile" ? "mobile-" : ""}${name}-${theme}.png`;
     writeFileSync(new URL(file, OUT), Buffer.from(data, "base64"));
     console.log("збережено", file);
   };
