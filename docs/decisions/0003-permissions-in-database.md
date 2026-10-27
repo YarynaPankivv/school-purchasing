@@ -84,3 +84,9 @@
 | — (текст помилки) | `isKnownInvalidDetail` → завжди `true` | `tests/pur/lines.test.ts` |
 | AC-FRM-01 | у `new/page.tsx` відбір `selectableDepartments` → усі відділи (мок тепер віддає всі, відбір — код сторінки) | AC-FRM-01, AC-FRM-05 |
 | AC-APR-06 | текст `reason_required` у `errors.ts` → інший | AC-APR-06 (повідомлення на сторінці заявки) |
+| AC-APR-08 | у `private.profile_labels` `security definer` → `security invoker` (підписи читаються крізь RLS профілів) | AC-APR-08 (обидва тести `tests/db/author-labels.test.ts`) |
+| AC-APR-10 | у `private.profile_labels` умову `p.id = any (target_ids)` → `true` (віддає всі профілі) | AC-APR-10 (обидва тести `author-labels.test.ts`) |
+| AC-APR-08 | у `overview.ts` підписи з `request_author_labels` не підставляються | AC-APR-08 (сторінка списку для рішення) |
+| AC-FRM-06 | текст `lines_required` у `errors.ts` → інший | AC-FRM-06 (сторінка заявки) |
+| AC-FRM-15 | текст «Fill in all line fields» у `lines.ts` → інший | AC-FRM-15 (сторінка заявки) |
+| — (клавіатура) | `shouldCloseOnEscape` → завжди `false`; «Skip to content» і `main#main-content` прибрано | три тести `tests/ui/keyboard-access.test.tsx` |

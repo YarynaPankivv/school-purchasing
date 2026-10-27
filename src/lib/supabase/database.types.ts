@@ -356,6 +356,10 @@ export type Database = {
         };
         Returns: string;
       };
+      request_author_labels: {
+        Args: Record<PropertyKey, never>;
+        Returns: { user_id: string; label: string }[];
+      };
       reopen_purchase: {
         Args: { target_request: string };
         Returns: string;

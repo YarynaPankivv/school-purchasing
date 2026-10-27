@@ -209,6 +209,32 @@ async function renderDecisionDetail(
   return renderToStaticMarkup(await RequestPageContent({ params: Promise.resolve({ id: REQ }), searchParams: Promise.resolve(query) } as never));
 }
 
+// Автор відкриває власну чернетку (він же схвалювач Primary School): сторінка заявки після відмови подання.
+async function renderOwnDraft(query: Record<string, string>) {
+  const author = makeProfile({ id: ME, role: "approver", email: "maria@example.test", full_name: "Maria" });
+  return renderDecisionDetail(author, query, { status: "draft", author_id: ME, department_id: PRIMARY, editing: false });
+}
+
+describe("AC-FRM: відмови подання на сторінці заявки", () => {
+  it("AC-FRM-06: подання без рядків — на сторінці «Add at least one line», статус «Draft», відділ і тип збережено", async () => {
+    const html = await renderOwnDraft({ error: "lines_required" });
+
+    expect(html).toContain("Add at least one line");
+    expect(html).toContain("Draft");
+    expect(html).not.toContain("Awaiting approval");
+    expect(html).toContain("Primary School");
+    expect(html).toContain("Purchasing department");
+  });
+
+  it("AC-FRM-15: рядок лише з назвою — на сторінці «Fill in all line fields» із переліком полів, статус «Draft»", async () => {
+    const html = await renderOwnDraft({ error: "lines_incomplete", detail: "1:purpose,quantity,unit_price" });
+
+    expect(html).toContain("Fill in all line fields. Line 1: purpose, quantity, unit price.");
+    expect(html).toContain("Draft");
+    expect(html).not.toContain("Awaiting approval");
+  });
+});
+
 describe("AC-APR: список для рішення", () => {
   it("AC-APR-04: заявник за прямим посиланням на список для рішення бачить «Not enough permissions», заявок немає", async () => {
     const employee = makeProfile({ id: ME, role: "requester", email: "member1@example.test" });
@@ -272,6 +298,28 @@ describe("AC-APR: список для рішення", () => {
 
     expect(html).toContain("Rejected");
     expect(html).toContain("Reason: Over budget");
+  });
+
+  it("AC-APR-08: автора, чий профіль схвалювачу не видно (адміністратор без відділу), показано за підписом з request_author_labels", async () => {
+    // У видачі profiles лише сам схвалювач (автор не колега зі спільного відділу), підпис автора віддає функція.
+    const mock = createSupabaseMock({
+      profile: approver,
+      profiles: [],
+      results: {
+        "requests.select": { data: [pendingRequest()] },
+        "request_lines.select": { data: [line] },
+        "departments.select": { data: [{ id: PRIMARY, name: "Primary School" }] },
+        "department_approvers.select": { data: [{ department_id: PRIMARY, user_id: ME }] },
+        "rpc:request_author_labels.rpc": { data: [{ user_id: AUTHOR, label: "Olga Admin" }] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent } = await import("@/app/(app)/requests/(list)/page");
+
+    const html = renderToStaticMarkup(await RequestsPageContent({ searchParams: Promise.resolve({ view: "decide" }) } as never));
+
+    expect(html).toContain("Olga Admin");
+    expect(mock.calls.some((c) => c.table === "rpc:request_author_labels")).toBe(true);
   });
 
   it("AC-APR-09: без імені в профілі автора замість імені вказано його email", async () => {

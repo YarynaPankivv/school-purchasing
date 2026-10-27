@@ -9,6 +9,7 @@ import { isParticipant } from "@/lib/pur/visibility";
 import { requestTotal } from "@/lib/pur/totals";
 import type { Actor, LineRow, PurchaseRow } from "@/lib/pur/types";
 import type { createClient } from "@/lib/supabase/server";
+import { loadAuthorLabels } from "./author-labels";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -30,12 +31,13 @@ export type RequestOverview = {
 };
 
 export async function loadOverview(supabase: Supabase, user: CurrentUser): Promise<RequestOverview> {
-  const [requests, lines, departments, approvers, people] = await Promise.all([
+  const [requests, lines, departments, approvers, people, authorLabels] = await Promise.all([
     supabase.from("requests").select("*").eq("type", "PUR").order("created_at", { ascending: false }),
     supabase.from("request_lines").select("*"),
     supabase.from("departments").select("id, name"),
     supabase.from("department_approvers").select("department_id, user_id"),
     supabase.from("profiles").select("id, email, full_name, is_active, role"),
+    loadAuthorLabels(supabase),
   ]);
   // Збій бази — не «заявок немає»: нехай спрацює сторінка помилки.
   for (const result of [requests, lines, departments, approvers, people]) {
@@ -51,7 +53,8 @@ export async function loadOverview(supabase: Supabase, user: CurrentUser): Promi
   }
   const departmentNames = new Map((departments.data ?? []).map((d) => [d.id, d.name]));
   const personList: Person[] = people.data ?? [];
-  const names = new Map(personList.map((p) => [p.id, personLabel(p)]));
+  // Підписи з request_author_labels (усі автори видимих заявок) мають перевагу над профілями колег.
+  const names = new Map([...personList.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);
   const approverList: Approver[] = approvers.data ?? [];
 
   const item = (request: PurchaseRow): RequestListItem => ({
