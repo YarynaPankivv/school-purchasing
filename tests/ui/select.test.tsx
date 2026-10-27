@@ -28,7 +28,7 @@ describe("Select", () => {
     expect(html).toContain('data-testid="department-select"');
     expect(html).toContain("required");
     // Скрінрідер чує «обов'язкове» на самому полі списку (справжній select прихований), а не лише від браузерної перевірки.
-    expect(html).toContain('aria-required="true"');
+    expect(html).toMatch(/role="combobox"[^>]*aria-required="true"/);
     expect(html).toContain('<option value="a">Office</option>');
     // Список не рендериться, поки меню закрите.
     expect(html).not.toContain('role="listbox"');
