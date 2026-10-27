@@ -90,3 +90,6 @@
 | AC-FRM-06 | текст `lines_required` у `errors.ts` → інший | AC-FRM-06 (сторінка заявки) |
 | AC-FRM-15 | текст «Fill in all line fields» у `lines.ts` → інший | AC-FRM-15 (сторінка заявки) |
 | — (клавіатура) | `shouldCloseOnEscape` → завжди `false`; «Skip to content» і `main#main-content` прибрано | три тести `tests/ui/keyboard-access.test.tsx` |
+| AC-FRM-02, 12, 13 | порядок тестів: `pendingCount` без «до/після», схвалювач `Upper School` в іншому тесті, «єдиний схвалювач» у спільному відділі | `vitest --sequence.shuffle` (8 прогонів поспіль) падав на AC-FRM-02 і AC-FRM-12; тепер зелений |
+| — (`Select`) | `aria-required` на кнопці-combobox прибрано | `tests/ui/select.test.tsx` |
+| — (головна) | `console.error` у `.catch` після збою `loadOverview` прибрано | `tests/ui/home-error.test.tsx` |

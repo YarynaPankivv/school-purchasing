@@ -75,6 +75,7 @@ beforeAll(async () => {
 
 describe("AC-FRM: подання закупівлі з урахуванням прав (база)", () => {
   it("AC-FRM-02: подання у відділ, де працівник не заявник, відхилено, нової заявки «Очікує схвалення» немає", async () => {
+    const before = await pendingCount(andrii);
     await expect(createDraft(andrii, "Upper School")).rejects.toThrow(ROW_SECURITY);
 
     // Обхід через зміну відділу вже створеної чернетки теж закрито політикою update.
@@ -84,7 +85,7 @@ describe("AC-FRM: подання закупівлі з урахуванням п
       t.asUser(andrii, "update public.requests set department_id = $1 where id = $2", [t.departments["Upper School"], own]),
     ).rejects.toThrow(ROW_SECURITY);
 
-    expect(await pendingCount(andrii)).toBe(0);
+    expect(await pendingCount(andrii)).toBe(before);
     const [{ department_id }] = await t.asService<{ department_id: string }>(
       "select department_id from public.requests where id = $1",
       [own],
@@ -190,6 +191,10 @@ describe("AC-FRM: подання закупівлі з урахуванням п
   });
 
   it("AC-FRM-12: відділ без активного схвалювача не блокує подання — «Очікує схвалення»", async () => {
+    const [{ n }] = await t.asService<{ n: string }>("select count(*) as n from public.department_approvers where department_id = $1", [
+      t.departments["Upper School"],
+    ]);
+    expect(Number(n)).toBe(0);
     const id = await createDraft(tom, "Upper School");
     await fillLine(tom, id);
 
@@ -199,13 +204,23 @@ describe("AC-FRM: подання закупівлі з урахуванням п
   });
 
   it("AC-FRM-13: закупівля єдиного схвалювача-автора лишається «Очікує схвалення», доки її не вирішить інший", async () => {
-    const id = await submitted(petro, "Library");
+    // Окремий відділ у самому тесті: «єдиний схвалювач» не залежить від інших тестів і від порядку їх запуску.
+    await t.addDepartment("Archive");
+    await t.addMember("Archive", petro, { approver: true });
+    const id = await submitted(petro, "Archive");
     expect(await statusOf(id)).toBe("pending");
 
     await expect(
       t.asUser(petro, "select public.decide_purchase($1, 'approve')", [id]),
     ).rejects.toThrow("pur:own_request");
     expect(await statusOf(id)).toBe("pending");
+
+    // Другий схвалювач відділу вирішує — лише тоді статус змінюється.
+    const rita = await t.addUser("rita@example.test");
+    await t.addMember("Archive", rita, { approver: true });
+    const [{ decide_purchase }] = await t.asUser<{ decide_purchase: string }>(rita, "select public.decide_purchase($1, 'approve')", [id]);
+    expect(decide_purchase).toBe("approved");
+    expect(await statusOf(id)).toBe("approved");
   });
 });
 
@@ -325,7 +340,9 @@ describe("AC-APR: схвалювач вирішує лише по заявках
   it("AC-APR-03: схвалювач третього відділу теж не вирішує заявку Office — статус «Очікує схвалення»", async () => {
     const id = await submitted(andrii, "Office");
     const outsider = await t.addUser("outsider-approver@example.test");
-    await t.addMember("Upper School", outsider, { approver: true });
+    // Власний відділ схвалювача: «Upper School» має лишатися без схвалювача для AC-FRM-12 за будь-якого порядку тестів.
+    await t.addDepartment("Third Department");
+    await t.addMember("Third Department", outsider, { approver: true });
 
     await expect(t.asUser(outsider, "select public.decide_purchase($1, 'reject', 'No')", [id])).rejects.toThrow(
       "pur:forbidden",

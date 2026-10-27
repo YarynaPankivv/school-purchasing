@@ -38,6 +38,7 @@ export function Select({
   defaultValue,
   onChange,
   disabled,
+  required,
   id,
   "aria-label": ariaLabel,
   "aria-describedby": describedBy,
@@ -140,6 +141,7 @@ export function Select({
         aria-activedescendant={open ? optionId(active) : undefined}
         aria-label={ariaLabel}
         aria-describedby={describedBy}
+        aria-required={required || undefined}
         disabled={disabled}
         onClick={() => {
           setActive(selectedIndex);
@@ -160,6 +162,7 @@ export function Select({
         ref={native}
         value={current}
         disabled={disabled}
+        required={required}
         tabIndex={-1}
         aria-hidden="true"
         className="sr-only"
