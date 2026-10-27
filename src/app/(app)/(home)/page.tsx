@@ -25,7 +25,11 @@ export async function HomeContent() {
   const { supabase, user } = await requireActiveUser();
   // Збій читання (наприклад, міграцію ще не застосовано) не має ламати головну, але й не має приховувати чергу:
   // у такому разі показуємо попередження й даємо відкрити повний список.
-  const overview = await loadOverview(supabase, user).catch(() => null);
+  const overview = await loadOverview(supabase, user).catch((error: unknown) => {
+    // Головна не падає через збій списку (показуємо «summary is unavailable»), але причину пишемо в лог сервера.
+    console.error("Home: failed to load the requests overview", error);
+    return null;
+  });
   const isAdmin = user.role === "admin";
   const firstName = user.fullName?.trim().split(/\s+/)[0];
 
