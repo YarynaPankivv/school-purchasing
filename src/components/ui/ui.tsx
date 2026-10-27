@@ -243,7 +243,8 @@ export function PageShell({
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col gap-6 px-4 pb-12 pt-6 focus:outline-none sm:px-8 sm:pt-8"
+        // scroll-mt: після переходу за «Skip to content» початок вмісту не ховається під липкою шапкою (3.75rem) і TopBar.
+        className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col gap-6 px-4 pb-12 pt-6 scroll-mt-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:scroll-mt-16 sm:px-8 sm:pt-8"
       >
         <div className="flex flex-col gap-3">
           {back ? (
