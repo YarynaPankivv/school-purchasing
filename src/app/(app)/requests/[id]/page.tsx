@@ -27,7 +27,7 @@ import { PURCHASE_TYPE_LABELS } from "@/lib/org/requests";
 import { isAppRole } from "@/lib/org/roles";
 import { canAdminReject, canDecide, canReopen, decisionBlockReason, forwardedLines } from "@/lib/pur/decisions";
 import { PUR_ERROR_MESSAGES, purErrorMessage } from "@/lib/pur/errors";
-import { incompleteLinesFromDetail, incompleteLinesMessage, LINE_NAME_MAX, NOTE_MAX } from "@/lib/pur/lines";
+import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail, LINE_NAME_MAX, NOTE_MAX } from "@/lib/pur/lines";
 import { purchaseNumberLabel } from "@/lib/pur/numbers";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
@@ -154,7 +154,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   const errorMessage =
     incomplete.length > 0
       ? incompleteLinesMessage(incomplete)
-      : error === "invalid_input" && typeof detail === "string"
+      : error === "invalid_input" && typeof detail === "string" && isKnownInvalidDetail(detail)
         ? detail
         : purErrorMessage(error);
 

@@ -36,6 +36,52 @@ describe("scripts/check-server-actions.mjs", () => {
     expect(code).toBe(0);
   });
 
+  it("scans any file with a \"use server\" directive, not only actions.ts", () => {
+    const root = project({
+      "app/requests/search-actions.ts": `"use server";
+export async function loadIndex() {
+  const supabase = await createClient();
+  return supabase.from("requests").select("id");
+}
+`,
+    });
+    const { code, out } = runScript("check-server-actions.mjs", root);
+    expect(code).toBe(1);
+    expect(out).toContain("search-actions.ts");
+    expect(out).toContain("loadIndex: немає виклику перевірки користувача");
+  });
+
+  it("does not accept a bare getClaims() whose result is never used", () => {
+    const root = project({
+      "app/requests/actions.ts": `"use server";
+export async function wipe() {
+  const supabase = await createClient();
+  await supabase.auth.getClaims();
+  await supabase.rpc("wipe", {});
+}
+`,
+    });
+    const { code, out } = runScript("check-server-actions.mjs", root);
+    expect(code).toBe(1);
+    expect(out).toContain("wipe: немає виклику перевірки користувача");
+  });
+
+  it("accepts getClaims() when its result is assigned and checked", () => {
+    const root = project({
+      "app/requests/actions.ts": `"use server";
+export async function save() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data) return;
+  await supabase.rpc("save", {});
+}
+`,
+    });
+    const { code, out } = runScript("check-server-actions.mjs", root);
+    expect(out).toContain("OK");
+    expect(code).toBe(0);
+  });
+
   it("flags an exported action that writes without checking the caller", () => {
     const root = project({
       "app/requests/actions.ts": `"use server";

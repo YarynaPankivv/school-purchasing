@@ -104,6 +104,23 @@ export function parseLineFields(raw: {
   return { ok: false, errors };
 }
 
+export const DELIVERY_DATE_INVALID = "Delivery date must be a valid date.";
+
+// Повідомлення «invalid_input» приходить на сторінку в адресі (?detail=…), тож показуємо його лише якщо воно складене з
+// наших власних фраз валідації: інакше за посиланням можна підкинути довільний «системний» текст.
+export function isKnownInvalidDetail(detail: string): boolean {
+  const known = new Set([
+    "Quantity must be a whole number of 1 or more.",
+    "Unit price must be 0 or more, with at most 2 decimal places.",
+    `Name must be at most ${LINE_NAME_MAX} characters.`,
+    "Purpose must be text.",
+    `Note must be at most ${NOTE_MAX} characters.`,
+    DELIVERY_DATE_INVALID,
+  ]);
+  const parts = detail.split(/(?<=\.) /);
+  return parts.length > 0 && parts.every((part) => known.has(part));
+}
+
 // Порожній рядок нової чернетки (AC-PUR-01; у базі його додає тригер after insert, D3).
 export function emptyLine(position = 1): LineFields & Pick<LineRow, "position" | "status"> {
   return { position, name: null, purpose: null, quantity: null, unit_price: null, status: "pending" };

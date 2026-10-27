@@ -24,6 +24,11 @@ const SUPABASE_SHIM = `
   grant execute on function auth.uid() to anon, authenticated, service_role;
   grant select, insert, delete on auth.users to supabase_auth_admin;
   grant usage on schema public to anon, authenticated, service_role;
+  -- Як у справжньому Supabase: нові об'єкти public одразу доступні anon/authenticated/service_role. Без цього тест
+  -- «гість нічого не бачить» проходив би й без revoke у міграції: прав і так ніхто не мав би.
+  alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+  alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+  alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
 `;
 
 export type AppRole = "requester" | "approver" | "admin";
