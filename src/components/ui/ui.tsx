@@ -150,6 +150,13 @@ function UserBlock({ user }: { user: ShellUser | null }) {
 export function AppSidebar({ user }: { user: ShellUser | null }) {
   return (
     <>
+      {/* Перше, що отримує фокус із клавіатури: пропуск бічної панелі до вмісту сторінки (main#main-content). */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-30 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+      >
+        Skip to content
+      </a>
       <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card lg:sticky lg:top-0 lg:flex lg:h-dvh">
         {/* Висота рядка бренду = висоті TopBar (h-15.25), тож лінія під ним продовжує лінію під верхньою смугою. */}
         <div className="flex h-15.25 shrink-0 items-center border-b border-border px-6">
@@ -234,7 +241,10 @@ export function PageShell({
     <>
       <TopBar query={searchQuery} showNewRequest={!hideNewRequest} />
       <main
-        className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col gap-6 px-4 pb-12 pt-6 sm:px-8 sm:pt-8"
+        id="main-content"
+        tabIndex={-1}
+        // scroll-mt: після переходу за «Skip to content» початок вмісту не ховається під липкою шапкою (3.75rem) і TopBar.
+        className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col gap-6 px-4 pb-12 pt-6 scroll-mt-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:scroll-mt-16 sm:px-8 sm:pt-8"
       >
         <div className="flex flex-col gap-3">
           {back ? (

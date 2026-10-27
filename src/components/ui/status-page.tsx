@@ -57,5 +57,14 @@ export function StatusPage({
     );
   }
 
-  return <main className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col items-center justify-center px-4 py-12 sm:px-8">{panel}</main>;
+  // id і tabIndex — ціль посилання «Skip to content» і на сторінках стану (404, відмова, помилка) усередині застосунку.
+  return (
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="scroll-mt-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:scroll-mt-16 mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col items-center justify-center px-4 py-12 sm:px-8"
+    >
+      {panel}
+    </main>
+  );
 }

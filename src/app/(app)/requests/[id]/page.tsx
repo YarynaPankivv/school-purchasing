@@ -58,6 +58,7 @@ import {
   submitPurchase,
 } from "./actions";
 import { LineStatusBadge, PurchaseStatusBadge } from "../_components/status-badge";
+import { loadAuthorLabels } from "../_lib/author-labels";
 import { safeBack } from "../_lib/nav";
 
 const SAVED: Record<string, string> = {
@@ -98,7 +99,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   // Куди повертає «Back» і сусіди в порядку списку, з якого людина прийшла (лише адреса, дані читає RLS).
   const back = safeBack(rawBack);
 
-  const [requestRes, linesRes, historyRes, departmentsRes, approversRes, peopleRes, membersRes, permissions] = await Promise.all([
+  const [requestRes, linesRes, historyRes, departmentsRes, approversRes, peopleRes, membersRes, permissions, authorLabels] = await Promise.all([
     supabase.from("requests").select("*").eq("id", id).eq("type", "PUR").maybeSingle(),
     supabase.from("request_lines").select("*").eq("request_id", id).order("position"),
     supabase.from("request_history").select("*").eq("request_id", id).order("created_at", { ascending: false }),
@@ -107,6 +108,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
     supabase.from("profiles").select("id, email, full_name, is_active, role"),
     supabase.from("department_members").select("department_id, user_id, auto_approve"),
     loadPermissions(supabase, user.id),
+    loadAuthorLabels(supabase),
   ]);
   for (const result of [requestRes, linesRes, historyRes, departmentsRes, approversRes, peopleRes, membersRes]) {
     if (result.error) throw new Error(`Failed to read the request: ${result.error.message}`);
@@ -122,7 +124,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   const approvers: Approver[] = approversRes.data ?? [];
   const people: Person[] = peopleRes.data ?? [];
   const memberships: Membership[] = (membersRes.data ?? []).map((m) => ({ ...m }));
-  const names = new Map(people.map((p) => [p.id, personLabel(p)]));
+  // Підписи з request_author_labels (автор і особа «від імені» видимої заявки) мають перевагу над профілями колег.
+  const names = new Map([...people.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);
   const departmentName = request.department_id ? (departments.find((d) => d.id === request.department_id)?.name ?? "—") : null;
 
   const editFields = canEditFields(request, actor);

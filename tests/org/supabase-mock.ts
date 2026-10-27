@@ -86,7 +86,12 @@ export function createSupabaseMock(options: {
       then<T>(resolve: (value: { data: unknown; error: MockError }) => T, reject?: (reason: unknown) => T) {
         calls.push(call);
         const configured = results[`rpc:${name}.rpc`];
-        const result = { data: configured?.data ?? (configured?.error ? null : true), error: configured?.error ?? null };
+        // request_author_labels за замовчуванням віддає підписи відомих профілів (ім'я або email), як справжня функція.
+        const fallback =
+          name === "request_author_labels"
+            ? known.map((p) => ({ user_id: p.id, label: p.full_name?.trim() || p.email }))
+            : true;
+        const result = { data: configured?.data ?? (configured?.error ? null : fallback), error: configured?.error ?? null };
         return Promise.resolve(result).then(resolve, reject);
       },
     };
