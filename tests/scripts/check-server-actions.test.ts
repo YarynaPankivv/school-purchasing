@@ -82,6 +82,21 @@ export async function save() {
     expect(code).toBe(0);
   });
 
+  it("accepts getClaims() used inside parentheses, as in if (!(await …getClaims()).data?.claims)", () => {
+    const root = project({
+      "app/requests/actions.ts": `"use server";
+export async function save() {
+  const supabase = await createClient();
+  if (!(await supabase.auth.getClaims()).data?.claims) return;
+  await supabase.rpc("save", {});
+}
+`,
+    });
+    const { code, out } = runScript("check-server-actions.mjs", root);
+    expect(out).toContain("OK");
+    expect(code).toBe(0);
+  });
+
   it("flags an exported action that writes without checking the caller", () => {
     const root = project({
       "app/requests/actions.ts": `"use server";

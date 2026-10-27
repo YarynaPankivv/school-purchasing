@@ -36,7 +36,7 @@ const WRITE = /\.(?:from|rpc|insert|update|upsert|delete)\s*\(|\bfetch\s*\(/;
 // Директива файлу: перший оператор — "use server" (перед нею можуть бути лише коментарі).
 const USE_SERVER = /^(?:\s*(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/))*\s*["']use server["']/;
 // Чи використано результат виклику getClaims(): присвоєння, return, умова чи заперечення перед викликом.
-const CLAIMS_USED = /(?:=|\breturn\b|\bif\s*\(|!|&&|\|\||\?)\s*(?:await\s+)?[\w.]*$/;
+const CLAIMS_USED = /(?:=|\breturn\b|\bif\s*\(|!|&&|\|\||\?)\s*(?:\(\s*)?(?:await\s+)?[\w.]*$/;
 const SKIP_DIRS = new Set(["node_modules", ".next", ".git"]);
 
 // Коментарі й рядкові літерали замінюємо пробілами (довжину зберігаємо, щоб номери рядків не зсунулись).
