@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // Архітектурне правило «кожна Server Action сама перевіряє, хто викликає» (ADR 0003).
 // Server Action — публічний POST-ендпойнт: її викликають напряму, оминувши сторінку, proxy і приховану кнопку.
-// 1) Кожна експортована функція у файлі actions.ts / route.ts (declaration, `export const f = async () =>`,
+// 1) Кожна експортована функція у файлі actions.ts / route.ts або в будь-якому файлі з директивою "use server" на
+//    початку (declaration, `export const f = async () =>`,
 //    `export default`), крім винятків нижче, у своєму тілі викликає requireActiveUser / requireAdmin / adminOr /
 //    authorRequest / getClaims — і цей виклик іде ДО першого запису чи запиту до бази (.from, .rpc, .insert, .update,
 //    .upsert, .delete) і fetch. Згадка в рядку чи коментарі не рахується.
+//    Результат getClaims() має бути використано (присвоєно, повернуто чи перевірено): голий виклик нічого не охороняє.
 // 2) У src/ немає getSession(): для авторизації на сервері — лише getClaims().
 // 3) У src/ немає middleware.ts: у Next.js 16 це src/proxy.ts (лише оновлення сесії, не захист).
 // Винятки (EXEMPT) — по іменах функцій і з причиною: дії, що створюють чи завершують сесію.
@@ -31,6 +33,10 @@ const EXEMPT = new Map([
 // adminOr — локальна обгортка над requireAdmin в actions.ts адміністрування.
 const GUARD = /\b(?:requireActiveUser|requireAdmin|adminOr|authorRequest|getClaims)\s*\(/;
 const WRITE = /\.(?:from|rpc|insert|update|upsert|delete)\s*\(|\bfetch\s*\(/;
+// Директива файлу: перший оператор — "use server" (перед нею можуть бути лише коментарі).
+const USE_SERVER = /^(?:\s*(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/))*\s*["']use server["']/;
+// Чи використано результат виклику getClaims(): присвоєння, return, умова чи заперечення перед викликом.
+const CLAIMS_USED = /(?:=|\breturn\b|\bif\s*\(|!|&&|\|\||\?)\s*(?:\(\s*)?(?:await\s+)?[\w.]*$/;
 const SKIP_DIRS = new Set(["node_modules", ".next", ".git"]);
 
 // Коментарі й рядкові літерали замінюємо пробілами (довжину зберігаємо, щоб номери рядків не зсунулись).
@@ -40,6 +46,14 @@ const stripNoise = (code) =>
     .replace(/\/\*[\s\S]*?\*\//g, blank)
     .replace(/(^|[^:\\])\/\/.*$/gm, (m, p) => p + blank(m.slice(p.length)))
     .replace(/"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`/g, blank);
+
+// Перший виклик перевірки в тілі, який справді щось охороняє: getClaims() — лише з використаним результатом.
+function findGuard(body) {
+  for (const m of body.matchAll(new RegExp(GUARD.source, "g"))) {
+    if (!m[0].startsWith("getClaims") || CLAIMS_USED.test(body.slice(Math.max(0, m.index - 40), m.index))) return m.index;
+  }
+  return -1;
+}
 
 const problems = [];
 const lineOf = (text, index) => text.slice(0, index).split("\n").length;
@@ -78,13 +92,14 @@ for (const file of walk(SRC)) {
   const name = basename(file);
   if (name === "middleware.ts") report(rel, 1, "у Next.js 16 замість middleware.ts — src/proxy.ts");
   if (!/\.(tsx?|mjs)$/.test(name) || /\.test\./.test(name)) continue;
-  const text = stripNoise(readFileSync(file, "utf8"));
+  const source = readFileSync(file, "utf8");
+  const text = stripNoise(source);
 
   for (const m of text.matchAll(/\bgetSession\s*\(/g)) {
     report(rel, lineOf(text, m.index), "getSession() для авторизації заборонено — лише getClaims()");
   }
 
-  if (!["actions.ts", "route.ts"].includes(name)) continue;
+  if (!["actions.ts", "route.ts"].includes(name) && !USE_SERVER.test(source)) continue;
   const exempt = EXEMPT.get(rel) ?? {};
 
   // Експортовані функції: від експорту до наступного експорту (або кінця файлу).
@@ -93,7 +108,7 @@ for (const file of walk(SRC)) {
     const fn = m[1] || m[2] || "default";
     if (Object.hasOwn(exempt, fn)) return;
     const body = text.slice(m.index, starts[i + 1]?.index ?? text.length);
-    const guard = body.search(GUARD);
+    const guard = findGuard(body);
     if (guard === -1) {
       report(rel, lineOf(text, m.index), `${fn}: немає виклику перевірки користувача (requireActiveUser / requireAdmin / adminOr / authorRequest / getClaims) у тілі`);
       return;

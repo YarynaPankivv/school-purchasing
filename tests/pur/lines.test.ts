@@ -4,11 +4,13 @@
 import { describe, expect, it } from "vitest";
 import { selectableDepartments } from "@/lib/org/departments";
 import {
+  DELIVERY_DATE_INVALID,
   LINE_NAME_MAX,
   NOTE_MAX,
   emptyLine,
   incompleteLines,
   incompleteLinesMessage,
+  isKnownInvalidDetail,
   isLineComplete,
   parseLineFields,
   parseLineName,
@@ -219,5 +221,20 @@ describe("час у America/New_York", () => {
     expect(formatDate("2026-10-21")).toBe("Oct 21, 2026");
     expect(formatDate("2026-02-31")).toBe("—");
     expect(formatDate(null)).toBe("—");
+  });
+});
+
+// Без AC PM: текст помилки приходить на сторінку в адресі, тож підроблене «системне» повідомлення не показуємо.
+describe("isKnownInvalidDetail", () => {
+  it("accepts messages built from our own validation phrases", () => {
+    expect(isKnownInvalidDetail(DELIVERY_DATE_INVALID)).toBe(true);
+    expect(isKnownInvalidDetail("Quantity must be a whole number of 1 or more. Purpose must be text.")).toBe(true);
+    expect(isKnownInvalidDetail(`Note must be at most ${NOTE_MAX} characters.`)).toBe(true);
+  });
+
+  it("rejects text that did not come from our validators", () => {
+    expect(isKnownInvalidDetail("Your account is locked. Call 555-0100 to unlock it.")).toBe(false);
+    expect(isKnownInvalidDetail(`${DELIVERY_DATE_INVALID} Call 555-0100.`)).toBe(false);
+    expect(isKnownInvalidDetail("")).toBe(false);
   });
 });

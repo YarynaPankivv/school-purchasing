@@ -10,7 +10,7 @@ import { requireActiveUser } from "@/lib/auth/session";
 import { isUuid } from "@/lib/org/departments";
 import { isPurchaseType } from "@/lib/org/requests";
 import { mapPurDbError, type PurErrorCode } from "@/lib/pur/errors";
-import { parseLineFields, parseNote } from "@/lib/pur/lines";
+import { DELIVERY_DATE_INVALID, parseLineFields, parseNote } from "@/lib/pur/lines";
 import { canEditFields, canEditLines } from "@/lib/pur/visibility";
 import { isPurchaseStatus } from "@/lib/pur/statuses";
 import type { DbError } from "@/lib/org/errors";
@@ -72,7 +72,7 @@ function requestFields(formData: FormData): { ok: true; value: RequestUpdate } |
 
   const rawDate = field(formData, "delivery_date");
   if (rawDate && (!DATE_RE.test(rawDate) || Number.isNaN(Date.parse(rawDate)))) {
-    return { ok: false, code: "invalid_input", detail: "Delivery date must be a valid date." };
+    return { ok: false, code: "invalid_input", detail: DELIVERY_DATE_INVALID };
   }
 
   // AC-PUR-12: позначка «від імені колеги» без вибору колеги — заявку не зберігаємо. Чи колега допустимий

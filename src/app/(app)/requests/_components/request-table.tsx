@@ -117,6 +117,8 @@ export function RequestTable({
                   </Link>
                   {/* На телефоні колонки «#» і «Department» сховані: відділ іде підрядком під номером. */}
                   <span className="block text-xs text-muted-foreground sm:hidden">{departmentName ?? "No department yet"}</span>
+                  {/* Колонка «Author» схована нижче md (AC-APR-08): автор іде підрядком, щоб схвалювач бачив, чия заявка. */}
+                  <span className="block text-xs text-muted-foreground md:hidden">{authorName}</span>
                   {itemsText ? <span className="block max-w-56 truncate text-xs text-muted-foreground">{itemsText}</span> : null}
                 </td>
                 <td className="px-3 py-3 text-foreground max-sm:hidden">{departmentName ?? "No department yet"}</td>

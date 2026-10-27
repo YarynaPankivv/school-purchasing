@@ -2,6 +2,9 @@
 // (asAnon). Кожен відмовний AC перевіряє і відмову, і те, що дані не змінилися; тест падає, якщо прибрати відповідну
 // політику чи перевірку в міграції (мутаційні прогони — в описі PR задачі).
 import { beforeAll, describe, expect, it } from "vitest";
+import { decisionQueue } from "@/lib/pur/decisions";
+import type { PurchaseStatus } from "@/lib/pur/statuses";
+import { actor } from "../pur/helpers";
 import { createPurchasingDb, type PurchasingDb } from "./supabase-pglite";
 
 let t: PurchasingDb;
@@ -108,6 +111,21 @@ describe("AC-FRM: подання закупівлі з урахуванням п
     expect(purchase_type).toBe("procurement");
   });
 
+  it("AC-FRM-04: чернетка «Самостійної закупівлі» після зняття дозволу не подається, статус лишається «Draft»", async () => {
+    const sam = await t.addUser("sam@example.test");
+    await t.addMember("Primary School", sam);
+    await t.allowSelfPurchase(sam);
+    const id = await createDraft(sam, "Primary School", "self");
+    await fillLine(sam, id);
+    // Адміністратор забирає дозвіл уже після створення чернетки.
+    await t.asService("update public.user_permissions set self_purchase = false where user_id = $1", [sam]);
+
+    await expect(t.asUser(sam, "select public.submit_purchase($1)", [id])).rejects.toThrow("pur:purchase_type_forbidden");
+
+    expect(await statusOf(id)).toBe("draft");
+    expect(await pendingCount(sam)).toBe(0);
+  });
+
   it("AC-FRM-04: з дозволом той самий запит проходить — відмова залежить саме від дозволу", async () => {
     const colleague = await t.addUser("with-permission@example.test");
     await t.addMember("Primary School", colleague);
@@ -205,6 +223,33 @@ describe("AC-APR: схвалювач вирішує лише по заявках
 
     expect(visible.map((r) => r.id).sort()).toEqual([first, second].sort());
     expect(visible.every((r) => r.department_id === t.departments["Primary School"])).toBe(true);
+  });
+
+  it("AC-APR-01: власної поданої заявки схвалювача у списку для рішення немає", async () => {
+    const first = await submitted(andrii, "Primary School");
+    const office = await submitted(andrii, "Office");
+    const own = await submitted(maria, "Primary School");
+
+    // Рядки, які Марія бачить крізь RLS (власна заявка серед них є), проходять через справжній відбір списку для рішення.
+    const rows = await t.asUser<{
+      id: string;
+      status: PurchaseStatus;
+      department_id: string;
+      author_id: string;
+      on_behalf_of_id: string | null;
+      editing: boolean;
+    }>(maria, "select id, status, department_id, author_id, on_behalf_of_id, editing from public.requests where id = any($1::uuid[])", [
+      [first, office, own],
+    ]);
+    expect(rows.map((r) => r.id)).toContain(own);
+    const approvers = await t.asService<{ department_id: string; user_id: string }>(
+      "select department_id, user_id from public.department_approvers",
+    );
+
+    const queue = decisionQueue(rows, actor(maria, "approver"), approvers);
+
+    expect(queue.map((r) => r.id)).toEqual([first]);
+    expect(await statusOf(own)).toBe("pending");
   });
 
   it("AC-APR-02: схвалення заявки свого відділу ставить статус «Схвалено»", async () => {

@@ -63,8 +63,8 @@ async function renderNewRequest(options: {
   const mock = createSupabaseMock({
     profile: options.viewer,
     results: {
-      // RLS: заявник бачить лише відділи, де він заявник.
-      "departments.select": { data: departments.filter((d) => options.memberOf.includes(d.id)) },
+      // Усі відділи: відбір «лише ті, де він заявник» робить код сторінки (selectableDepartments), а не цей мок.
+      "departments.select": { data: departments },
       "department_members.select": {
         data: options.memberOf.map((department_id) => ({ department_id, user_id: options.viewer.id })),
       },
@@ -181,12 +181,16 @@ async function renderDecisionList(authorProfile: ReturnType<typeof makeProfile>,
   return renderToStaticMarkup(await RequestsPageContent({ searchParams: Promise.resolve({ view }) } as never));
 }
 
-async function renderDecisionDetail(authorProfile: ReturnType<typeof makeProfile>) {
+async function renderDecisionDetail(
+  authorProfile: ReturnType<typeof makeProfile>,
+  query: Record<string, string> = {},
+  request: Record<string, unknown> = {},
+) {
   const mock = createSupabaseMock({
     profile: approver,
     profiles: [authorProfile],
     results: {
-      "requests.select": { data: pendingRequest() },
+      "requests.select": { data: pendingRequest(request) },
       "request_lines.select": { data: [line] },
       "request_history.select": { data: [] },
       "departments.select": { data: [{ id: PRIMARY, name: "Primary School" }] },
@@ -202,7 +206,7 @@ async function renderDecisionDetail(authorProfile: ReturnType<typeof makeProfile
   });
   createClient.mockResolvedValue(mock.client);
   const { RequestPageContent } = await import("@/app/(app)/requests/[id]/page");
-  return renderToStaticMarkup(await RequestPageContent({ params: Promise.resolve({ id: REQ }), searchParams: Promise.resolve({}) } as never));
+  return renderToStaticMarkup(await RequestPageContent({ params: Promise.resolve({ id: REQ }), searchParams: Promise.resolve(query) } as never));
 }
 
 describe("AC-APR: список для рішення", () => {
@@ -247,6 +251,27 @@ describe("AC-APR: список для рішення", () => {
     expect(list).toContain("Petro");
     expect(detail).toContain("Petro");
     expect(list).not.toContain("petro@example.test");
+    // На телефоні колонка «Author» схована: той самий автор іде підрядком під номером заявки.
+    expect(list).toMatch(/ md:hidden">Petro</);
+  });
+
+  it("AC-APR-06: відхилення без причини — на сторінці заявки «Provide a reason», статус лишається «Awaiting approval»", async () => {
+    const author = makeProfile({ id: AUTHOR, role: "requester", email: "petro@example.test", full_name: "Petro" });
+
+    const html = await renderDecisionDetail(author, { error: "reason_required" });
+
+    expect(html).toContain("Provide a reason");
+    expect(html).toContain("Awaiting approval");
+    expect(html).not.toContain("Rejected");
+  });
+
+  it("AC-APR-07: відхилену заявку на сторінці показано зі статусом «Rejected» і причиною «Reason: Over budget»", async () => {
+    const author = makeProfile({ id: AUTHOR, role: "requester", email: "petro@example.test", full_name: "Petro" });
+
+    const html = await renderDecisionDetail(author, {}, { status: "rejected", decision_reason: "Over budget" });
+
+    expect(html).toContain("Rejected");
+    expect(html).toContain("Reason: Over budget");
   });
 
   it("AC-APR-09: без імені в профілі автора замість імені вказано його email", async () => {

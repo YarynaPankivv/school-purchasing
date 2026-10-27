@@ -55,3 +55,32 @@
 - Правило: `npm run check:actions` і job «Server Actions: перевірка користувача» в `architecture.yml`; тест скрипта —
   `tests/scripts/check-server-actions.test.ts`. Доказ, що правило ловить порушення, — червоний прогін у PR на коміті з
   навмисно незахищеною дією.
+
+### Мутаційні перевірки
+
+Тест, який лишається зеленим без політики чи перевірки, AC не покриває. Таблиця: що тимчасово прибрали → який тест упав.
+Перші одинадцять рядків — прогони з PR #33 (локально; для AC-APR-05 і AC-FRM-02 — ще й червоні прогони CI на комітах
+`mutation: …`), решта — виправлення за рев'ю (кожну мутацію зроблено локально й повернуто).
+
+| AC | Що тимчасово прибрали | Який тест упав |
+|---|---|---|
+| AC-FRM-02 | `or private.is_member(department_id)` → `or true` у `requests_insert`/`requests_update_author` | AC-FRM-02 |
+| AC-FRM-04 | `can_create_request`: «self» дозволено без `self_purchase` | AC-FRM-04 |
+| AC-FRM-06 | `submit_purchase`: перевірку «рядків немає» | AC-FRM-06 |
+| AC-FRM-08 | `requests_select`: схвалювач → будь-який заявник відділу | AC-FRM-08, AC-APR-01, 03, 04, 07 |
+| AC-FRM-09 | `grant select on requests to anon` | AC-FRM-09 |
+| AC-FRM-15 | перевірку неповних рядків | AC-FRM-15 |
+| AC-APR-03 | `decide_purchase`: право вирішувати → `or true` | AC-APR-03 (обидва), AC-APR-04 |
+| AC-APR-05 | перевірку `own_request` | AC-APR-05, AC-FRM-13 |
+| AC-APR-06 | відхилення без причини дозволено | AC-APR-06 |
+| AC-APR-04 | умову `role === "requester"` у списку | AC-APR-04 |
+| AC-FRM-11 | редирект після подання → на сторінку заявки | AC-FRM-11, AC-PUR-14, 16, 23 |
+| AC-FRM-09 | `revoke all on table public.requests from anon, authenticated` → без `anon` (тестова база тепер має ті самі права за замовчуванням, що Supabase) | AC-FRM-09 |
+| AC-FRM-04 | у `submit_purchase` перевірку `can_create_request` для чернетки → `if false` (міграція `…_submit_recheck_purchase_type`) | AC-FRM-04 (подання після зняття дозволу) |
+| AC-APR-01 | у `decisionQueue` умову `!isParticipant(r, actor.id)` | AC-APR-01 (власна заявка схвалювача) |
+| AC-APR-08 | підрядок з автором на телефоні в `request-table.tsx` | AC-APR-08 |
+| — (`check:actions`) | скрипт без скану за `"use server"` і без перевірки використання `getClaims()` | два нові тести `check-server-actions.test.ts` |
+| — (proxy) | `isPublicPath`: точний збіг → `startsWith(path)` | `tests/auth/public-paths.test.ts` |
+| — (текст помилки) | `isKnownInvalidDetail` → завжди `true` | `tests/pur/lines.test.ts` |
+| AC-FRM-01 | у `new/page.tsx` відбір `selectableDepartments` → усі відділи (мок тепер віддає всі, відбір — код сторінки) | AC-FRM-01, AC-FRM-05 |
+| AC-APR-06 | текст `reason_required` у `errors.ts` → інший | AC-APR-06 (повідомлення на сторінці заявки) |
