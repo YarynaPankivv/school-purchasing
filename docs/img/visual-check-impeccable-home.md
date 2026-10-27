@@ -5,9 +5,11 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 2
-target_identity: "file:C:\\Homework\\Homework 6\\school-purchasing\\src\\app\\page.tsx"
+target_identity: "file:src/app/page.tsx"
 target_fingerprint: "sha256:8dca59f348b2e6df87cfbbf484bc83dfd85a186f2d3f198887cd15934c8f2fbf"
-target_path: "C:\\Homework\\Homework 6\\school-purchasing\\src\\app\\page.tsx"
+target_path: "src/app/page.tsx"
+current_path: "src/app/(app)/(home)/page.tsx"
+note: "target_fingerprint is a hash of the uncommitted working-tree file at critique time (26.10) and matches no commit; the page was reworked afterwards in PR #27. Local absolute paths were made repo-relative."
 timestamp: 2026-10-26T10-26-31Z
 slug: src-app-page-tsx
 ---
