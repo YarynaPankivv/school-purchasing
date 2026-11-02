@@ -1,0 +1,59 @@
+# D0 smoke проду: після кожного деплою main і щодня. Лише GET, без секретів: "/", "/login", "/api/health"
+# (коміт збірки = main, база відповідає). Скрипт — scripts/smoke.mjs; локально: npm run smoke -- <прод-URL>.
+# Налаштування: змінна репозиторію PROD_URL (Settings → Secrets and variables → Actions → Variables), напр.
+# https://<проєкт>.vercel.app. Не секрет. Без неї прогін червоний з підказкою: адресу за замовчуванням не беремо,
+# щоб smoke ніколи не перевіряв чужий прод.
+# Джерело: демо-репо курсу, тег ws8-03-uat (там був запасний URL демо — тут його прибрано).
+# Це НЕ обов'язкова перевірка ruleset-у: прод перевіряється після merge, а не в PR. Назви jobs у ci.yml не чіпаємо.
+# Smoke preview-деплоїв PR — у WS11. Події status, repository_dispatch і schedule GitHub запускає лише з файлу
+# на гілці за замовчуванням: до merge цей workflow можна перевірити тільки локально (npm run smoke).
+name: smoke
+
+on:
+  # Прод після деплою: commit status «Vercel» = success на коміті main. Цей статус Vercel ставить у кожному репо курсу.
+  # Кожен інший commit status (CodeRabbit тощо) створює в Actions пропущений (skipped) прогін — це шум, не збій.
+  status:
+  # Vercel шле repository_dispatch після кожного деплою (vercel.com/docs/git/vercel-for-github); беремо лише production.
+  repository_dispatch:
+    types: [vercel.deployment.success]
+  schedule:
+    - cron: "23 5 * * *" # щодня ≈ 07:23 за Києвом (зимовий час): прод живий, база не «заснула»
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Група враховує context статусу: статус іншого сервісу на тому ж коміті не скасує прогін «Vercel».
+# Без cancel-in-progress: прогін може чекати перемикання прод-домену (до 6 × 20 с).
+concurrency:
+  group: smoke-${{ github.event_name }}-${{ github.event.context || 'na' }}-${{ github.event.client_payload.git.sha || github.event.sha || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  prod:
+    if: >-
+      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'status' && github.event.context == 'Vercel' && github.event.state == 'success' &&
+       contains(github.event.branches.*.name, github.event.repository.default_branch)) ||
+      (github.event_name == 'repository_dispatch' && github.event.client_payload.environment == 'production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      PROD_URL: ${{ vars.PROD_URL }}
+      # Очікуваний коміт: щойно розгорнутий (status / repository_dispatch) або HEAD main (schedule, ручний запуск з main).
+      EXPECT_SHA: ${{ github.event.client_payload.git.sha || github.event.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Змінна PROD_URL задана
+        run: |
+          if [ -z "$PROD_URL" ]; then
+            echo "::error title=smoke::Немає змінної репо PROD_URL — Settings → Secrets and variables → Actions → Variables → PROD_URL = https://<проєкт>.vercel.app"
+            exit 1
+          fi
+      - name: Прод = main, сторінка входу відкривається, база відповідає
+        run: node scripts/smoke.mjs "$PROD_URL" "$EXPECT_SHA"

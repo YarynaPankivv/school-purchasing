@@ -29,6 +29,10 @@ const EXEMPT = new Map([
     "src/app/login/actions.ts",
     { login: "вхід: сесії ще немає, пароль перевіряє signInWithPassword", signOut: "завершує власний сеанс, даних не змінює" },
   ],
+  [
+    "src/app/api/health/route.ts",
+    { GET: "публічна перевірка здоров'я проду (D0): без користувача, лише SHA й стан бази, даних не читає" },
+  ],
 ]);
 // adminOr — локальна обгортка над requireAdmin в actions.ts адміністрування.
 const GUARD = /\b(?:requireActiveUser|requireAdmin|adminOr|authorRequest|getClaims)\s*\(/;
