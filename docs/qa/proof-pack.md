@@ -155,4 +155,5 @@ PR із правилом: https://github.com/YarynaPankivv/school-purchasing/pul
 ### Повторний прогін
 
 - `/code-review high 52` після правила (claude-opus-5-5): вада 2 стала **№1 у списку** і сама посилається на правило: «canEditFields no longer checks `request.author_id === actor.id` … AGENTS.md calls a removed author check a must-fix (Major)». Вади 1 і 3 знайдено. Приманку більше не позначено, хибна тривога зникла.
-- `@coderabbitai full review` після правила: <!-- результат і цитата після прогону, …/pull/52#issuecomment-M -->
+- CodeRabbit після правила — чистий прогін на новому PR 54 (гілка з тими самими комітами з вадами, `main` уже з правилом; на PR 52 CodeRabbit пропускав уже закриті треди): https://github.com/YarynaPankivv/school-purchasing/pull/54#issuecomment-6581159803. Усі три вади — **Major**; вада 2 (`canEditFields`) піднялась з Minor до Major і CodeRabbit послався на правило: «За правилами проєкту, функції `canEdit*` завжди перевіряють, що actor є автором заявки» (джерело в коментарі: Coding guidelines). Приманку не позначено. Додатково слушні: пагінація `route.ts:12`, `request_notes_insert` без `is_active_user()`.
+- PR 52 і 54 закрито без merge.
