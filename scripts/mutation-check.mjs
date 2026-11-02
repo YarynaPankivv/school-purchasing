@@ -118,7 +118,12 @@ function runTests(files, label) {
   const failed = report.testResults.flatMap((f) =>
     f.assertionResults.filter((a) => a.status === "failed").map((a) => a.title),
   );
-  return { error: loadProblems(report, files), failed };
+  const error = loadProblems(report, files);
+  // Нуль тестів упало, а Vitest завершився невдало (необроблена помилка поза тестами) — це не «зелений» прогін.
+  if (!error && !failed.length && run.status !== 0) {
+    return { error: `Vitest завершився з кодом ${run.status ?? run.signal} без жодного падіння тесту`, failed };
+  }
+  return { error, failed };
 }
 
 // 0. Прогін без мутацій: тести мутантів мають бути зеленими на чистому коді.

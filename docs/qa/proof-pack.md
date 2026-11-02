@@ -44,15 +44,15 @@
 
 ## B. Якість тестів
 
-Посилання на файли — відносні шляхи в `main` після merge PR треку B (рядки — на момент PR).
+Посилання на тести й міграції — на коміті `cb77ca3` (гілка PR треку B).
 
 ### Рівень для кожного AC
 
 | AC | Де живе правило | Рівень | Чому | Тест |
 |---|---|---|---|---|
-| AC-FRM-09 | SQL: `revoke` від `anon` на `requests` і функціях подання (`supabase/migrations/20261018182200_org_departments.sql`, `20261021140000_pur_drafts.sql`); TS: `updateSession` у `src/lib/supabase/proxy.ts` (редірект гостя на `/login`) | база (PGlite, `asAnon`) + unit proxy; текст сторінки входу — UAT | відмову гостю тримає SQL, а «бачить сторінку входу» — редірект proxy; TS-копія SQL тут не потрібна | `tests/db/frm-apr.test.ts` (AC-FRM-09), `tests/auth/proxy-guest.test.ts` (4 тести, нові) |
-| AC-FRM-14 | сторінка `src/app/(app)/requests/(list)/page.tsx` (порожній стан «My requests») | unit рендеру сторінки (`renderToStaticMarkup`, мок лише клієнта Supabase) + UAT для дослівного тексту на проді | правило не в SQL: це стан інтерфейсу; точний текст доводить лише UAT | `tests/pur/pages.test.tsx` (AC-FRM-14: було 1 тест, стало 3) |
-| AC-APR-03 | SQL: `requests_select`, `private.can_view_request`, `private.is_department_approver`, `decide_purchase` (`20261021140000_pur_drafts.sql`); сторінка `requests/[id]/page.tsx` (`Forbidden`) | база (PGlite, `asUser` + `asService`-читання статусу) + unit сторінки + UAT | відмова «чужий відділ» — це RLS і функція SQL; TS-дзеркало (`canViewRequest`) окремо; повідомлення «Not enough permissions» доводить UAT | `tests/db/frm-apr.test.ts` (2 тести AC-APR-03), `tests/ui/frm-apr-pages.test.tsx` |
+| AC-FRM-09 | SQL: `revoke` від `anon` на `requests` і функціях подання (`supabase/migrations/20261018182200_org_departments.sql`, `20261021140000_pur_drafts.sql`); TS: `updateSession` у `src/lib/supabase/proxy.ts` (редірект гостя на `/login`) | база (PGlite, `asAnon`) + unit proxy; текст сторінки входу — UAT | відмову гостю тримає SQL, а «бачить сторінку входу» — редірект proxy; TS-копія SQL тут не потрібна | [`tests/db/frm-apr.test.ts#L185`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/db/frm-apr.test.ts#L185) (AC-FRM-09), [`tests/auth/proxy-guest.test.ts`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/auth/proxy-guest.test.ts) (4 тести, нові) |
+| AC-FRM-14 | сторінка `src/app/(app)/requests/(list)/page.tsx` (порожній стан «My requests») | unit рендеру сторінки (`renderToStaticMarkup`, мок лише клієнта Supabase) + UAT для дослівного тексту на проді | правило не в SQL: це стан інтерфейсу; точний текст доводить лише UAT | [`tests/pur/pages.test.tsx#L511`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/pur/pages.test.tsx#L511), [`#L530`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/pur/pages.test.tsx#L530), [`#L549`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/pur/pages.test.tsx#L549) (AC-FRM-14: було 1 тест, стало 3) |
+| AC-APR-03 | SQL: `requests_select`, `private.can_view_request`, `private.is_department_approver`, `decide_purchase` (`20261021140000_pur_drafts.sql`); сторінка `requests/[id]/page.tsx` (`Forbidden`) | база (PGlite, `asUser` + `asService`-читання статусу) + unit сторінки + UAT | відмова «чужий відділ» — це RLS і функція SQL; TS-дзеркало (`canViewRequest`) окремо; повідомлення «Not enough permissions» доводить UAT | [`tests/db/frm-apr.test.ts#L283`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/db/frm-apr.test.ts#L283) і [`#L340`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/db/frm-apr.test.ts#L340) (AC-APR-03), [`tests/ui/frm-apr-pages.test.tsx#L372`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/ui/frm-apr-pages.test.tsx#L372) |
 
 ### Покриття
 
@@ -72,7 +72,7 @@
 
 | Мутант (файл:рядок, що змінено) | AC під загрозою | До | Тест, посилений з тексту AC | Після |
 |---|---|---|---|---|
-| `src/lib/supabase/proxy.ts:24–44` — тіло `updateSession` (умова `!claims && !isPublic`, редірект на `/login`) цілком без покриття: 18 мутантів NoCoverage | AC-FRM-09 | не покрито: score 43,75 % (14 убито, 0 вижили, 18 NoCoverage) | `tests/auth/proxy-guest.test.ts`: гість (`data: null` і `claims: null`) за прямим посиланням `/requests/new` → 307 на `/login`; `/login` для гостя — без редіректу; користувач з входом — без редіректу | убито: score 71,88 % (23 убито, 3 вижили, 6 NoCoverage); мутанти на гілці гостя вбито |
+| `src/lib/supabase/proxy.ts:24–44` — тіло `updateSession` (умова `!claims && !isPublic`, редірект на `/login`) цілком без покриття: 18 мутантів NoCoverage | AC-FRM-09 | не покрито: score 43,75 % (14 убито, 0 вижили, 18 NoCoverage) | [`tests/auth/proxy-guest.test.ts`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/auth/proxy-guest.test.ts): гість (`data: null` і `claims: null`) за прямим посиланням `/requests/new` → 307 на `/login`; `/login` для гостя — без редіректу; користувач з входом — без редіректу | убито: score 71,88 % (23 убито, 3 вижили, 6 NoCoverage); мутанти на гілці гостя вбито |
 | `(list)/page.tsx:224` — умова показу «My requests» і текст порожнього стану; рядок `empty="You have not submitted any requests yet"` | AC-FRM-14 | текст мутантів убивав 1 тест; «списку заявок немає» не перевірялось | 2 нові тести: порожня сторінка — немає `<table` і `PUR-`; працівник із заявкою — повідомлення відсутнє | мутанти на тексті й гілці «є/немає заявок» убиті |
 
 Вижили після посилення (розбір, не приховано):
@@ -95,7 +95,7 @@
 | F1 | AC-FRM-09 | `submit_purchase`: execute дозволено `anon` | SURVIVED — еквівалентний (див. нижче) |
 | F2 | AC-FRM-09 | `requests`: select дозволено `anon` | KILLED (AC-FRM-09) |
 
-- Еквівалентні мутанти: **F1** — `public.submit_purchase` є `security invoker` і лише викликає `private.submit_purchase`, у якої `execute` забрано в `anon` (`20261021140000_pur_drafts.sql:893`, `revoke execute on function private.submit_purchase(uuid) from public, anon`); гість однаково отримує `permission denied`. Тест із точнішим текстом помилки це не розрізнить: повідомлення `permission denied for function submit_purchase` однакове для обох шарів. Причина записана в `scripts/mutants.mjs` (`expect: "survive"`, `reason`).
+- Еквівалентні мутанти: **F1** — `public.submit_purchase` є `security invoker` і лише викликає `private.submit_purchase`, у якої `execute` забрано в `anon` ([`20261021140000_pur_drafts.sql#L893`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/supabase/migrations/20261021140000_pur_drafts.sql#L893), `revoke execute on function private.submit_purchase(uuid) from public, anon`); гість однаково отримує `permission denied`. Тест із точнішим текстом помилки це не розрізнить: повідомлення `permission denied for function submit_purchase` однакове для обох шарів. Причина записана в `scripts/mutants.mjs` (`expect: "survive"`, `reason`).
 - Чесне зауваження: усі SQL-мутанти AC-APR-03 були вбиті з першого прогону — тести бази вже були з тексту AC; прогалини знайшли TS-мутанти `proxy.ts` (гілку гостя не виконував жоден тест).
 
 ## C. UAT на проді
