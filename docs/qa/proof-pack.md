@@ -10,7 +10,7 @@
 
 - Прод-URL: https://school-purchasing.vercel.app
 - Вимоги: https://github.com/ValiaBihun/2026-quitcode-dream-team · джерело: issues · знімок 2026-10-26
-- `/api/health` на момент UAT: sha 0286b5e, db ok, 02.11.2026 (оновити при запуску UAT)
+- `/api/health` на момент UAT: sha f458c84, db ok, 02.11.2026
 
 ## 3 AC
 
