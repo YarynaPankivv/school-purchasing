@@ -1,0 +1,84 @@
+# e2e — ті самі специфікації Playwright (tests/e2e/*.spec.ts), що й UAT, але на ОДНОРАЗОВОМУ локальному стеку
+# Supabase в раннері (доріжка A): жодних хмарних секретів, свіжа база на кожен прогін, тож @writes-тести безпечні.
+# Окремий workflow: назви jobs у ci.yml не змінюємо (на них тримається ruleset). Назва job — `e2e`.
+# У тестах немає акаунта admin з прода: усі акаунти — з supabase/demo-users.json, дані AC-APR-03 — scripts/e2e-seed.mjs.
+# Бонус WS8 (необов'язково). Джерело — демо-репо курсу, тег ws8-03-uat: там цей workflow зелений 4 з 4 прогонів.
+# Обов'язковою перевіркою ruleset-у можна зробити лише після першого зеленого прогону на main — і лише якщо хочете.
+name: e2e
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Без `version:` setup-cli@v3 бере версію supabase з package-lock.json (2.120.0), як у db-check.
+      - uses: supabase/setup-cli@v3
+      - name: Local Supabase (лише Postgres, Auth, REST і шлюз)
+        # Міграції й supabase/seed.sql застосовуються при старті: свіжа база на кожен прогін.
+        run: supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: .env.local з ключів локального стеку
+        # Ключі локального стеку — стандартні демо-ключі CLI, не секрети. NEXT_PUBLIC_* вбудовуються під час next build,
+        # тому файл має з'явитись ДО збірки. Пароль синтетичних користувачів — випадковий на кожен прогін.
+        run: |
+          supabase status -o json > "$RUNNER_TEMP/supabase-status.json"
+          echo "Змінні supabase status (лише назви): $(jq -r 'keys | join(", ")' "$RUNNER_TEMP/supabase-status.json")"
+          api_url=$(jq -r '.API_URL' "$RUNNER_TEMP/supabase-status.json")
+          publishable=$(jq -r '.PUBLISHABLE_KEY // .ANON_KEY' "$RUNNER_TEMP/supabase-status.json")
+          secret=$(jq -r '.SECRET_KEY // .SERVICE_ROLE_KEY' "$RUNNER_TEMP/supabase-status.json")
+          random_value=$(openssl rand -hex 16)
+          echo "::add-mask::$random_value"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$api_url"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$publishable"
+            echo "SUPABASE_SECRET_KEY=$secret"
+            echo "DEMO_USER_PASSWORD=$random_value"
+          } > .env.local
+      - name: Синтетичні користувачі (supabase/demo-users.json)
+        run: npm run users:demo
+      - name: Дані e2e (схвалювач і подана заявка чужого відділу для AC-APR-03)
+        run: npm run e2e:seed
+      - run: npm run build
+      - name: Chromium для Playwright
+        run: npx playwright install --with-deps --only-shell chromium
+      - name: Playwright (webServer — npm run start на зібраному застосунку)
+        run: npx playwright test
+      - name: Жодного пропущеного тесту
+        # Пропущений тест (наприклад, test.skip(умова) у тілі) не перевіряє AC, а ac:coverage його рахує.
+        if: ${{ !cancelled() }}
+        run: |
+          node -e '
+            const s = require("./test-results/results.json").stats;
+            console.log(JSON.stringify(s));
+            const lines = [`### e2e: ${s.expected} пройшли, ${s.unexpected} впали, ${s.skipped} пропущено, ${s.flaky} нестабільні`];
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+            if (s.skipped > 0) { console.error("::error::Пропущені e2e-тести: " + s.skipped); process.exitCode = 1; }
+          '
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: e2e-${{ github.run_id }}
+          path: |
+            test-results/
+            !test-results/**/*.aria.yml
+          retention-days: 14
