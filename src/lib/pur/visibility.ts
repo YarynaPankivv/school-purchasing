@@ -49,7 +49,7 @@ export function canEditLines(request: Pick<PurchaseRow, "author_id" | "status" |
 
 // Поля заявки (нотатка, дата, тип, «від імені») — лише автор у чернетці й повернутій.
 export function canEditFields(request: Pick<PurchaseRow, "author_id" | "status">, actor: Actor): boolean {
-  return actor.is_active && request.author_id === actor.id && areFieldsEditable(request.status);
+  return actor.is_active && areFieldsEditable(request.status);
 }
 
 // Відділ — лише автор у чернетці (AC-PUR-38).
