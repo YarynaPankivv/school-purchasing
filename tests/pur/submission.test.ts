@@ -14,9 +14,9 @@ describe("перевірка перед поданням", () => {
   it("AC-PUR-05: чернетка без відділу не подається, автор бачить «Оберіть відділ» (англійською)", () => {
     const result = checkSubmission({ departmentId: null, onBehalf: noOnBehalf, lines: [completeLine] });
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.issues).toEqual([{ code: "department_required", message: "Select a department" }]);
-    }
+    expect((result as Extract<typeof result, { ok: false }>).issues).toEqual([
+      { code: "department_required", message: "Select a department" },
+    ]);
   });
 
   it("AC-PUR-09: незаповнені рядки названо в повідомленні — усі рядки й поля", () => {
@@ -30,13 +30,12 @@ describe("перевірка перед поданням", () => {
       ],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.issues).toHaveLength(1);
-      expect(result.issues[0].code).toBe("lines_incomplete");
-      expect(result.issues[0].message).toContain("Line 1: name");
-      expect(result.issues[0].message).toContain("Line 3: purpose, quantity, unit price");
-      expect(result.issues[0].message).not.toContain("Line 2");
-    }
+    const { issues } = result as Extract<typeof result, { ok: false }>;
+    expect(issues).toHaveLength(1);
+    expect(issues[0].code).toBe("lines_incomplete");
+    expect(issues[0].message).toContain("Line 1: name");
+    expect(issues[0].message).toContain("Line 3: purpose, quantity, unit price");
+    expect(issues[0].message).not.toContain("Line 2");
   });
 
   it("AC-PUR-12: позначка «від імені колеги» без вибору колеги — заявку не подано, текст з вимоги PM", () => {
@@ -46,17 +45,15 @@ describe("перевірка перед поданням", () => {
       lines: [completeLine],
     });
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.issues).toEqual([
-        { code: "on_behalf_required", message: "Select the colleague you are submitting on behalf of" },
-      ]);
-    }
+    expect((result as Extract<typeof result, { ok: false }>).issues).toEqual([
+      { code: "on_behalf_required", message: "Select the colleague you are submitting on behalf of" },
+    ]);
   });
 
   it("заявка без жодного рядка не подається", () => {
     const result = checkSubmission({ departmentId: PRIMARY, onBehalf: noOnBehalf, lines: [] });
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.issues.map((i) => i.code)).toEqual(["lines_required"]);
+    expect((result as Extract<typeof result, { ok: false }>).issues.map((i) => i.code)).toEqual(["lines_required"]);
   });
 
   it("коректна чернетка проходить; помилки збираються разом", () => {
@@ -67,7 +64,11 @@ describe("перевірка перед поданням", () => {
       lines: [{ position: 1, name: null, purpose: null, quantity: null, unit_price: null }],
     });
     expect(all.ok).toBe(false);
-    if (!all.ok) expect(all.issues.map((i) => i.code)).toEqual(["department_required", "on_behalf_required", "lines_incomplete"]);
+    expect((all as Extract<typeof all, { ok: false }>).issues.map((i) => i.code)).toEqual([
+      "department_required",
+      "on_behalf_required",
+      "lines_incomplete",
+    ]);
   });
 });
 
@@ -179,7 +180,7 @@ describe("помилки бази", () => {
     }
   });
 
-  it("pur:lines_incomplete з DETAIL «позиція:поля;…» дає повідомлення з рядками й полями (AC-PUR-09)", () => {
+  it("AC-PUR-09: pur:lines_incomplete з DETAIL «позиція:поля;…» дає повідомлення з рядками й полями", () => {
     const error = { code: "P0001", message: "pur:lines_incomplete", details: "1:name,purpose;3:quantity,unit_price" };
     expect(purErrorText(error)).toBe(
       "Fill in all line fields. Line 1: name, purpose; Line 3: quantity, unit price.",

@@ -31,7 +31,6 @@ const SUPABASE_SHIM = `
   alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
 `;
 
-export type AppRole = "requester" | "approver" | "admin";
 
 export interface AddUserOptions {
   /** Ім'я в профілі; null — профіль без імені (замість нього показують email). */

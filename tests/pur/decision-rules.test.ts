@@ -144,15 +144,14 @@ describe("рішення схвалювача", () => {
   it("схвалення без відхилених рядків — «Схвалено»; з відхиленим рядком 2 з 3 — «Частково схвалено», рядки 1 і 3 далі", () => {
     const full = decisionOutcome({ action: "approve", lines });
     expect(full).toMatchObject({ ok: true, status: "approved", historyAction: "approved", reason: null });
-    if (full.ok) expect(Object.values(full.lineStatuses)).toEqual(["approved", "approved", "approved"]);
+    expect(full).toEqual(expect.objectContaining({ lineStatuses: { l1: "approved", l2: "approved", l3: "approved" } }));
 
     const partial = decisionOutcome({ action: "approve", lines, rejectedLineIds: ["l2"] });
     expect(partial).toMatchObject({ ok: true, status: "partially_approved", historyAction: "partially_approved" });
-    if (partial.ok) {
-      expect(partial.lineStatuses).toEqual({ l1: "approved", l2: "rejected", l3: "approved" });
-      const after = lines.map((l) => ({ ...l, status: partial.lineStatuses[l.id] }));
-      expect(forwardedLines(after).map((l) => l.id)).toEqual(["l1", "l3"]);
-    }
+    const partialLineStatuses = (partial as Extract<typeof partial, { ok: true }>).lineStatuses;
+    expect(partialLineStatuses).toEqual({ l1: "approved", l2: "rejected", l3: "approved" });
+    const after = lines.map((l) => ({ ...l, status: partialLineStatuses[l.id] }));
+    expect(forwardedLines(after).map((l) => l.id)).toEqual(["l1", "l3"]);
   });
 
   it("AC-PUR-39: схвалення без відхилених рядків додає в історію запис «approved» (автора й час додає база)", () => {
@@ -162,17 +161,21 @@ describe("рішення схвалювача", () => {
 
   it("AC-PUR-41: відхилений рядок 2 з 3 позначено «rejected», рядки 1 і 3 — «approved»", () => {
     const outcome = decisionOutcome({ action: "approve", lines, rejectedLineIds: ["l2"] });
-    expect(outcome).toMatchObject({ ok: true, status: "partially_approved" });
-    if (outcome.ok) expect(outcome.lineStatuses).toEqual({ l1: "approved", l2: "rejected", l3: "approved" });
+    expect(outcome).toEqual(
+      expect.objectContaining({
+        ok: true,
+        status: "partially_approved",
+        lineStatuses: { l1: "approved", l2: "rejected", l3: "approved" },
+      }),
+    );
   });
 
   it("AC-PUR-42: далі до відділу закупівель ідуть лише 2 схвалені рядки з 3, відхилений рядок 2 — ні", () => {
     const outcome = decisionOutcome({ action: "approve", lines, rejectedLineIds: ["l2"] });
     expect(outcome.ok).toBe(true);
-    if (outcome.ok) {
-      const decided = lines.map((l) => ({ ...l, status: outcome.lineStatuses[l.id] }));
-      expect(forwardedLines(decided).map((l) => l.id)).toEqual(["l1", "l3"]);
-    }
+    const outcomeLineStatuses = (outcome as Extract<typeof outcome, { ok: true }>).lineStatuses;
+    const decided = lines.map((l) => ({ ...l, status: outcomeLineStatuses[l.id] }));
+    expect(forwardedLines(decided).map((l) => l.id)).toEqual(["l1", "l3"]);
   });
 
   it("AC-PUR-43: відхилення з причиною «Не передбачено бюджетом» зберігає її для автора", () => {

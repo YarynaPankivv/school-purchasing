@@ -78,11 +78,6 @@ export function cancelOutcome(status: PurchaseStatus): CancelOutcome | null {
   return null;
 }
 
-// Чекає рішення схвалювача.
-export function isAwaitingDecision(status: PurchaseStatus): boolean {
-  return status === "pending";
-}
-
 // Може бути подана автором (draft — уперше, returned — повторно, AC-PUR-23).
 export function isSubmittable(status: PurchaseStatus): boolean {
   return status === "draft" || status === "returned";
