@@ -14,7 +14,8 @@ export type DbHealth = { db: "ok" | "down"; reason: string };
 export function classifyDbProbe({ status, error }: DbProbe): DbHealth {
   if (status === SUPABASE_PAUSED) return { db: "down", reason: "paused" };
   const code = error?.code ?? "";
-  if (!error || SQLSTATE.test(code) || (code.startsWith("PGRST") && !PGRST_DB_DOWN.test(code))) {
+  // 5xx — завжди «down»: PostgREST віддає SQLSTATE класу 08 (напр. 08006) зі статусом 503, коли не дістає до бази.
+  if (status < 500 && (!error || SQLSTATE.test(code) || (code.startsWith("PGRST") && !PGRST_DB_DOWN.test(code)))) {
     return { db: "ok", reason: "" };
   }
   if (/api key/i.test(error.message ?? "")) return { db: "down", reason: "invalid-api-key" };

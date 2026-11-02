@@ -12,7 +12,12 @@ const base = (/^https?:\/\//.test(rawBase) ? rawBase : rawBase ? `https://${rawB
 
 const get = async (path) => {
   try {
-    const r = await fetch(base + path, { redirect: "manual", headers: { "user-agent": "smoke/1.0 (D0)" } });
+    const r = await fetch(base + path, {
+      redirect: "manual",
+      headers: { "user-agent": "smoke/1.0 (D0)" },
+      // Ліміт і на відповідь, і на читання тіла: зависле з'єднання стане збоєм у fail, а не зависанням прогону.
+      signal: AbortSignal.timeout(15_000),
+    });
     return {
       status: r.status,
       location: r.headers.get("location") ?? "",
@@ -31,7 +36,9 @@ async function main() {
   const root = await get("/");
   if (vercelWall(root)) fail.push(`"/": стіна входу Vercel — Settings → Deployment Protection → вимкніть Vercel Authentication`);
   else if (root.status === 0) fail.push(`"/": недоступний (${root.text})`);
-  else if (root.status >= 400) {
+  else if (root.status >= 300 && root.status < 400 && new URL(root.location || "/", base).pathname !== "/login") {
+    fail.push(`"/": редірект на ${root.location || "(без Location)"}, очікували /login`);
+  } else if (root.status >= 400) {
     const hint = root.vercelError === "MIDDLEWARE_INVOCATION_FAILED" ? " — у Vercel бракує NEXT_PUBLIC_SUPABASE_*?" : "";
     fail.push(`"/": HTTP ${root.status} ${root.vercelError}${hint}`.trim());
   }

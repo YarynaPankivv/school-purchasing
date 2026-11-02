@@ -28,6 +28,11 @@ describe("classifyDbProbe (/api/health)", () => {
       db: "down",
       reason: "status-503-PGRST002",
     });
+    // SQLSTATE класу 08 зі статусом 503: PostgREST не дістає до бази — не «ok», хоч код схожий на код Postgres.
+    expect(classifyDbProbe({ status: 503, error: { code: "08006", message: "connection failure" } })).toEqual({
+      db: "down",
+      reason: "status-503-08006",
+    });
     expect(classifyDbProbe({ status: 0, error: { message: "fetch failed" } })).toEqual({ db: "down", reason: "status-0" });
   });
 });
