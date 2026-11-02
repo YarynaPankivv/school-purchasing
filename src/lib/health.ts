@@ -18,7 +18,7 @@ export function classifyDbProbe({ status, error }: DbProbe): DbHealth {
   if (status < 500 && (!error || SQLSTATE.test(code) || (code.startsWith("PGRST") && !PGRST_DB_DOWN.test(code)))) {
     return { db: "ok", reason: "" };
   }
-  if (/api key/i.test(error.message ?? "")) return { db: "down", reason: "invalid-api-key" };
+  if (/api key/i.test(error?.message ?? "")) return { db: "down", reason: "invalid-api-key" };
   // 0 — мережа (Supabase недоступний або хибний URL), 5xx, PGRST000–003.
   return { db: "down", reason: `status-${status}${code ? `-${code}` : ""}` };
 }
