@@ -1,0 +1,133 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-02T10:36:07.773Z",
+  "baseURL": "https://school-purchasing.vercel.app",
+  "deployedSha": "f458c84a5f30a0d51aa05ae74c6a3cc8a4770ea2",
+  "testsCommit": "2b53e8561b1fecafa9d812d4e18f49e457622faa",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [
+    {
+      "id": "AC-APR-03",
+      "proof": "AC-APR-03",
+      "title": "AC-APR-03: схвалювач відкриває за прямим посиланням заявку відділу, який не схвалює, і бачить «Недостатньо прав», даних заявки немає, а статус лишається «Очікує схвалення»",
+      "screenshot": "docs/qa/uat/2026-11-02/frames/AC-APR-03-then-1.png",
+      "video": "test-results/artifacts/slice2-схвалювач-і-чужа-за-245ff-ишається-«Очікує-схвалення»-chromium/video.webm",
+      "trace": "test-results/artifacts/slice2-схвалювач-і-чужа-за-245ff-ишається-«Очікує-схвалення»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінка 403 із заголовком «Not enough permissions» і текстом «You do not have access to this request.». Номера, відділу, рядків чи статусу заявки не видно, лише кнопка «Back to home»."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "Not enough permissions",
+          "onPage": true
+        },
+        {
+          "quote": "You do not have access to this request.",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 8169,
+      "reviewCostUsd": 0.03036,
+      "reviewWallMs": 22412
+    },
+    {
+      "id": "AC-FRM-09",
+      "proof": "AC-FRM-09",
+      "title": "AC-FRM-09: гість за прямим посиланням на форму закупівлі бачить сторінку входу, а форму закупівлі не показано",
+      "screenshot": "docs/qa/uat/2026-11-02/frames/AC-FRM-09-then-1.png",
+      "video": "test-results/artifacts/slice2-гість-без-входу-AC--2c359-форму-закупівлі-не-показано-chromium/video.webm",
+      "trace": "test-results/artifacts/slice2-гість-без-входу-AC--2c359-форму-закупівлі-не-показано-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі frame-then-1.png видно сторінку входу School Purchasing: заголовок «Sign in», поля «Email» і «Password», кнопка «Sign in». Заголовка «New request» і форми закупівлі на кадрі немає. Відсутність форми на сторінці перевіряють автоматичні тести, тому її не оцінюю."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Sign in",
+          "onPage": true
+        },
+        {
+          "quote": "Email",
+          "onPage": true
+        },
+        {
+          "quote": "Password",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 2573,
+      "reviewCostUsd": 0.00166,
+      "reviewWallMs": 8253
+    },
+    {
+      "id": "AC-FRM-14",
+      "proof": "AC-FRM-14",
+      "title": "AC-FRM-14: працівник без жодної поданої заявки відкриває «Мої заявки» і бачить повідомлення про порожній список, а списку заявок немає",
+      "screenshot": "docs/qa/uat/2026-11-02/frames/AC-FRM-14-then-1.png",
+      "video": "test-results/artifacts/slice2-працівник-без-жодно-db4f5-писок-а-списку-заявок-немає-chromium/video.webm",
+      "trace": "test-results/artifacts/slice2-працівник-без-жодно-db4f5-писок-а-списку-заявок-немає-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінки Requests видно розділ «My requests» і під ним повідомлення «You have not submitted any requests yet». Лічильники вкладок показують 0. Відсутність таблиці за кадрами не оцінювалась."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "My requests",
+          "onPage": true
+        },
+        {
+          "quote": "You have not submitted any requests yet",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 3738,
+      "reviewCostUsd": 0.02951,
+      "reviewWallMs": 21654
+    }
+  ],
+  "negativeControls": [],
+  "cleanup": {
+    "at": "2026-11-02T10:35:41.964Z",
+    "deleted": [],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}

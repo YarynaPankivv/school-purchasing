@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // npm run ac:coverage — наскрізне покриття критеріїв приймання (AC):
 //   вимоги PM (requirements/**) → ваша специфікація (openspec/specs/**) → рядок матриці (docs/conformance.md) →
-//   тест (назва test()/it() у файлах *.test.ts(x) з src/** або tests/** — інші файли Vitest не запускає; AC ID — на
-//   початку назви).
+//   тест (назва test()/it() у файлах, які запускає CI: *.test.ts(x) з src/** або tests/** — Vitest, job app;
+//   tests/e2e/**/*.spec.ts — Playwright, job e2e; інші файли не рахуються; AC ID — на початку назви).
 // FAIL, якщо:
 //   NO-ROW     — AC є в специфікаціях, але в docs/conformance.md немає рядка (типово — PR «Специфікація» без рядків
 //                нових AC, див. /conformance, або рядок випадково видалено);
@@ -107,7 +107,7 @@ console.log(
     `«реалізовано»: ${implemented}, AC у назвах тестів: ${testRefs.size}`,
 );
 printList("NO-ROW: AC зі специфікації без рядка в docs/conformance.md", noRow);
-printList("MISSING: «реалізовано» без тесту з AC ID у назві (рахуються лише файли *.test.ts / *.test.tsx)", missing);
+printList("MISSING: «реалізовано» без тесту з AC ID у назві (рахуються лише *.test.ts(x) під src/ і tests/ та tests/e2e/**/*.spec.ts)", missing);
 printList("ORPHAN: тест посилається на AC, якого немає в специфікаціях", orphan);
 printList("BAD-STATUS: невідомий статус у матриці", badStatus);
 printList("WRONG-REF: колонки «Код» / «Тест» не відповідають репозиторію", wrongRef);

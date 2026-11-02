@@ -10,7 +10,7 @@
 
 - Прод-URL: https://school-purchasing.vercel.app
 - Вимоги: https://github.com/ValiaBihun/2026-quitcode-dream-team · джерело: issues · знімок 2026-10-26
-- `/api/health` на момент UAT: sha 0286b5e, db ok, 02.11.2026 (оновити при запуску UAT)
+- `/api/health` на момент UAT: sha f458c84, db ok, 02.11.2026
 
 ## 3 AC
 
@@ -102,13 +102,15 @@
 
 | AC | Специфікація | Тест (твердження) | Агент | Вердикт | Кадр |
 |---|---|---|---|---|---|
-| AC-…-NN | <!-- …/blob/<sha>/tests/e2e/….spec.ts --> | <!-- passed / failed --> | <!-- Haiku: PASS / FAIL / NEEDS-HUMAN (+ Sonnet, якщо була суперечка) --> | <!-- PASS / FAIL / NEEDS-HUMAN і правило (R1–R6) --> | <!-- …/blob/<sha>/docs/qa/uat/<дата>/frames/AC-…-then-1.png --> |
+| AC-FRM-09 | [`tests/e2e/slice2.spec.ts#L14`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/tests/e2e/slice2.spec.ts#L14) | passed | Haiku: PASS | PASS, R6 | [`AC-FRM-09-then-1.png`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/docs/qa/uat/2026-11-02/frames/AC-FRM-09-then-1.png) |
+| AC-FRM-14 | [`tests/e2e/slice2.spec.ts#L46`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/tests/e2e/slice2.spec.ts#L46) | passed | Haiku: NEEDS-HUMAN → Sonnet: PASS | PASS, R6 | [`AC-FRM-14-then-1.png`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/docs/qa/uat/2026-11-02/frames/AC-FRM-14-then-1.png) |
+| AC-APR-03 | [`tests/e2e/slice2.spec.ts#L115`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/tests/e2e/slice2.spec.ts#L115) | passed | Haiku: NEEDS-HUMAN → Sonnet: PASS | PASS, R6 | [`AC-APR-03-then-1.png`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/docs/qa/uat/2026-11-02/frames/AC-APR-03-then-1.png) |
 
-- Звіт: <!-- …/blob/<sha>/docs/qa/uat/<YYYY-MM-DD>/report.md -->
-- Відео: <!-- вкладення в описі PR …/pull/N -->
-- Рецензент: <!-- моделі зі звіту (claude-haiku-5-5; суперечки — claude-sonnet-5-5) і вартість прогону -->
-- Негативний контроль: <!-- NC-… (npm run uat:nc): що навмисно хибне, вердикт (FAIL / NEEDS-HUMAN), …/pull/N -->
-- Дані: <!-- «лише читання» або «@writes: uat-<запуск>@example.test, рядок «Прибирання» зі звіту» -->
+- Звіт: [`docs/qa/uat/2026-11-02/report.md`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/docs/qa/uat/2026-11-02/report.md) (прод `/api/health`: коміт `f458c84`, 02.11.2026 12:35 за Києвом, Playwright 29,9 с)
+- Відео: у вкладенні опису PR (не в git)
+- Рецензент: `claude-haiku-5-5`, на двох AC суперечка → `claude-sonnet-5-5`; разом $0,0615 за цінами API
+- Негативний контроль (`npm run uat:nc`, 02.11.2026): **NC-1** (AC-FRM-14, у тесті навмисно інший текст порожнього стану) → **FAIL**, R1: твердження впало, агент його не перекриває; **NC-2** (AC-FRM-09, текст «Тоді» у вимозі змінено на «Welcome back», тест і застосунок без змін) → **NEEDS-HUMAN**, R3: твердження зелені, Haiku — NEEDS-HUMAN, Sonnet — FAIL; рядки з PR UAT, звіт NC лишається в `test-results/uat-report-nc/` (не в git).
+- Дані: лише читання. `@writes` немає; прибирання: видалено 0, лишилось 0 (рядок «Прибирання» зі звіту). Для AC-APR-03 спека не створює даних: бере наявну подану заявку чужого відділу, яку бачить адміністратор, а схвалювач — ні.
 
 ### Приймання PM
 
