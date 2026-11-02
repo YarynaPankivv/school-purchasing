@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
 
 // Сторінки, доступні без входу.
-const PUBLIC_PATHS = ["/login", "/auth"];
+const PUBLIC_PATHS = ["/login", "/auth", "/api/health"];
 
 // Збіг по сегменту шляху, а не по префіксу рядка: «/loginfoo» чи «/authx» публічними не є.
 export function isPublicPath(pathname: string): boolean {
