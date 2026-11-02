@@ -1,0 +1,54 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  // Конфіг fallow 3.35.0 для проєкту з шаблону курсу (WS8). Джерело — демо-репо курсу, тег ws8-01-gates;
+  // демо-специфічне прибрано. Кожен ваш новий ignore… — з коментарем-причиною, як нижче.
+  //
+  // Скрипти з package.json fallow бачить сам. Сюди — лише те, що читає інший інструмент: конфіг Vitest для Stryker
+  // (його називає stryker.config.json, а не import). Не пишіть "scripts/*.mjs": з 3.35 зірочка не заходить у підтеки,
+  // і кожен прогін друкує WARN.
+  "entry": ["vitest.stryker.config.mts"],
+  // tests/fixtures — дані для тестів скриптів шаблону, навмисно «зламані» файли.
+  // src/lib/supabase/client.ts — браузерний клієнт Supabase із шаблону: зараз усі запити йдуть із сервера, але файл
+  // потрібен першому клієнтському компоненту з запитом до бази (інші клієнти — server.ts, proxy.ts — використано).
+  "ignorePatterns": ["tests/fixtures/**", "src/lib/supabase/client.ts"],
+  "ignoreDependencies": [
+    // Tailwind 4 підключено рядком у next.config.ts (turbopack.rules.loaders) — fallow цього не бачить.
+    "@tailwindcss/turbopack",
+    // Vitest вантажить провайдер покриття за назвою з конфігу (provider: "v8"), а не через import.
+    "@vitest/coverage-v8"
+  ],
+  // Якщо у вас є shadcn/ui: компоненти дизайн-системи навмисно експортують усі частини. Немає теки — рядок нічого не робить.
+  "ignoreExports": [{ "file": "src/components/ui/**", "exports": ["*"] }],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    // Кожен експорт "use server" — публічний POST-ендпойнт: мертвий — прибрати.
+    "unused-server-actions": "error",
+    "invalid-client-export": "error",
+    "misplaced-directive": "error",
+    "mixed-client-server-barrel": "error",
+    // Захист від «агент зробив тести зеленими»: послаблений тест, гілка лише для тестів, нове придушення.
+    "weakened-tests": "error",
+    "test-only-branch": "error",
+    "added-suppression": "warn",
+    // CRAP без файлу покриття — оцінка, не факт.
+    "complexity-crap": "warn"
+  },
+  "health": {
+    // Скрипти курсу (шаблон і materials/ WS8): їх перевірено на демо, і ви їх не змінюєте. Без цього рядка PR, що
+    // додає, скажімо, scripts/uat/**, червоніє на складності чужого коду (fallow audit рахує новий файл новою знахідкою).
+    // Мертвий код і залежності в цих файлах fallow перевіряє й далі — це виняток лише для складності.
+    "ignore": [
+      "scripts/lib/**",
+      "scripts/uat/**",
+      "scripts/smoke.mjs",
+      "scripts/zip-accounts.mjs",
+      "scripts/mutation-check.mjs",
+      "scripts/coverage-summary.mjs"
+    ],
+    "thresholdOverrides": [
+      { "files": ["tests/**"], "maxUnitSize": 500, "reason": "describe()-блоки довгі за задумом" }
+    ]
+  },
+  // Ворота валять лише НОВІ знахідки відносно бази PR; успадковані fallow показує як контекст.
+  "audit": { "gate": "new-only" }
+}

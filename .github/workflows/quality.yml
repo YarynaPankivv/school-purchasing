@@ -1,0 +1,81 @@
+# Детерміновані ворота якості (WS8) — окремий workflow: назви jobs у ci.yml заморожені (на них тримається ruleset).
+#   fallow   — fallow audit: мертвий код, складність, дублі, правила Next.js і «послаблені тести» — валить лише НОВІ
+#              знахідки відносно бази PR (успадковані показує як контекст);
+#   coverage — Vitest із покриттям v8: підлога для доменних файлів (vitest.coverage.config.mts), таблиця — у Summary;
+#   deps     — npm audit залежностей продакшену: лише попередження (вивід npm audit недетермінований, job не червоніє).
+# Тестові правила лінтера (@vitest/eslint-plugin) — в eslint.config.mjs, тобто вже в обов'язковому job app (ci.yml).
+# Порядок впровадження: нові перевірки — дорадчі, доки не буде першого зеленого прогону на main; після нього
+# «Ворота: fallow audit» і «Покриття: доменна підлога» додають в обов'язкові перевірки ruleset (deps — ніколи).
+name: quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Новий push у PR скасовує застарілий прогін цього PR; прогони main не скасовуються (як у ci.yml).
+concurrency:
+  group: quality-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FALLOW_TELEMETRY_DISABLED: "1"
+
+jobs:
+  fallow:
+    name: "Ворота: fallow audit"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # audit шукає merge-base із базовою гілкою
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      # З node_modules fallow правильно класифікує залежності (без них друкує WARN і може помилитися); версія — з lock-файлу.
+      - run: npm ci
+      - name: fallow audit (лише нове відносно бази)
+        run: |
+          set -o pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then BASE="origin/${{ github.base_ref }}"; else BASE="HEAD~1"; fi
+          npx fallow audit --base "$BASE" --format github-summary | tee -a "$GITHUB_STEP_SUMMARY"
+
+  coverage:
+    name: "Покриття: доменна підлога"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Vitest із покриттям (падає, якщо доменний файл нижче своєї підлоги)
+        run: npm run test:coverage
+      - name: Таблиця покриття → Summary
+        if: always()
+        run: npm run coverage:summary
+
+  deps:
+    name: "Порада: вразливі залежності"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # Лише попередження: база advisories змінюється щодня, тож той самий коміт може стати «червоним» без змін у коді.
+      - name: npm audit (лише залежності продакшену)
+        continue-on-error: true
+        run: |
+          if ! npm audit --omit=dev --audit-level=high; then
+            echo "::warning title=npm audit::Вразливі залежності продакшену — оновіть пакет (див. лог цього кроку)"
+            exit 1
+          fi

@@ -47,3 +47,10 @@ next-env.d.ts
 
 # Локальний файл з тестовими акаунтами; у репо лише зашифрований accounts.zip
 accounts.txt
+/.fallow/
+/.stryker-tmp/
+/reports/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.auth/
