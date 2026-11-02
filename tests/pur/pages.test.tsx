@@ -527,6 +527,43 @@ describe("тексти інтерфейсу на сторінках (табли�
     expect(html).not.toContain("You have no requests yet");
   });
 
+  it("AC-FRM-14: коли заявок немає, є лише повідомлення — списку заявок (таблиці) на сторінці немає", async () => {
+    const requester = makeProfile({ id: VIEWER, role: "requester" });
+    const mock = createSupabaseMock({
+      profile: requester,
+      results: {
+        "requests.select": { data: [] },
+        "request_lines.select": { data: [] },
+        "departments.select": { data: [] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
+    expect(html).toContain("You have not submitted any requests yet");
+    expect(html).not.toContain("<table");
+    expect(html).not.toContain("PUR-");
+  });
+
+  it("AC-FRM-14: працівник, який уже подав заявку, бачить список і не бачить повідомлення про порожній список", async () => {
+    const requester = makeProfile({ id: VIEWER, role: "requester" });
+    const mock = createSupabaseMock({
+      profile: requester,
+      results: {
+        "requests.select": { data: [requestRow("pending", { author_id: VIEWER })] },
+        "request_lines.select": { data: [] },
+        "departments.select": { data: [{ id: DEP, name: "Primary School" }] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent: Page } = await import("@/app/(app)/requests/(list)/page");
+    const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) } as never));
+    expect(html).toContain("PUR-12");
+    expect(html).not.toContain("You have not submitted any requests yet");
+  });
+
   it("AC-LANG-06: статуси «Awaiting approval» і «Approved» підписано текстом у списку й на сторінці заявки", async () => {
     const mock = createSupabaseMock({
       profile: asApprover,

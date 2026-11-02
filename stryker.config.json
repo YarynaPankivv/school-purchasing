@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Мутаційне тестування TS (WS8; джерело — демо-репо курсу, тег ws8-02-tests): npm run mutation:ts; один файл — npm run mutation:ts -- --mutate src/lib/<модуль>.ts. mutate — увесь src/lib, крім адаптерів Supabase; у демо тут три теки домену. SQL і RLS Stryker не мутує — для них npm run mutation:sql.",
+  "testRunner": "vitest",
+  "vitest": { "configFile": "vitest.stryker.config.mts", "related": true },
+  "mutate": ["src/lib/**/*.ts", "!src/lib/supabase/**", "!src/lib/**/types.ts", "!src/lib/**/*.test.ts"],
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "thresholds": { "high": 80, "low": 60, "break": null },
+  "tempDirName": ".stryker-tmp",
+  "cleanTempDir": "always"
+}
