@@ -27,11 +27,27 @@ describe("scripts/check-ac-coverage.mjs", () => {
     expect(out).not.toMatch(/MISSING[\s\S]*AC-DEMO-01/);
   });
 
-  it("does not count tests in files Vitest never runs (*.spec.ts, plain .ts)", () => {
+  it("does not count tests in files CI never runs (*.spec.ts outside tests/e2e, plain .ts)", () => {
     const { code, out } = run("not-run");
     expect(code).toBe(1);
     expect(out).toContain("MISSING");
     expect(out).toContain("AC-DEMO-01");
+  });
+
+  it("counts Playwright tests in tests/e2e/**/*.spec.ts (job e2e runs them), but not test.fixme", () => {
+    const { code, out } = run("e2e-counted");
+    expect(out).toContain("AC у назвах тестів: 2");
+    expect(out).not.toContain("MISSING");
+    expect(out).not.toContain("WRONG-REF");
+    expect(code).toBe(0);
+  });
+
+  it("does not count tests/e2e helpers or tests/e2e/*.test.ts (neither Vitest nor Playwright runs them)", () => {
+    const { code, out } = run("e2e-not-run");
+    expect(code).toBe(1);
+    const missing = out.slice(out.indexOf("MISSING"));
+    expect(missing).toContain("AC-DEMO-01");
+    expect(missing).toContain("AC-DEMO-02");
   });
 
   it("does not count a test without a body (Vitest treats it as todo)", () => {
@@ -92,7 +108,7 @@ describe("scripts/check-ac-coverage.mjs", () => {
     expect(out).not.toContain("MISSING");
   });
 
-  it("accepts the rows a «Специфікація» PR adds for new AC: «відкладено (чекає реалізації)»", () => {
+  it("accepts the PM's rows for new AC: «відкладено (новий AC — чекає задачі)»", () => {
     const { code, out } = run("new-ac");
     expect(out).toContain("рядків у матриці: 2");
     expect(code).toBe(0);

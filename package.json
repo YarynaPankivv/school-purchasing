@@ -24,7 +24,11 @@
     "test:coverage": "vitest run --config vitest.coverage.config.mts --coverage",
     "coverage:summary": "node scripts/coverage-summary.mjs",
     "mutation:ts": "stryker run",
-    "mutation:sql": "node scripts/mutation-check.mjs"
+    "mutation:sql": "node scripts/mutation-check.mjs",
+    "test:e2e": "playwright test",
+    "uat": "node scripts/uat/run.mjs",
+    "uat:nc": "node scripts/uat/run.mjs --negative-controls",
+    "uat:review": "node scripts/uat/review.mjs && node scripts/uat/report.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
@@ -36,6 +40,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
     "@fission-ai/openspec": "1.14.1",
+    "@playwright/test": "1.64.1",
     "@stryker-mutator/core": "10.1.1",
     "@stryker-mutator/vitest-runner": "10.1.1",
     "@tailwindcss/turbopack": "^4",

@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ac_id", "verdict", "then_parts", "defects", "notes"],
+  "properties": {
+    "ac_id": { "type": "string" },
+    "verdict": { "type": "string", "enum": ["PASS", "FAIL", "NEEDS-HUMAN"] },
+    "then_parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["part", "observable", "status", "frame", "quoted_text"],
+        "properties": {
+          "part": { "type": "string" },
+          "observable": { "type": "string", "enum": ["visible", "not-from-frames"] },
+          "status": { "type": "string", "enum": ["met", "not-met", "cannot-tell"] },
+          "frame": { "type": "string" },
+          "quoted_text": { "type": "string" }
+        }
+      }
+    },
+    "defects": { "type": "array", "items": { "type": "string" } },
+    "notes": { "type": "string" }
+  }
+}
