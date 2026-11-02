@@ -82,16 +82,16 @@ describe("кількість, ціна й ліміти тексту", () => {
     for (const bad of [0, "0", 1.5, "2.5", -1, "abc"]) {
       const result = parseQuantity(bad);
       expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.error).toMatch(/^Quantity /);
+      expect((result as Extract<typeof result, { ok: false }>).error).toMatch(/^Quantity /);
     }
     for (const bad of [-1, "-0.01", "-5", "1.234", "abc"]) {
       const result = parseUnitPrice(bad);
       expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.error).toMatch(/^Unit price /);
+      expect((result as Extract<typeof result, { ok: false }>).error).toMatch(/^Unit price /);
     }
     const form = parseLineFields({ name: "Markers", purpose: "Class", quantity: "0", unit_price: "-1" });
     expect(form.ok).toBe(false);
-    if (!form.ok) expect(Object.keys(form.errors).sort()).toEqual(["quantity", "unit_price"]);
+    expect(Object.keys((form as Extract<typeof form, { ok: false }>).errors).sort()).toEqual(["quantity", "unit_price"]);
   });
 
   it("AC-PUR-08: ціна 0 (невідома) приймається; допустимі кількість і ціна проходять", () => {
@@ -114,12 +114,12 @@ describe("кількість, ціна й ліміти тексту", () => {
     expect(parseLineName("a".repeat(LINE_NAME_MAX))).toEqual({ ok: true, value: "a".repeat(LINE_NAME_MAX) });
     const longName = parseLineName("a".repeat(LINE_NAME_MAX + 1));
     expect(longName.ok).toBe(false);
-    if (!longName.ok) expect(longName.error).toContain("500");
+    expect((longName as Extract<typeof longName, { ok: false }>).error).toContain("500");
 
     expect(parseNote("b".repeat(NOTE_MAX)).ok).toBe(true);
     const longNote = parseNote("b".repeat(NOTE_MAX + 1));
     expect(longNote.ok).toBe(false);
-    if (!longNote.ok) expect(longNote.error).toContain("2000");
+    expect((longNote as Extract<typeof longNote, { ok: false }>).error).toContain("2000");
   });
 
   it("ліміт рахує символи як Postgres char_length: емодзі — один символ", () => {

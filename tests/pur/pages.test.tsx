@@ -51,6 +51,7 @@ vi.mock("@/components/ui/submit-button", () => ({
     return <button data-testid={props.testId}>{props.children}</button>;
   },
 }));
+// eslint-disable-next-line no-restricted-syntax -- Server Actions виконують запис у базу й редірект; сторінка лише передає їх кнопкам, тож підміняємо їх шпигунами (WS8, PR воріт)
 vi.mock("@/app/(app)/requests/[id]/actions", () => actionSpies);
 
 const VIEWER = "3f0c2a5e-9b1d-4c7e-8a2f-1b6d5e4c3a21";

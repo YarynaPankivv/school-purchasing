@@ -45,14 +45,5 @@ export type HistoryAction =
   | "reopened"
   | "cancelled";
 
-export type HistoryRow = {
-  id: string;
-  request_id: string;
-  actor_id: string;
-  action: HistoryAction;
-  reason: string | null;
-  created_at: string;
-};
-
 // Хто діє: профіль сеансу. Роль — з profiles.role, ніколи з user_metadata (AGENTS.md).
 export type Actor = { id: string; role: string; is_active: boolean };

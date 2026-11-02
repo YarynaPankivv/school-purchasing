@@ -29,6 +29,7 @@ type FormProps = {
   purchaseTypes: Array<{ value: string; label: string }>;
 };
 const formProps = vi.hoisted(() => ({ current: null as unknown }));
+// eslint-disable-next-line no-restricted-syntax -- клієнтську форму підміняємо заглушкою, щоб перевірити лише пропси, які сторінка передає серверним кодом; повна форма має власні тести (WS8, PR воріт)
 vi.mock("@/app/(app)/requests/new/request-form", () => ({
   RequestForm: (props: unknown) => {
     formProps.current = props;
