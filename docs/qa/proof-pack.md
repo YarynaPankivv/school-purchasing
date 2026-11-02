@@ -22,9 +22,9 @@
 
 ## A. Ворота
 
-- PR воріт: <!-- …/pull/N -->
-- Зелений `quality` на `main`: <!-- …/actions/runs/N -->
-- Обов'язкові перевірки в `solo-main` з <!-- дата -->: <!-- назви jobs -->
+- PR воріт: https://github.com/YarynaPankivv/school-purchasing/pull/47
+- Зелений `quality` на `main`: https://github.com/YarynaPankivv/school-purchasing/actions/runs/41419965667
+- Обов'язкові перевірки в `solo-main` з 02.11.2026: «Ворота: fallow audit», «Покриття: доменна підлога» (поруч із `spec`, `app`, `conformance`, `db-check`)
 
 Розбір першого повного прогону `fallow` (той самий — в описі PR воріт):
 
@@ -44,28 +44,59 @@
 
 ## B. Якість тестів
 
+Посилання на файли — відносні шляхи в `main` після merge PR треку B (рядки — на момент PR).
+
 ### Рівень для кожного AC
 
 | AC | Де живе правило | Рівень | Чому | Тест |
 |---|---|---|---|---|
-| AC-…-NN | <!-- політика / функція бази / TS-модуль / сторінка --> | <!-- unit / база (PGlite) / e2e --> | … | <!-- …/blob/<sha>/tests/…#L<N> --> |
+| AC-FRM-09 | SQL: `revoke` від `anon` на `requests` і функціях подання (`supabase/migrations/20261018182200_org_departments.sql`, `20261021140000_pur_drafts.sql`); TS: `updateSession` у `src/lib/supabase/proxy.ts` (редірект гостя на `/login`) | база (PGlite, `asAnon`) + unit proxy; текст сторінки входу — UAT | відмову гостю тримає SQL, а «бачить сторінку входу» — редірект proxy; TS-копія SQL тут не потрібна | `tests/db/frm-apr.test.ts` (AC-FRM-09), `tests/auth/proxy-guest.test.ts` (4 тести, нові) |
+| AC-FRM-14 | сторінка `src/app/(app)/requests/(list)/page.tsx` (порожній стан «My requests») | unit рендеру сторінки (`renderToStaticMarkup`, мок лише клієнта Supabase) + UAT для дослівного тексту на проді | правило не в SQL: це стан інтерфейсу; точний текст доводить лише UAT | `tests/pur/pages.test.tsx` (AC-FRM-14: було 1 тест, стало 3) |
+| AC-APR-03 | SQL: `requests_select`, `private.can_view_request`, `private.is_department_approver`, `decide_purchase` (`20261021140000_pur_drafts.sql`); сторінка `requests/[id]/page.tsx` (`Forbidden`) | база (PGlite, `asUser` + `asService`-читання статусу) + unit сторінки + UAT | відмова «чужий відділ» — це RLS і функція SQL; TS-дзеркало (`canViewRequest`) окремо; повідомлення «Not enough permissions» доводить UAT | `tests/db/frm-apr.test.ts` (2 тести AC-APR-03), `tests/ui/frm-apr-pages.test.tsx` |
 
 ### Покриття
 
-| Файл за AC | Рядки | Гілки | Чим доведено, якщо 0 % |
+`npm run test:coverage` на момент PR (v8, `coverage/coverage-summary.json`):
+
+| Файл за AC | Рядки | Гілки | Чим доведено, якщо мало |
 |---|---|---|---|
-| <!-- src/lib/<модуль>.ts --> | … % | … % | — |
-| <!-- src/app/<сторінка>/page.tsx --> | 0 % | 0 % | <!-- e2e: tests/e2e/….spec.ts --> |
+| `src/lib/supabase/proxy.ts` | 60 % | 100 % | гілка гостя покрита новим тестом; непокрите — `setAll` cookies (оновлення сесії, не AC) |
+| `src/lib/auth/session.ts` | 94 % | 93 % | — (підлога 90/85/90/90 у `FLOORED`) |
+| `src/app/(app)/requests/(list)/page.tsx` | 84 % | 80 % | текст порожнього стану — тести рендеру; на проді — UAT (трек C) |
+| `src/app/(app)/requests/[id]/page.tsx` | 96 % | 72 % | відмову й «Not enough permissions» — тест UI + база; на проді — UAT |
+| SQL (RLS, `decide_purchase`, grants) | — | — | JS-покриття SQL не бачить; доведено SQL-мутаціями нижче |
 
 ### Доказ мутацією
 
+**TS, Stryker 10.1.1** (`npx stryker run --mutate <файл>`):
+
 | Мутант (файл:рядок, що змінено) | AC під загрозою | До | Тест, посилений з тексту AC | Після |
 |---|---|---|---|---|
-| <!-- src/lib/…/x.ts:14 `<=` → `<` --> | AC-…-NN | вижив | <!-- …/blob/<sha>/tests/…#L<N>: межа «…» з AC --> | убитий |
+| `src/lib/supabase/proxy.ts:24–44` — тіло `updateSession` (умова `!claims && !isPublic`, редірект на `/login`) цілком без покриття: 18 мутантів NoCoverage | AC-FRM-09 | не покрито: score 43,75 % (14 убито, 0 вижили, 18 NoCoverage) | `tests/auth/proxy-guest.test.ts`: гість (`data: null` і `claims: null`) за прямим посиланням `/requests/new` → 307 на `/login`; `/login` для гостя — без редіректу; користувач з входом — без редіректу | убито: score 71,88 % (23 убито, 3 вижили, 6 NoCoverage); мутанти на гілці гостя вбито |
+| `(list)/page.tsx:224` — умова показу «My requests» і текст порожнього стану; рядок `empty="You have not submitted any requests yet"` | AC-FRM-14 | текст мутантів убивав 1 тест; «списку заявок немає» не перевірялось | 2 нові тести: порожня сторінка — немає `<table` і `PUR-`; працівник із заявкою — повідомлення відсутнє | мутанти на тексті й гілці «є/немає заявок» убиті |
 
-- Stryker: <!-- score до → після, посилання на PR з виводом -->
-- SQL-мутації (`npm run mutation:sql`): <!-- таблиця з npm run mutation:sql -- --markdown (KILLED / SURVIVED / ERROR) з PR або «немає PGlite-гарнесу» -->
-- Еквівалентні мутанти: <!-- який і чому (рядок міграції чи коду, що робить його еквівалентним) або «немає» -->
+Вижили після посилення (розбір, не приховано):
+
+| Мутант | Категорія | Рішення |
+|---|---|---|
+| `proxy.ts:17,22,23` — `ObjectLiteral` у `NextResponse.next({ request })` і опціях клієнта | не AC (передача request у відповідь) | лишено |
+| `proxy.ts:27–35` — `setAll` cookies, NoCoverage | не AC-FRM-09 (оновлення cookie сесії) | лишено |
+| `(list)/page.tsx:114–116, 224:24, 224:53` — `nothingToShow`, `mine.length >= 0` | нерозрізнений вхід: потрібен схвалювач/адміністратор із чергою й без власних заявок; AC-FRM-14 говорить лише про працівника без заявок, поведінка для інших ролей поза AC | лишено; питання до PM про «Мої заявки» для схвалювача без власних заявок — кандидат у «Питання до вимог» |
+
+- Stryker: файли за AC — `proxy.ts` 43,75 % → 71,88 %; `visibility.ts` (TS-дзеркало видимості) 92 % (92 з 100), вижилі — права редагування автора, не AC-APR-03.
+- SQL-мутації (`npm run mutation:sql -- --markdown`, PGlite, 6 мутантів, ≈26 с):
+
+| Мутант | AC | Що зламано | Вердикт |
+|---|---|---|---|
+| A1 | AC-APR-03 | `requests_select`: схвалювач бачить подані заявки будь-якого відділу | KILLED (5 тестів, у т.ч. AC-APR-03) |
+| A2 | AC-APR-03 | `can_view_request`: рядки й історія чужої заявки видимі схвалювачу будь-якого відділу | KILLED (AC-FRM-08, AC-APR-03) |
+| A3 | AC-APR-03 | `decide_purchase`: рішення дозволено, якщо у заявки є відділ | KILLED (AC-APR-03 ×2, AC-APR-04) |
+| A4 | AC-APR-03 | `is_department_approver`: не перевіряє, що схвалювач — поточний користувач | KILLED (6 тестів) |
+| F1 | AC-FRM-09 | `submit_purchase`: execute дозволено `anon` | SURVIVED — еквівалентний (див. нижче) |
+| F2 | AC-FRM-09 | `requests`: select дозволено `anon` | KILLED (AC-FRM-09) |
+
+- Еквівалентні мутанти: **F1** — `public.submit_purchase` є `security invoker` і лише викликає `private.submit_purchase`, у якої `execute` забрано в `anon` (`20261021140000_pur_drafts.sql:893`, `revoke execute on function private.submit_purchase(uuid) from public, anon`); гість однаково отримує `permission denied`. Тест із точнішим текстом помилки це не розрізнить: повідомлення `permission denied for function submit_purchase` однакове для обох шарів. Причина записана в `scripts/mutants.mjs` (`expect: "survive"`, `reason`).
+- Чесне зауваження: усі SQL-мутанти AC-APR-03 були вбиті з першого прогону — тести бази вже були з тексту AC; прогалини знайшли TS-мутанти `proxy.ts` (гілку гостя не виконував жоден тест).
 
 ## C. UAT на проді
 

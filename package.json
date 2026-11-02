@@ -22,7 +22,9 @@
     "smoke": "node scripts/smoke.mjs",
     "gates": "npm run lint && npm run typecheck && fallow audit --base origin/main",
     "test:coverage": "vitest run --config vitest.coverage.config.mts --coverage",
-    "coverage:summary": "node scripts/coverage-summary.mjs"
+    "coverage:summary": "node scripts/coverage-summary.mjs",
+    "mutation:ts": "stryker run",
+    "mutation:sql": "node scripts/mutation-check.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
@@ -34,6 +36,8 @@
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
     "@fission-ai/openspec": "1.14.1",
+    "@stryker-mutator/core": "10.1.1",
+    "@stryker-mutator/vitest-runner": "10.1.1",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^24",
     "@types/react": "^19",
