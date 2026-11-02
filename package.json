@@ -28,7 +28,8 @@
     "test:e2e": "playwright test",
     "uat": "node scripts/uat/run.mjs",
     "uat:nc": "node scripts/uat/run.mjs --negative-controls",
-    "uat:review": "node scripts/uat/review.mjs && node scripts/uat/report.mjs"
+    "uat:review": "node scripts/uat/review.mjs && node scripts/uat/report.mjs",
+    "accounts:zip": "node scripts/zip-accounts.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
@@ -49,6 +50,7 @@
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "5.0.3",
     "@vitest/eslint-plugin": "1.6.27",
+    "@zip.js/zip.js": "2.24.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "eslint-plugin-playwright": "2.12.1",
