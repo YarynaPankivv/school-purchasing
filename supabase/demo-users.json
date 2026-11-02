@@ -30,6 +30,11 @@
     "role": "requester"
   },
   {
+    "email": "pm-empty@example.test",
+    "full_name": "PM Empty",
+    "role": "requester"
+  },
+  {
     "email": "pm-admin@example.test",
     "full_name": "PM Admin",
     "role": "admin"
