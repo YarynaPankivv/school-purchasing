@@ -142,6 +142,7 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
   репозиторію `koldovsky/2026-quitcode-06-leave-portal-demo`): `security invoker`, або `security definer` лише в
   схемі `private` з `set search_path = ''`.
 - Авторизація на сервері — `supabase.auth.getClaims()`, ніколи `getSession()`.
+- Функції прав у `src/lib/pur/visibility.ts` (`canEdit*`, `canChange*`, `canSubmit`) для дій автора завжди перевіряють `request.author_id === actor.id`: інтерфейс не показує дію, яку RLS не дозволить. Прибрана чи пропущена перевірка автора — помилка рівня «must fix» (Major), а не зауваження до стилю.
 
 ## Секрети
 
