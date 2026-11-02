@@ -120,16 +120,39 @@
 
 ## D. Eval рецензента
 
-- PR з вадами (не злитий): <!-- …/pull/N -->
-- Ключ і таблиця: <!-- …/pull/N#issuecomment-M -->
+- PR з вадами (не злитий, після eval закрито): https://github.com/YarynaPankivv/school-purchasing/pull/52 (гілка `task/refactor-request-summary`, нейтральні коміти й опис; усі обов'язкові перевірки на PR зелені)
+- Ключ і таблиця «до правила»: https://github.com/YarynaPankivv/school-purchasing/pull/52#issuecomment-6578245575 (ключ відповідей до прогону зберігався поза репо)
+- Рецензенти: CodeRabbit (профіль assertive, uk-UA, `.coderabbit.yaml` репо) і `/code-review high` через `claude -p … --setting-sources project` (модель **claude-opus-5-5**: $0,54 і 62 с до правила, $0,56 і 68 с після)
+
+### До правила
 
 | # | Вада (ключ) | CodeRabbit | `/code-review high` |
 |---|---|---|---|
-| 1 | <!-- категорія і файл:рядок --> | <!-- знайшов / пропустив + цитата --> | <!-- знайшов / пропустив + цитата --> |
-| 2 | … | … | … |
-| 3 | … | … | … |
-| П | приманка: <!-- що --> | <!-- хибна тривога? цитата --> | <!-- хибна тривога? цитата --> |
+| 1 | права в даних: `supabase/migrations/20261102150000_request_notes.sql:21`, політика `request_notes_select` без перевірки видимості заявки | **знайшов, Critical**: «Обмежте читання нотаток доступом до заявки … дозволяє йому читати нотатки до всіх заявок» | **знайшов**: «only checks private.is_active_user(), so any active user can read the notes of every request» |
+| 2 | логіка: `src/lib/pur/visibility.ts:52`, `canEditFields` без `request.author_id === actor.id` | **знайшов, лише Minor**: «Поверніть перевірку автора в `canEditFields` … будь-який активний `admin` або `approver` може отримати `true` для чужої заявки» | **знайшов**: «canEditFields lost the `request.author_id === actor.id` check» (№2 у списку, без рівня) |
+| 3 | авторизація в дії: `src/app/api/requests/summary/route.ts:22`, роль admin з `claims.user_metadata.role` | **знайшов, Major**: «Читайте роль адміністратора з `profiles.role` … Користувач також може змінити власний `user_metadata.role`» | **знайшов**: «Admin status is read from `claims.user_metadata.role`, which the user can edit themselves» |
+| П | приманка: `private.request_note_count` — `security definer`, `set search_path = ''`, `revoke` від `public`/`anon`, перевіряє `can_view_request` (оформлена правильно) | слабка хибна тривога (Major): радить додати `is_active_user()`, небезпеки не заявляє | слабка хибна тривога: «is not called anywhere … dead code», «extra security definer surface» |
 
-- Інші знахідки: <!-- слушна / шум, по рядку на кожну -->
-- Правило, що закриває пропуск: <!-- рядок в AGENTS.md чи path instruction, …/commit/<sha> -->
-- Повторний прогін: <!-- хто, результат, цитата, …/pull/N#issuecomment-M -->
+### Інші знахідки
+
+| Знахідка | Хто | Оцінка |
+|---|---|---|
+| вибірка `requests` без пагінації, ліміт PostgREST 1000 рядків (`route.ts:12`) | обидва | слушна |
+| `request_notes_insert` без `is_active_user()` (`…sql:27`) | обидва | слушна |
+| роут повторює `getClaims` замість `requireActiveUser` (`route.ts:7`) | `/code-review` | слушна |
+| FK `author_id` на `auth.users` з `on delete cascade`, а не на `profiles` з `restrict` | `/code-review` | слушна |
+| немає AC, тестів і рядка `conformance.md` для ендпойнта й таблиці | обидва | слушна, але шум для eval: PR навмисно без AC |
+| 401-гілка роуту недосяжна: `proxy.ts` редіректить гостя на `/login` | `/code-review` (лише після правила) | слушна |
+
+### Правило, що закриває пропуск
+
+Найслабше місце — вада 2: CodeRabbit позначив пропущену перевірку автора лише як Minor. Правило — один рядок у `AGENTS.md` (його читають обидва рецензенти; `CLAUDE.md` імпортує `@AGENTS.md`):
+
+> Функції прав у `src/lib/pur/visibility.ts` (`canEdit*`, `canChange*`, `canSubmit`) для дій автора завжди перевіряють `request.author_id === actor.id`: інтерфейс не показує дію, яку RLS не дозволить. Прибрана чи пропущена перевірка автора — помилка рівня «must fix» (Major), а не зауваження до стилю.
+
+PR із правилом: https://github.com/YarynaPankivv/school-purchasing/pull/53, коміт `b75262a`; потім `git merge main` у гілку з вадами (`6317e47`).
+
+### Повторний прогін
+
+- `/code-review high 52` після правила (claude-opus-5-5): вада 2 стала **№1 у списку** і сама посилається на правило: «canEditFields no longer checks `request.author_id === actor.id` … AGENTS.md calls a removed author check a must-fix (Major)». Вади 1 і 3 знайдено. Приманку більше не позначено, хибна тривога зникла.
+- `@coderabbitai full review` після правила: <!-- результат і цитата після прогону, …/pull/52#issuecomment-M -->
