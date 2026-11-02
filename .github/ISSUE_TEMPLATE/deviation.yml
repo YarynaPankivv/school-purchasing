@@ -1,0 +1,90 @@
+# Форма «Відхилення від вимог» — PM відкриває її в репо розробника під час приймання на проді (WS8, трек PM B).
+# Розробник кладе файл у .github/ISSUE_TEMPLATE/deviation.yml свого репо і раз створює мітку:
+#   gh label create "відхилення" --color D93F0B --description "Відхилення від вимог: приймання PM"
+# Форма ставить мітку й тим, хто не має прав запису (PM), але лише якщо така мітка вже є в репо.
+# Посилання на форму для PM: https://github.com/<dev>/<team-slug>/issues/new?template=deviation.yml
+name: Відхилення від вимог
+description: PM бачить на проді поведінку, яка розходиться з AC. Розробник відповідає PR-ом з тестом, що відтворює відхилення, або поясненням.
+title: "Відхилення від вимог: AC-… — "
+labels: ["відхилення"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Одне issue — один AC.** Назва: `Відхилення від вимог: AC-… — коротко про суть`.
+        - **Без паролів** — ні тут, ні на знімку екрана. Акаунт — лише адреса `*@example.test`.
+        - Без справжніх назв клієнта, імен людей і їхніх даних.
+        - Знімок екрана перевірте перед вставкою: на ньому немає пароля, вмісту `accounts.txt` і адрес не з `example.test`.
+  - type: input
+    id: ac
+    attributes:
+      label: AC
+      description: ID критерію приймання.
+      placeholder: "AC-ROOM-06"
+    validations:
+      required: true
+  - type: input
+    id: requirement
+    attributes:
+      label: Вимога
+      description: Повна адреса issue «Вимога» або файла `docs/requirements/…` у репо вимог PM.
+      placeholder: "https://github.com/<pm>/<team-slug>-spec/issues/N"
+    validations:
+      required: true
+  - type: input
+    id: account
+    attributes:
+      label: Роль і акаунт
+      description: Роль, під якою прогнано AC, і лише email акаунта, без пароля. Без входу — «не увійшов (вікно інкогніто)».
+      placeholder: "працівник, pm-employee@example.test"
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Прод-URL і час
+      placeholder: "https://<проєкт>.vercel.app — 02.11.2026, 14:20 (Київ)"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Кроки
+      description: Нумеровано, від входу до результату, так, щоб розробник міг відтворити.
+      placeholder: |
+        1. Вхід як pm-admin@example.test, відкрито бронювання працівника 1, адресу скопійовано.
+        2. У вікні інкогніто вхід як pm-employee@example.test, відкрито скопійовану адресу.
+        3. Натиснуто «Скасувати».
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Очікувано (текст AC)
+      description: Частина «Тоді» з вимоги — дослівно.
+      placeholder: "Тоді бачить повідомлення «Скасувати можна лише власне бронювання», а бронювання лишається «підтверджено»."
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактично
+      description: Що видно насправді. Дослівний текст на екрані, якщо він є.
+      placeholder: "Бронювання скасовано, повідомлення немає."
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Знімок екрана
+      description: Перетягніть зображення сюди. Якщо в браузері цього не видно (наприклад, відмова прямого запиту) — «—».
+    validations:
+      required: false
+  - type: input
+    id: uat
+    attributes:
+      label: Рядок UAT-звіту
+      description: Необов'язково. Посилання на звіт UAT розробника (`docs/qa/uat/<дата>/report.md`) чи на кадр «Тоді», де видно відхилення.
+      placeholder: "https://github.com/<dev>/<team-slug>/blob/<sha>/docs/qa/uat/2026-11-01/report.md"
+    validations:
+      required: false
