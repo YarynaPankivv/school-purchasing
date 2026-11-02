@@ -94,7 +94,8 @@ export async function attachRuntimeErrors(page: Page) {
 export async function signIn(page: Page, email: string, password: string) {
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password", { exact: true }).evaluate((el, value) => {
+  // Доступне ім'я поля — «Password Show password» (підпис охоплює кнопку показу пароля), тож шукаємо за name.
+  await page.locator('input[name="password"]').evaluate((el, value) => {
     (el as HTMLInputElement).value = value;
   }, password);
   await page.getByRole("button", { name: "Sign in" }).click();
