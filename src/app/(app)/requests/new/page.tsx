@@ -6,6 +6,7 @@ import { requireActiveUser } from "@/lib/auth/session";
 import { onBehalfCandidates, personLabel, selectableDepartments } from "@/lib/org/departments";
 import { orgErrorMessage } from "@/lib/org/errors";
 import { loadPermissions } from "@/lib/org/load-permissions";
+import { loadPeople } from "@/lib/org/people";
 import { allowedPurchaseTypes, allowedRequestTypes } from "@/lib/org/request-options";
 import { PURCHASE_TYPE_LABELS, REQUEST_TYPE_LABELS } from "@/lib/org/requests";
 import { createDraftRequest } from "./actions";
@@ -20,11 +21,11 @@ export async function NewRequestPageContent({ searchParams }: PageProps<"/reques
   const { supabase, user } = await requireActiveUser();
   const { error, created } = await searchParams;
 
-  const [{ data: departments }, { data: memberships }, { data: people }, permissions] = await Promise.all([
+  const [{ data: departments }, { data: memberships }, people, permissions] = await Promise.all([
     supabase.from("departments").select("id, name"),
     supabase.from("department_members").select("department_id, user_id"),
-    // RLS: не-admin бачить себе й активних колег зі спільних відділів (profiles_select_colleagues), admin — усіх.
-    supabase.from("profiles").select("id, email, full_name, is_active, role"),
+    // Не-admin бачить себе й активних колег зі спільних відділів лише як підпис (colleague_directory), admin — усіх.
+    loadPeople(supabase, user.role),
     loadPermissions(supabase, user.id),
   ]);
   const options = selectableDepartments(departments ?? [], memberships ?? [], user.id, user.role);
@@ -33,7 +34,7 @@ export async function NewRequestPageContent({ searchParams }: PageProps<"/reques
   const candidatesByDepartment = Object.fromEntries(
     options.map((d) => [
       d.id,
-      onBehalfCandidates(d.id, memberships ?? [], people ?? [], user.id, user.role).map((p) => ({
+      onBehalfCandidates(d.id, memberships ?? [], people, user.id, user.role).map((p) => ({
         value: p.id,
         label: personLabel(p),
       })),

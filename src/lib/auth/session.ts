@@ -10,6 +10,8 @@ export type CurrentUser = {
   fullName: string | null;
   role: AppRole;
   isActive: boolean;
+  // false — профілю немає взагалі (інакше email === null не відрізнив би його від профілю без email).
+  hasProfile: boolean;
 };
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -32,7 +34,7 @@ export async function getSessionContext(): Promise<{ supabase: Supabase; user: C
   if (!profile || !isAppRole(profile.role)) {
     return {
       supabase,
-      user: { id: userId, email: null, fullName: null, role: "requester", isActive: false },
+      user: { id: userId, email: null, fullName: null, role: "requester", isActive: false, hasProfile: false },
     };
   }
   return {
@@ -43,17 +45,18 @@ export async function getSessionContext(): Promise<{ supabase: Supabase; user: C
       fullName: profile.full_name,
       role: profile.role,
       isActive: profile.is_active,
+      hasProfile: true,
     },
   };
 }
 
-// Неактивний (або без профілю) — виходить і бачить той самий текст, що й за невірного пароля (AC-ORG-12, D6).
+// Неактивний — виходить і бачить текст PM про деактивацію (AC-ORG-12); без профілю — текст невірного пароля.
 export async function requireActiveUser(): Promise<{ supabase: Supabase; user: CurrentUser }> {
   const { supabase, user } = await getSessionContext();
   if (!user) redirect("/login");
   if (!user.isActive) {
     await supabase.auth.signOut();
-    redirect("/login?error=invalid");
+    redirect(user.hasProfile ? "/login?error=deactivated" : "/login?error=invalid");
   }
   return { supabase, user };
 }

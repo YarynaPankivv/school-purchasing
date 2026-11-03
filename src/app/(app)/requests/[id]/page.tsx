@@ -20,7 +20,8 @@ import {
   Textarea,
 } from "@/components/ui";
 import { requireActiveUser } from "@/lib/auth/session";
-import { isUuid, personLabel, selectableDepartments, type Approver, type Membership, type Person } from "@/lib/org/departments";
+import { isUuid, personLabel, selectableDepartments, type Approver, type Membership } from "@/lib/org/departments";
+import { loadPeople } from "@/lib/org/people";
 import { loadPermissions } from "@/lib/org/load-permissions";
 import { allowedPurchaseTypes } from "@/lib/org/request-options";
 import { PURCHASE_TYPE_LABELS } from "@/lib/org/requests";
@@ -100,18 +101,18 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   // Куди повертає «Back» і сусіди в порядку списку, з якого людина прийшла (лише адреса, дані читає RLS).
   const back = safeBack(rawBack);
 
-  const [requestRes, linesRes, historyRes, departmentsRes, approversRes, peopleRes, membersRes, permissions, authorLabels] = await Promise.all([
+  const [requestRes, linesRes, historyRes, departmentsRes, approversRes, people, membersRes, permissions, authorLabels] = await Promise.all([
     supabase.from("requests").select("*").eq("id", id).eq("type", "PUR").maybeSingle(),
     supabase.from("request_lines").select("*").eq("request_id", id).order("position"),
     supabase.from("request_history").select("*").eq("request_id", id).order("created_at", { ascending: false }),
     supabase.from("departments").select("id, name"),
     supabase.from("department_approvers").select("department_id, user_id"),
-    supabase.from("profiles").select("id, email, full_name, is_active, role"),
+    loadPeople(supabase, user.role),
     supabase.from("department_members").select("department_id, user_id, auto_approve"),
     loadPermissions(supabase, user.id),
     loadAuthorLabels(supabase),
   ]);
-  for (const result of [requestRes, linesRes, historyRes, departmentsRes, approversRes, peopleRes, membersRes]) {
+  for (const result of [requestRes, linesRes, historyRes, departmentsRes, approversRes, membersRes]) {
     if (result.error) throw new Error(`Failed to read the request: ${result.error.message}`);
   }
   const request = requestRes.data ? toPurchaseRow(requestRes.data) : null;
@@ -123,7 +124,6 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   const lines = (linesRes.data ?? []).map(toLineRow).filter((l): l is LineRow => l !== null);
   const departments = departmentsRes.data ?? [];
   const approvers: Approver[] = approversRes.data ?? [];
-  const people: Person[] = peopleRes.data ?? [];
   const memberships: Membership[] = (membersRes.data ?? []).map((m) => ({ ...m }));
   // Підписи з request_author_labels (автор і особа «від імені» видимої заявки) мають перевагу над профілями колег.
   const names = new Map([...people.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);

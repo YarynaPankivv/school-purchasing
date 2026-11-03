@@ -6,7 +6,6 @@ import { NO_APPROVER_LABEL } from "@/lib/org/departments";
 import {
   adminRejectAllowed,
   adminRejectOutcome,
-  autoApproves,
   awaitingDecision,
   canAdminReject,
   canDecide,
@@ -17,7 +16,6 @@ import {
   forwardedLines,
   reopenAllowed,
 } from "@/lib/pur/decisions";
-import { submitOutcome } from "@/lib/pur/submission";
 import { ADMIN, APPROVER, AUTHOR, COLLEAGUE, OFFICE, OTHER_APPROVER, PRIMARY, actor, approver, makeLine, makePurchase, person } from "./helpers";
 
 const approvers = [approver(PRIMARY, APPROVER), approver(PRIMARY, OTHER_APPROVER), approver(OFFICE, "user-office-head")];
@@ -237,39 +235,6 @@ describe("хто може вирішити", () => {
     );
     expect(decisionBlockReason(makePurchase({ status: "pending" }), actor(AUTHOR, "requester"), approvers)).toBe("own_request");
     expect(decisionBlockReason(makePurchase({ status: "pending" }), approverActor, approvers)).toBeNull();
-  });
-});
-
-describe("автосхвалення", () => {
-  const memberships = [
-    { department_id: OFFICE, user_id: AUTHOR, auto_approve: true },
-    { department_id: PRIMARY, user_id: AUTHOR, auto_approve: false },
-  ];
-
-  it("лише автор з автосхваленням саме цього відділу", () => {
-    expect(autoApproves({ author_id: AUTHOR, department_id: OFFICE }, memberships)).toBe(true);
-    expect(autoApproves({ author_id: AUTHOR, department_id: PRIMARY }, memberships)).toBe(false);
-    expect(autoApproves({ author_id: COLLEAGUE, department_id: OFFICE }, memberships)).toBe(false);
-    expect(autoApproves({ author_id: AUTHOR, department_id: null }, memberships)).toBe(false);
-  });
-});
-
-describe("автосхвалення єдиного схвалювача", () => {
-  // Автор — водночас єдиний схвалювач відділу «Офіс» і має там автосхвалення.
-  const memberships = [{ department_id: OFFICE, user_id: APPROVER, auto_approve: true }];
-  const soleApprover = [approver(OFFICE, APPROVER)];
-  const own = makePurchase({ author_id: APPROVER, department_id: OFFICE, status: "pending" });
-
-  it("AC-PUR-53: власна закупівля єдиного схвалювача з автосхваленням — одразу «Схвалено», не «Чекають рішення»", () => {
-    const outcome = submitOutcome(own, memberships);
-    expect(outcome.status).toBe("approved");
-
-    // Після подання заявка вже approved: у списках рішення її немає ні в схвалювача, ні в admin.
-    const submitted = { ...own, status: outcome.status };
-    const approverActor = actor(APPROVER, "approver");
-    expect(decisionQueue([submitted], approverActor, soleApprover)).toEqual([]);
-    expect(awaitingDecision([submitted], actor(ADMIN, "admin"), soleApprover, people)).toEqual([]);
-    expect(canDecide(submitted, approverActor, soleApprover)).toBe(false);
   });
 });
 

@@ -2,7 +2,7 @@
 // (AC-PUR-15…28, 33, 47, 48, 50…54; design.md D5, D6).
 // Останнє слово — за функціями Postgres decide_purchase, reopen_purchase, admin_reject_purchase (D5) і RLS.
 // Ці функції — дзеркало для UI (які кнопки показати), перевірки в server action до rpc і тестів; змінюйте їх разом.
-import { departmentHasActiveApprover, type Approver, type Membership, type Person } from "@/lib/org/departments";
+import { departmentHasActiveApprover, type Approver, type Person } from "@/lib/org/departments";
 import type { PurErrorCode } from "./errors";
 import type { PurchaseStatus, LineStatus } from "./statuses";
 import type { Actor, HistoryAction, LineRow, PurchaseRow } from "./types";
@@ -85,20 +85,6 @@ export function decisionOutcome(input: DecisionInput): DecisionOutcome {
 // AC-PUR-42: далі до відділу закупівель йдуть лише схвалені (не відхилені) рядки.
 export function forwardedLines<T extends Pick<LineRow, "status">>(lines: readonly T[]): T[] {
   return lines.filter((l) => l.status !== "rejected");
-}
-
-// AC-PUR-16, 53: автор, якому в цьому відділі ввімкнено автосхвалення, подає закупівлю цього відділу — одразу «Схвалено».
-// Лише автор (особа «від імені» й admin окремо не виділяються), лише відділ заявки.
-export function autoApproves(
-  request: Pick<PurchaseRow, "author_id" | "department_id">,
-  memberships: readonly Membership[],
-): boolean {
-  return (
-    request.department_id !== null &&
-    memberships.some(
-      (m) => m.department_id === request.department_id && m.user_id === request.author_id && m.auto_approve,
-    )
-  );
 }
 
 // AC-PUR-15: «На рішення» — заявки pending відділів, де людина схвалює, крім власних (автор чи «від імені»).

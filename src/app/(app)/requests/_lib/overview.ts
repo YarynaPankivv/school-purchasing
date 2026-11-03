@@ -1,7 +1,8 @@
 // Дані для списку закупівель і лічильників на головній (design.md D6). Усе читаємо під RLS: вона вже віддає лише
 // те, що людина має право бачити (D4); списки «На рішення» й «Чекають рішення» — TS-функції src/lib/pur/decisions.ts.
+import { loadPeople } from "@/lib/org/people";
 import type { CurrentUser } from "@/lib/auth/session";
-import { personLabel, type Approver, type Person } from "@/lib/org/departments";
+import { personLabel, type Approver } from "@/lib/org/departments";
 import { awaitingDecision, decisionQueue, forwardedLines } from "@/lib/pur/decisions";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
@@ -31,16 +32,16 @@ export type RequestOverview = {
 };
 
 export async function loadOverview(supabase: Supabase, user: CurrentUser): Promise<RequestOverview> {
-  const [requests, lines, departments, approvers, people, authorLabels] = await Promise.all([
+  const [requests, lines, departments, approvers, personList, authorLabels] = await Promise.all([
     supabase.from("requests").select("*").eq("type", "PUR").order("created_at", { ascending: false }),
     supabase.from("request_lines").select("*"),
     supabase.from("departments").select("id, name"),
     supabase.from("department_approvers").select("department_id, user_id"),
-    supabase.from("profiles").select("id, email, full_name, is_active, role"),
+    loadPeople(supabase, user.role),
     loadAuthorLabels(supabase),
   ]);
   // Збій бази — не «заявок немає»: нехай спрацює сторінка помилки.
-  for (const result of [requests, lines, departments, approvers, people]) {
+  for (const result of [requests, lines, departments, approvers]) {
     if (result.error) throw new Error(`Failed to read requests: ${result.error.message}`);
   }
 
@@ -52,7 +53,6 @@ export async function loadOverview(supabase: Supabase, user: CurrentUser): Promi
     if (line) linesByRequest.set(line.request_id, [...(linesByRequest.get(line.request_id) ?? []), line]);
   }
   const departmentNames = new Map((departments.data ?? []).map((d) => [d.id, d.name]));
-  const personList: Person[] = people.data ?? [];
   // Підписи з request_author_labels (усі автори видимих заявок) мають перевагу над профілями колег.
   const names = new Map([...personList.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);
   const approverList: Approver[] = approvers.data ?? [];

@@ -157,3 +157,16 @@ PR із правилом: https://github.com/YarynaPankivv/school-purchasing/pul
 - `/code-review high 52` після правила (claude-opus-5-5): вада 2 стала **№1 у списку** і сама посилається на правило: «canEditFields no longer checks `request.author_id === actor.id` … AGENTS.md calls a removed author check a must-fix (Major)». Вади 1 і 3 знайдено. Приманку більше не позначено, хибна тривога зникла.
 - CodeRabbit після правила — чистий прогін на новому PR 54 (гілка з тими самими комітами з вадами, `main` уже з правилом; на PR 52 CodeRabbit пропускав уже закриті треди): https://github.com/YarynaPankivv/school-purchasing/pull/54#issuecomment-6581159803. Усі три вади — **Major**; вада 2 (`canEditFields`) піднялась з Minor до Major і CodeRabbit послався на правило: «За правилами проєкту, функції `canEdit*` завжди перевіряють, що actor є автором заявки» (джерело в коментарі: Coding guidelines). Приманку не позначено. Додатково слушні: пагінація `route.ts:12`, `request_notes_insert` без `is_active_user()`.
 - PR 52 і 54 закрито без merge.
+
+## Бонус: UAT у CI
+
+`.github/workflows/e2e.yml` (джерело — `materials/uat/.github/workflows/e2e.yml` курсу, підлаштований під наш застосунок) на
+кожен PR, push у `main` і `workflow_dispatch` піднімає **одноразовий локальний Supabase** у раннері (`supabase start`,
+міграції й `supabase/seed.sql`), створює синтетичних користувачів `npm run users:demo` з випадковим паролем, додає дані для
+AC-APR-03 `npm run e2e:seed` (`scripts/e2e-seed.mjs`: pm-approver схвалює Primary School, подана заявка pm-requester лежить в
+Upper School), збирає застосунок і ганяє специфікації `tests/e2e/*.spec.ts`. Хмарних секретів немає; крок «no skipped tests»
+валить прогін, якщо хоч один тест пропущено; звіт і записи — артефактом.
+
+- Зелений прогін `workflow_dispatch` на `main`: https://github.com/YarynaPankivv/school-purchasing/actions/runs/41620421190 (коміт `aac9ff0`, 7 пройшли, 0 впали, 0 пропущено, 0 нестабільних; артефакт `e2e-41620421190`).
+- Чому сід: на локальному Supabase немає подачі чужого відділу, яку на проді тримає PM, тож без `e2e:seed` AC-APR-03 лише «пропускався». Тепер він виконується, а не пропускається.
+- Висновок: UAT уміє падати й у CI. Після merge виявився флейк хелпера `statusSeenByAdmin` (читав скелет «Loading…» замість сторінки заявки); виправлено очікуванням, поки скелет зникне.
