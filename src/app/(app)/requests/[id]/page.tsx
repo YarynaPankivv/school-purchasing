@@ -33,7 +33,8 @@ import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
 import { cancelOutcome } from "@/lib/pur/statuses";
 import { formatDate, formatDateTime } from "@/lib/pur/time";
-import { formatUsd, lineTotal, requestTotal } from "@/lib/pur/totals";
+import { formatUsd, lineTotal, lineTotalCents, requestTotal } from "@/lib/pur/totals";
+import { LiveLineTotal } from "./live-line-total";
 import type { Actor, LineRow } from "@/lib/pur/types";
 import { purchaseOnBehalfCandidates } from "@/lib/pur/on-behalf";
 import {
@@ -384,7 +385,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                       </td>
                       <td className="py-2 pr-2 text-right tabular-nums max-md:order-7 max-md:col-span-2 max-md:flex max-md:justify-between max-md:p-0 max-md:text-sm">
                         <span className="text-muted-foreground md:hidden">Total</span>
-                        {formatUsd(lineTotal(line))}
+                        <LiveLineTotal lineId={line.id} initialCents={lineTotalCents(line)} />
                       </td>
                       <td className="py-2 text-right max-md:order-2 max-md:p-0">
                         {editLines && lines.length > 1 ? (

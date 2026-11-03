@@ -10,6 +10,17 @@ export function lineTotalCents(line: Priced): number {
   return line.quantity * Math.round(line.unit_price * 100);
 }
 
+// Живий підрахунок під час набору (AC-PUR-06): значення полів форми — текст. Порожнє чи неприпустиме (кількість не ціле
+// від 1, ціна менша за 0) дає 0, як і незаповнений рядок; перевірку повідомленнями робить подання.
+export function lineTotalCentsFromInput(quantity: string, unitPrice: string): number {
+  const quantityValue = Number(quantity);
+  const priceValue = Number(unitPrice);
+  if (quantity.trim() === "" || unitPrice.trim() === "") return 0;
+  if (!Number.isInteger(quantityValue) || quantityValue < 1) return 0;
+  if (!Number.isFinite(priceValue) || priceValue < 0) return 0;
+  return lineTotalCents({ quantity: quantityValue, unit_price: priceValue });
+}
+
 // Сума рядка = кількість × ціна, округлення до центів (Припущення PM).
 export function lineTotal(line: Priced): number {
   return lineTotalCents(line) / 100;
