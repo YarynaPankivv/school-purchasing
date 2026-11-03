@@ -260,7 +260,7 @@ describe("автосхвалення єдиного схвалювача", () =>
   const soleApprover = [approver(OFFICE, APPROVER)];
   const own = makePurchase({ author_id: APPROVER, department_id: OFFICE, status: "pending" });
 
-  it("AC-PUR-53: власна закупівля єдиного схвалювача з автосхваленням — одразу «Схвалено», не «Чекають рішення»", () => {
+  it("власна закупівля єдиного схвалювача з автосхваленням — одразу «Схвалено», не «Чекають рішення»", () => {
     const outcome = submitOutcome(own, memberships);
     expect(outcome.status).toBe("approved");
 

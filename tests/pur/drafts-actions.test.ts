@@ -242,7 +242,7 @@ describe("подання", () => {
     expect(mock.calls.find((c) => c.table === "rpc:submit_purchase")?.payload).toEqual({ target_request: REQ });
   });
 
-  it("AC-PUR-16: автосхвалення — функція повертає «approved», сторінка показує «одразу схвалено»", async () => {
+  it("автосхвалення — функція повертає «approved», сторінка показує «одразу схвалено»", async () => {
     mockSupabase(
       createSupabaseMock({
         profile: author,
