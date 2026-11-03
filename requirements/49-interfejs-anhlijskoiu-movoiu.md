@@ -1,4 +1,4 @@
-> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/49 · оновлено 2026-10-26T14:13:28Z
+> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/49 · оновлено 2026-10-29T17:10:25Z
 
 # Вимога: інтерфейс застосунку англійською мовою
 
@@ -27,6 +27,7 @@
 - AC-LANG-05: Дано схвалювач, який відхиляє заявку без причини. Коли він підтверджує рішення. Тоді рішення не зберігається, а він бачить повідомлення «Provide a reason» замість «Вкажіть причину».
 - AC-LANG-06: Дано заявка в статусі «Очікує схвалення», «Схвалено» чи «Відхилено». Коли її показано у списку, на сторінці заявки або в історії. Тоді статус підписано текстом «Awaiting approval», «Approved» чи «Rejected» відповідно, а не лише кольором.
 - AC-LANG-08: Дано ролі `requester`, `approver`, `admin`. Коли вони показані на будь-якій сторінці. Тоді ідентифікатори ролей лишаються без змін, а поруч, де є підпис ролі, — англійська назва за таблицею.
+- AC-LANG-09: Дано заявка зі статусом «Частково схвалено» чи «Повернено на доопрацювання». Коли її показано у списку, на сторінці заявки або в історії. Тоді статус підписано текстом «Partially approved» чи «Returned for revision» відповідно, а не лише кольором.
 
 ### Поза межами
 
@@ -81,6 +82,16 @@
 | Обліковий запис деактивовано. Зверніться до адміністратора | Account deactivated. Contact your administrator |
 | Немає схвалювача | No approver |
 | Заповніть усі поля рядка | Fill in all line fields |
+| Частково схвалено | Partially approved |
+| Повернено на доопрацювання | Returned for revision |
+| Усі рядки відхилено: відхиліть заявку повністю | All lines are rejected: reject the whole request |
+| Кількість: ціле число від 1 | Quantity: a whole number from 1 |
+| Ціна: число від 0 | Price: a number from 0 |
+| Подано | Submitted |
+| Історія | History |
+| Мої заявки | My requests |
+| Редагувати | Edit |
+| Рядок | Line |
 | Ви ще не подали жодної заявки | You have not submitted any requests yet |
 
 ### Відкриті питання
@@ -95,3 +106,4 @@
 - 2026-10-25 — у таблицю додано текст порожнього стану «Мої заявки» (AC-FRM-14) — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/55
 - 2026-10-25 — AC-LANG-03 без випадку «власна заявка схвалювача»; AC-LANG-05 лише для відхилення без причини; AC-LANG-07 і частину AC-LANG-08 про номери перенесено в «Поза межами» до зрізу з історією й номерами; у таблицю додано «Заповніть усі поля рядка» — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/57, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/61, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/60
 - 2026-10-26 — у таблицю додано підпис «Автор» / «Author» для імені автора заявки (AC-APR-08 у вимозі https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/48) — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/62
+- 2026-10-29 — додано AC-LANG-09 і англійські тексти зрізу 3 (статуси «Partially approved», «Returned for revision», повідомлення про рядки й межі кількості та ціни, підписи історії) — власне рішення PM (зріз 3, WS9)
