@@ -16,8 +16,9 @@ async function readProfiles(supabase: Supabase): Promise<Person[]> {
 export async function loadPeople(supabase: Supabase, role: AppRole): Promise<Person[]> {
   if (role === "admin") return readProfiles(supabase);
   const { data, error } = await supabase.rpc("colleague_directory");
-  // PGRST202: функції ще немає в базі (db-deploy застосовує міграцію трохи пізніше за деплой застосунку): тоді й
-  // політика profiles_select_colleagues ще діє, тож читаємо профілі, як раніше.
+  // PGRST202: функції ще немає в кеші схеми PostgREST. Це або міграція ще не застосована (db-deploy трохи пізніше за деплой
+  // застосунку) і політика profiles_select_colleagues ще діє, або вже застосована, але кеш не оновився, і тоді читання
+  // профілів поверне лише власний рядок; підписи авторів у будь-якому разі дає request_author_labels.
   if (error?.code === "PGRST202") return readProfiles(supabase);
   if (error) throw new Error(`Failed to read people: ${error.message}`);
   // Директорія віддає лише активних; підпис кладемо в full_name (personLabel бере його першим), роль — лише admin чи ні.

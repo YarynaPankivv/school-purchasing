@@ -10,6 +10,8 @@ export type CurrentUser = {
   fullName: string | null;
   role: AppRole;
   isActive: boolean;
+  // false — профілю немає взагалі (інакше email === null не відрізнив би його від профілю без email).
+  hasProfile: boolean;
 };
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -32,7 +34,7 @@ export async function getSessionContext(): Promise<{ supabase: Supabase; user: C
   if (!profile || !isAppRole(profile.role)) {
     return {
       supabase,
-      user: { id: userId, email: null, fullName: null, role: "requester", isActive: false },
+      user: { id: userId, email: null, fullName: null, role: "requester", isActive: false, hasProfile: false },
     };
   }
   return {
@@ -43,6 +45,7 @@ export async function getSessionContext(): Promise<{ supabase: Supabase; user: C
       fullName: profile.full_name,
       role: profile.role,
       isActive: profile.is_active,
+      hasProfile: true,
     },
   };
 }
@@ -53,7 +56,7 @@ export async function requireActiveUser(): Promise<{ supabase: Supabase; user: C
   if (!user) redirect("/login");
   if (!user.isActive) {
     await supabase.auth.signOut();
-    redirect(user.email === null ? "/login?error=invalid" : "/login?error=deactivated");
+    redirect(user.hasProfile ? "/login?error=deactivated" : "/login?error=invalid");
   }
   return { supabase, user };
 }

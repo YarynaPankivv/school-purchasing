@@ -1,5 +1,5 @@
 // Правила зрізу 1 (ORG, PUR) на справжній базі (PGlite), а не на моках чи тексті міграції: єдиний активний адміністратор
-// (AC-ORG-10, AC-ORG-18), рішення по власній заявці й одночасні рішення (AC-PUR-24, AC-PUR-25), видимість заявок
+// (AC-ORG-10, AC-ORG-18), рішення по власній заявці й послідовні рішення (AC-PUR-24, AC-PUR-25), видимість заявок
 // (AC-PUR-35, AC-PUR-49). Кожен відмовний AC перевіряє і відмову, і те, що дані не змінилися.
 import { beforeAll, describe, expect, it } from "vitest";
 import { createPurchasingDb, type PurchasingDb } from "./supabase-pglite";

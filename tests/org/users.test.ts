@@ -231,6 +231,12 @@ describe("деактивація", () => {
     expect(mock.signOut).toHaveBeenCalledTimes(1);
   });
 
+  it("AC-ORG-12: деактивований профіль без email теж веде до «deactivated», а не до «invalid»", async () => {
+    const { requireActiveUser } = await sessionModule();
+    useSupabase(createSupabaseMock({ profile: makeProfile({ id: WORKER, role: "requester", is_active: false, email: null }) }));
+    expect(await redirectedTo(() => requireActiveUser())).toBe("/login?error=deactivated");
+  });
+
   it("AC-ORG-12: текст PM про деактивацію показано дослівно англійською з таблиці PM", async () => {
     const { default: LoginPage } = await import("@/app/login/page");
     const html = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({ error: "deactivated" }) } as never));
