@@ -103,6 +103,8 @@ async function statusSeenByAdmin(browser: Browser, baseURL: string, id: string):
   try {
     const page: Page = await context.newPage();
     await page.goto(`/requests/${id}`);
+    // goto чекає лише на load: сторінку Next стрімить, і без цього очікування innerText читає скелет «Loading…».
+    await expect(page.locator("body")).not.toContainText("Loading…");
     return await page.locator("body").innerText();
   } finally {
     await context.close();
