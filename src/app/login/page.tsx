@@ -5,6 +5,7 @@ import { LoginForm } from "./login-form";
 const ERRORS: Record<string, string> = {
   missing: "Enter your email and password.",
   invalid: "Incorrect email or password.",
+  deactivated: "Account deactivated. Contact your administrator", // AC-ORG-12: текст із таблиці PM, дослівно
 };
 
 // Вхід. Форма — першою в DOM (скрінрідер і Tab починають із неї), ліва панель на lg розташована CSS-сіткою ліворуч.

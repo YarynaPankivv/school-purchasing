@@ -3,6 +3,7 @@
 // і server actions із моком Supabase (design.md D9).
 // SQL-дзеркало — тригер private.guard_profile_update(), політики profiles_*/requests_* і private.can_act_on_behalf();
 // їх перевіряють db-check і ручний прохід на Preview.
+import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { approverCandidates, onBehalfCandidates, type Person } from "@/lib/org/departments";
 import { ORG_ERROR_MESSAGES, mapOrgDbError, orgErrorMessage } from "@/lib/org/errors";
@@ -199,13 +200,13 @@ describe("єдиний активний адміністратор", () => {
 });
 
 describe("деактивація", () => {
-  it("AC-ORG-12: деактивований працівник не може увійти — login() виходить із текстом невірного пароля", async () => {
+  it("AC-ORG-12: деактивований працівник не може увійти — login() виходить і веде до тексту PM про деактивацію", async () => {
     const inactive = makeProfile({ id: WORKER, role: "requester", is_active: false });
     const mock = useSupabase(createSupabaseMock({ profile: inactive }));
     const { login } = await loginActions();
 
     const url = await redirectedTo(() => login(form({ email: "member1@example.test", password: "secret-1234" })));
-    expect(url).toBe("/login?error=invalid"); // не розкриваємо стан облікового запису
+    expect(url).toBe("/login?error=deactivated"); // лише після вірного пароля: невірний лишається «invalid»
     expect(mock.signInWithPassword).toHaveBeenCalledTimes(1);
     expect(mock.signOut).toHaveBeenCalledTimes(1);
   });
@@ -226,8 +227,14 @@ describe("деактивація", () => {
   it("AC-ORG-12: активна сесія деактивованого теж закінчується — requireActiveUser виходить на кожній сторінці", async () => {
     const mock = useSupabase(createSupabaseMock({ profile: makeProfile({ id: WORKER, role: "requester", is_active: false }) }));
     const { requireActiveUser } = await sessionModule();
-    expect(await redirectedTo(() => requireActiveUser())).toBe("/login?error=invalid");
+    expect(await redirectedTo(() => requireActiveUser())).toBe("/login?error=deactivated");
     expect(mock.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("AC-ORG-12: текст PM про деактивацію показано дослівно англійською з таблиці PM", async () => {
+    const { default: LoginPage } = await import("@/app/login/page");
+    const html = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({ error: "deactivated" }) } as never));
+    expect(html).toContain("Account deactivated. Contact your administrator");
   });
 
   it("AC-ORG-12: адміністратор деактивує працівника — admin_set_active(false), активує — (true)", async () => {
