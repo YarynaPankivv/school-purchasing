@@ -67,16 +67,20 @@ export async function removeMember(formData: FormData) {
 }
 
 // AC-ORG-06: автосхвалення — лише для цього відділу (прапорець членства).
+// AC-ORG-33: не-заявнику відділу не вмикаємо — «Add the employee to the department as a requester first».
 export async function setAutoApprove(formData: FormData) {
   const departmentId = field(formData, "department_id");
   const path = detailPath(departmentId);
   const supabase = await adminOr(path);
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("department_members")
     .update({ auto_approve: formData.get("auto_approve") === "on" })
     .eq("department_id", departmentId)
-    .eq("user_id", field(formData, "user_id"));
+    .eq("user_id", field(formData, "user_id"))
+    .select("user_id");
+  // Рядка членства немає (не заявник відділу): UPDATE нічого не змінив, і це відмова, а не успіх.
+  if (!error && (data ?? []).length === 0) fail(path, "not_member");
   finish(path, error, "department_members");
 }
 

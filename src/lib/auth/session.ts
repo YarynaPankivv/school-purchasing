@@ -47,13 +47,13 @@ export async function getSessionContext(): Promise<{ supabase: Supabase; user: C
   };
 }
 
-// Неактивний (або без профілю) — виходить і бачить той самий текст, що й за невірного пароля (AC-ORG-12, D6).
+// Неактивний — виходить і бачить текст PM про деактивацію (AC-ORG-12); без профілю — текст невірного пароля.
 export async function requireActiveUser(): Promise<{ supabase: Supabase; user: CurrentUser }> {
   const { supabase, user } = await getSessionContext();
   if (!user) redirect("/login");
   if (!user.isActive) {
     await supabase.auth.signOut();
-    redirect("/login?error=invalid");
+    redirect(user.email === null ? "/login?error=invalid" : "/login?error=deactivated");
   }
   return { supabase, user };
 }

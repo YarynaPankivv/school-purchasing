@@ -293,7 +293,9 @@ describe("автосхвалення", () => {
     ];
     expect(autoApproveDepartments(memberships, WORKER)).toEqual([OFFICE.id]);
 
-    const mock = useSupabase(createSupabaseMock());
+    const mock = useSupabase(
+      createSupabaseMock({ results: { "department_members.update": { data: [{ user_id: WORKER }] } } }),
+    );
     const { setAutoApprove } = await actions();
     await redirectedTo(() =>
       setAutoApprove(form({ department_id: OFFICE.id, user_id: WORKER, auto_approve: "on" })),
@@ -307,6 +309,17 @@ describe("автосхвалення", () => {
         ["user_id", WORKER],
       ],
     });
+  });
+
+  it("AC-ORG-33: автосхвалення не вмикається не-заявнику відділу — відмова з текстом про додавання заявником", async () => {
+    // Рядка членства немає: UPDATE нічого не знайшов (порожня відповідь), тож це не успіх.
+    useSupabase(createSupabaseMock());
+    const { setAutoApprove } = await actions();
+    const url = await redirectedTo(() =>
+      setAutoApprove(form({ department_id: PRIMARY.id, user_id: WORKER, auto_approve: "on" })),
+    );
+    expect(url).toBe(`/admin/departments/${PRIMARY.id}?error=not_member`);
+    expect(orgErrorMessage("not_member")).toBe("Add the employee to the department as a requester first");
   });
 
   it("AC-ORG-15: зняття заявника відділу знімає його автосхвалення в цьому відділі", () => {
@@ -347,10 +360,10 @@ describe("сесія", () => {
     expect(mock.signOut).not.toHaveBeenCalled();
   });
 
-  it("неактивного працівника виводить із системи з тим самим текстом, що й за невірного пароля", async () => {
+  it("AC-ORG-12: неактивного працівника виводить із системи з текстом PM про деактивацію", async () => {
     const mock = useSupabase(createSupabaseMock({ profile: makeProfile({ id: WORKER, is_active: false }) }));
     const { requireActiveUser } = await import("@/lib/auth/session");
-    await expect(redirectedTo(() => requireActiveUser())).resolves.toBe("/login?error=invalid");
+    await expect(redirectedTo(() => requireActiveUser())).resolves.toBe("/login?error=deactivated");
     expect(mock.signOut).toHaveBeenCalledOnce();
   });
 });

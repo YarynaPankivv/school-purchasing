@@ -23,16 +23,20 @@ export async function login(formData: FormData) {
     redirect("/login?error=invalid");
   }
 
-  // AC-ORG-12: деактивований працівник не входить. Пароль міг бути вірним, тож читаємо власний профіль
-  // (політика profiles_select_own діє й для неактивного) і виходимо з тим самим текстом, що й за невірного пароля:
-  // PM тексту не задав, а стан облікового запису не розкриваємо (design.md D6).
+  // AC-ORG-12: деактивований працівник не входить і бачить текст PM («Account deactivated. Contact your administrator»).
+  // Текст показуємо лише після ВІРНОГО пароля, тож він не розкриває, чи існує email (невірний пароль — завжди «invalid»).
+  // Профіль читаємо власний (політика profiles_select_own діє й для неактивного).
   const userId = signIn?.user?.id;
   const { data: profile, error: profileError } = userId
     ? await supabase.from("profiles").select("is_active").eq("id", userId).maybeSingle()
     : { data: null, error: null };
-  if (!userId || profileError || !profile || !profile.is_active) {
+  if (!userId || profileError || !profile) {
     await supabase.auth.signOut();
     redirect("/login?error=invalid");
+  }
+  if (!profile.is_active) {
+    await supabase.auth.signOut();
+    redirect("/login?error=deactivated");
   }
 
   revalidatePath("/", "layout");
