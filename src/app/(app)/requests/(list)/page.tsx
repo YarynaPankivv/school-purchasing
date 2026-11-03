@@ -31,7 +31,6 @@ import { RequestTable } from "../_components/request-table";
 const SAVED: Record<string, string> = {
   deleted: "Draft deleted.",
   submitted: "Purchase submitted", // AC-FRM-11 (текст із таблиці PM)
-  submitted_approved: "Purchase submitted and approved automatically (Auto-approval)",
 };
 
 // Порівняння за колонкою таблиці; текст — з урахуванням локалі, числа й дати — за значенням.

@@ -242,19 +242,19 @@ describe("подання", () => {
     expect(mock.calls.find((c) => c.table === "rpc:submit_purchase")?.payload).toEqual({ target_request: REQ });
   });
 
-  it("автосхвалення — функція повертає «approved», сторінка показує «одразу схвалено»", async () => {
+  it("AC-PUR-14: подання завжди веде на «Мої заявки» з «Purchase submitted» — автосхвалення в заявках не діє", async () => {
     mockSupabase(
       createSupabaseMock({
         profile: author,
         results: {
           "requests.select": { data: row("draft") },
           "requests.update": { data: [{ id: REQ }] },
-          "rpc:submit_purchase.rpc": { data: "approved" },
+          "rpc:submit_purchase.rpc": { data: "pending" },
         },
       }),
     );
     const { submitPurchase } = await purActions();
-    expect(await redirectedTo(() => submitPurchase(form(fields())))).toBe("/requests?saved=submitted_approved");
+    expect(await redirectedTo(() => submitPurchase(form(fields())))).toBe("/requests?saved=submitted");
   });
 
   it("AC-PUR-05: чернетка без відділу не подається — «pur:department_required» стає помилкою сторінки", async () => {
