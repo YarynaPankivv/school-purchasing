@@ -30,7 +30,7 @@ import {
   purchaseStatusLabel,
 } from "@/lib/pur/statuses";
 import { formatDate, formatDateTime } from "@/lib/pur/time";
-import { formatUsd, lineTotal, lineTotalCents, requestTotal } from "@/lib/pur/totals";
+import { formatUsd, lineTotal, lineTotalCents, lineTotalCentsFromInput, requestTotal } from "@/lib/pur/totals";
 
 describe("AC-PUR-04: вибір відділу", () => {
   const departments = [
@@ -61,6 +61,19 @@ describe("суми рядка й заявки", () => {
     ];
     expect(requestTotal(lines)).toBe(85);
     expect(requestTotal(lines)).toBe(lines.reduce((s, l) => s + lineTotal(l), 0));
+  });
+
+  it("AC-PUR-06: сума рядка під час набору — з тексту полів: 5 × 1 дає 5.00, порожнє чи неприпустиме дає 0", () => {
+    expect(lineTotalCentsFromInput("5", "1")).toBe(500);
+    expect(lineTotalCentsFromInput("3", "20.00")).toBe(6000);
+    expect(lineTotalCentsFromInput("3", "0.1")).toBe(30);
+    expect(lineTotalCentsFromInput("", "1")).toBe(0);
+    expect(lineTotalCentsFromInput("5", "")).toBe(0);
+    expect(lineTotalCentsFromInput("0", "1")).toBe(0);
+    expect(lineTotalCentsFromInput("2.5", "1")).toBe(0);
+    expect(lineTotalCentsFromInput("5", "-1")).toBe(0);
+    expect(lineTotalCentsFromInput("1e308", "1e308")).toBe(0);
+    expect(formatUsd(lineTotalCentsFromInput("5", "1") / 100)).toBe("$5.00");
   });
 
   it("порожній рядок чернетки дає 0, а копійки не накопичують похибку float", () => {
