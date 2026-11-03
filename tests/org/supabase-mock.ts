@@ -87,10 +87,15 @@ export function createSupabaseMock(options: {
         calls.push(call);
         const configured = results[`rpc:${name}.rpc`];
         // request_author_labels за замовчуванням віддає підписи відомих профілів (ім'я або email), як справжня функція.
+        // colleague_directory — активні відомі профілі: підпис і ознака admin, без ролі й email за наявності імені.
         const fallback =
           name === "request_author_labels"
             ? known.map((p) => ({ user_id: p.id, label: p.full_name?.trim() || p.email }))
-            : true;
+            : name === "colleague_directory"
+              ? known
+                  .filter((p) => p.is_active)
+                  .map((p) => ({ user_id: p.id, label: p.full_name?.trim() || p.email || "—", is_admin: p.role === "admin" }))
+              : true;
         const result = { data: configured?.data ?? (configured?.error ? null : fallback), error: configured?.error ?? null };
         return Promise.resolve(result).then(resolve, reject);
       },

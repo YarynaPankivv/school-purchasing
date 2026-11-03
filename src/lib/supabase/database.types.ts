@@ -356,6 +356,10 @@ export type Database = {
         };
         Returns: string;
       };
+      colleague_directory: {
+        Args: Record<PropertyKey, never>;
+        Returns: { user_id: string; label: string; is_admin: boolean }[];
+      };
       request_author_labels: {
         Args: Record<PropertyKey, never>;
         Returns: { user_id: string; label: string }[];
