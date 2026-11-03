@@ -18,7 +18,9 @@ export function lineTotalCentsFromInput(quantity: string, unitPrice: string): nu
   if (quantity.trim() === "" || unitPrice.trim() === "") return 0;
   if (!Number.isInteger(quantityValue) || quantityValue < 1) return 0;
   if (!Number.isFinite(priceValue) || priceValue < 0) return 0;
-  return lineTotalCents({ quantity: quantityValue, unit_price: priceValue });
+  const cents = lineTotalCents({ quantity: quantityValue, unit_price: priceValue });
+  // Надвелике число (1e308 × 1e308) дає Infinity: показуємо 0, як і для неприпустимого значення.
+  return Number.isFinite(cents) ? cents : 0;
 }
 
 // Сума рядка = кількість × ціна, округлення до центів (Припущення PM).

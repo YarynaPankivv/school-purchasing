@@ -17,8 +17,16 @@ export function LiveLineTotal({ lineId, initialCents }: { lineId: string; initia
       const unitPrice = form.elements.namedItem(`line_${lineId}_unit_price`) as HTMLInputElement | null;
       setCents(lineTotalCentsFromInput(quantity?.value ?? "", unitPrice?.value ?? ""));
     };
+    // Браузер міг відновити значення полів (назад, перезавантаження) без події input: беремо їх одразу.
+    recalculate();
+    // Подія reset надходить до того, як поля повернуть серверні значення, тож рахуємо після неї.
+    const recalculateAfterReset = () => setTimeout(recalculate, 0);
     form.addEventListener("input", recalculate);
-    return () => form.removeEventListener("input", recalculate);
+    form.addEventListener("reset", recalculateAfterReset);
+    return () => {
+      form.removeEventListener("input", recalculate);
+      form.removeEventListener("reset", recalculateAfterReset);
+    };
   }, [lineId]);
 
   return (

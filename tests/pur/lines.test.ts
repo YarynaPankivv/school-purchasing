@@ -72,6 +72,7 @@ describe("суми рядка й заявки", () => {
     expect(lineTotalCentsFromInput("0", "1")).toBe(0);
     expect(lineTotalCentsFromInput("2.5", "1")).toBe(0);
     expect(lineTotalCentsFromInput("5", "-1")).toBe(0);
+    expect(lineTotalCentsFromInput("1e308", "1e308")).toBe(0);
     expect(formatUsd(lineTotalCentsFromInput("5", "1") / 100)).toBe("$5.00");
   });
 
