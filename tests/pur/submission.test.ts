@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { PUR_ERROR_MESSAGES, mapPurDbError, purErrorMessage, purErrorText } from "@/lib/pur/errors";
 import { purchaseOnBehalfCandidates, resolveOnBehalf } from "@/lib/pur/on-behalf";
 import { checkSubmission, submitOutcome } from "@/lib/pur/submission";
-import { ADMIN, AUTHOR, COLLEAGUE, OFFICE, PRIMARY, makePurchase, person } from "./helpers";
+import { ADMIN, AUTHOR, COLLEAGUE, OFFICE, PRIMARY, person } from "./helpers";
 
 const completeLine = { position: 1, name: "Markers", purpose: "Class", quantity: 3, unit_price: 20 };
 const noOnBehalf = { flag: false, colleagueId: null };
@@ -115,32 +115,8 @@ describe("колеги «від імені»", () => {
 });
 
 describe("результат подання", () => {
-  const memberships = [
-    { department_id: OFFICE, user_id: AUTHOR, auto_approve: true },
-    { department_id: PRIMARY, user_id: AUTHOR, auto_approve: false },
-    { department_id: PRIMARY, user_id: COLLEAGUE, auto_approve: true },
-  ];
-
-  it("автосхвалення автора у відділі заявки — одразу «Схвалено», історія «Подано» і «Схвалено»", () => {
-    expect(submitOutcome({ author_id: AUTHOR, department_id: OFFICE }, memberships)).toEqual({
-      status: "approved",
-      history: ["submitted", "approved"],
-      lineStatus: "approved",
-    });
-  });
-
-  it("AC-PUR-37: подання без автосхвалення додає в історію один запис «Подано» (автора й час додає база)", () => {
-    const outcome = submitOutcome({ author_id: AUTHOR, department_id: PRIMARY }, memberships);
-    expect(outcome.history).toEqual(["submitted"]);
-  });
-
-  it("без автосхвалення (чужий відділ, чуже членство) — «Очікує схвалення» й запис «Подано»", () => {
-    const expected = { status: "pending", history: ["submitted"], lineStatus: "pending" };
-    expect(submitOutcome({ author_id: AUTHOR, department_id: PRIMARY }, memberships)).toEqual(expected);
-    expect(submitOutcome({ author_id: "user-nobody", department_id: OFFICE }, memberships)).toEqual(expected);
-    expect(submitOutcome({ author_id: AUTHOR, department_id: null }, memberships)).toEqual(expected);
-    // Автосхвалення колеги ніяк не діє на заявку автора.
-    expect(submitOutcome(makePurchase({ author_id: AUTHOR, department_id: PRIMARY }), memberships).status).toBe("pending");
+  it("AC-PUR-14, AC-PUR-37: подана заявка завжди «Очікує схвалення», в історії один запис «Подано» (автора й час додає база)", () => {
+    expect(submitOutcome()).toEqual({ status: "pending", history: ["submitted"], lineStatus: "pending" });
   });
 });
 

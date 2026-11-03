@@ -1,13 +1,11 @@
-// Перевірка перед поданням і результат подання (AC-PUR-05, 09, 12, 14, 16, 37, 53; design.md D5).
+// Перевірка перед поданням і результат подання (AC-PUR-05, 09, 12, 14, 37; design.md D5).
 // Останнє слово — за submit_purchase (pur:department_required, pur:lines_incomplete); позначку «від імені колеги»
 // без вибору колеги знає лише форма (у базі є тільки on_behalf_of_id), тож її перевіряє лише TS.
-import type { Membership } from "@/lib/org/departments";
-import { autoApproves } from "./decisions";
 import { PUR_ERROR_MESSAGES, type PurErrorCode } from "./errors";
 import { incompleteLines, incompleteLinesMessage, type IncompleteLine, type LineFields } from "./lines";
 import type { OnBehalfChoice } from "./on-behalf";
 import type { LineStatus, PurchaseStatus } from "./statuses";
-import type { HistoryAction, PurchaseRow } from "./types";
+import type { HistoryAction } from "./types";
 
 export type SubmissionIssue = { code: PurErrorCode; message: string };
 
@@ -37,19 +35,15 @@ export function checkSubmission(input: SubmissionInput): SubmissionCheck {
 }
 
 export type SubmitOutcome = {
-  status: Extract<PurchaseStatus, "pending" | "approved">;
-  // Записи історії в порядку додавання: «Подано» (AC-PUR-37) і, за автосхвалення, «Схвалено» автором (AC-PUR-16).
+  status: Extract<PurchaseStatus, "pending">;
+  // Записи історії в порядку додавання: лише «Подано» (AC-PUR-37).
   history: HistoryAction[];
-  // Статус рядків після подання: за автосхвалення — схвалені, інакше лишаються як були.
-  lineStatus: Extract<LineStatus, "pending" | "approved">;
+  // Статус рядків після подання.
+  lineStatus: Extract<LineStatus, "pending">;
 };
 
-// Що дає подання (D5): автосхвалення автора у відділі заявки → «Схвалено»; інакше «Очікує схвалення» (AC-PUR-14, 23).
-export function submitOutcome(
-  request: Pick<PurchaseRow, "author_id" | "department_id">,
-  memberships: readonly Membership[],
-): SubmitOutcome {
-  return autoApproves(request, memberships)
-    ? { status: "approved", history: ["submitted", "approved"], lineStatus: "approved" }
-    : { status: "pending", history: ["submitted"], lineStatus: "pending" };
+// Що дає подання (D5): подана заявка завжди «Очікує схвалення» (AC-PUR-14, 23). Автосхвалення в заявках не діє
+// (спрощений скоуп ДЗ7, requirements/product.md): налаштування лишається з WS6, але на подання не впливає.
+export function submitOutcome(): SubmitOutcome {
+  return { status: "pending", history: ["submitted"], lineStatus: "pending" };
 }
