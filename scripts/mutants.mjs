@@ -11,7 +11,9 @@
 //
 const PUR = "supabase/migrations/20261021140000_pur_drafts.sql";
 const ORG = "supabase/migrations/20261018182200_org_departments.sql";
+const SUBMIT = "supabase/migrations/20261103140000_submit_without_auto_approval.sql";
 const FRM_APR_DB = "tests/db/frm-apr.test.ts";
+const DEC_HIST_DB = "tests/db/dec-hist.test.ts";
 
 export const mutants = [
   // ── Ваші мутанти: по одному на правило в SQL за кожним із ваших 3 AC ──────────────────────────────────────────
@@ -57,6 +59,28 @@ export const mutants = [
     what: "requests: select дозволено гостю (anon)",
     find: "grant select, insert on table public.requests to authenticated;",
     replace: "grant select, insert on table public.requests to authenticated, anon;",
+  },
+  // ── Зріз 3 (WS9): рішення схвалювача й повторне подання. Усі тести — tests/db/dec-hist.test.ts ──────────────────
+  // AC-DEC-06: повернення на доопрацювання без причини не виконується.
+  {
+    id: "D1", kind: "sql", ac: "AC-DEC-06", file: PUR, tests: [DEC_HIST_DB],
+    what: "decide_purchase: причину перевіряємо лише для відхилення, повернення без причини дозволено",
+    find: "    -- AC-PUR-20, 51: причина обов'язкова.\n    if clean_reason is null then",
+    replace: "    -- AC-PUR-20, 51: причина обов'язкова.\n    if clean_reason is null and decision = 'reject' then",
+  },
+  // AC-DEC-01: відхилений рядок + схвалення = «Частково схвалено».
+  {
+    id: "D2", kind: "sql", ac: "AC-DEC-01", file: PUR, tests: [DEC_HIST_DB],
+    what: "decide_purchase: схвалення з відхиленим рядком дає «Схвалено», а не «Частково схвалено»",
+    find: "new_status := case when rejected_count = 0 then 'approved' else 'partially_approved' end;",
+    replace: "new_status := 'approved';",
+  },
+  // AC-DEC-07: подана знову повернена заявка очікує схвалення.
+  {
+    id: "D3", kind: "sql", ac: "AC-DEC-07", file: SUBMIT, tests: [DEC_HIST_DB],
+    what: "submit_purchase: повернена заявка після повторного подання лишається «Повернено на доопрацювання»",
+    find: "     set status = 'pending', editing = false, decision_reason = null",
+    replace: "     set status = case when req.status = 'returned' then req.status else 'pending' end, editing = false, decision_reason = null",
   },
 ];
 

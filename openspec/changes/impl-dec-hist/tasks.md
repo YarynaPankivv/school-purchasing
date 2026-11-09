@@ -6,17 +6,17 @@
 
 ## 1. Рішення схвалювача й повторне подання: тести бази (`task/dec-db-tests`)
 
-- [ ] 1.1 `tests/db/dec-hist.test.ts` (PGlite, `asUser`): `it("AC-DEC-01: …")` — відхилений рядок 2 з трьох і схвалення дають
+- [x] 1.1 `tests/db/dec-hist.test.ts` (PGlite, `asUser`): `it("AC-DEC-01: …")` — відхилений рядок 2 з трьох і схвалення дають
   `partially_approved`, рядок 2 `rejected`, рядки 1 і 3 `approved`; `it("AC-DEC-04: …")` — повернення з причиною дає
   `returned`; `it("AC-DEC-06: …")` — повернення без причини дає `pur:reason_required`, статус лишається `pending`;
   `it("AC-DEC-07: …")` — виправлена повернена заявка після `submit_purchase` — `pending`, відділ той самий; не-автор повторно
   не подає. Перевірка: `npm test`
-- [ ] 1.2 Сторінковий тест під ID PM у `tests/pur/pages.test.tsx`: автор бачить статуси рядків частково схваленої заявки
+- [x] 1.2 Сторінковий тест під ID PM у `tests/pur/pages.test.tsx`: автор бачить статуси рядків частково схваленої заявки
   (`AC-DEC-01`). Перевірка: `npm test`
-- [ ] 1.3 Мутанти D1, D2, D3 у `scripts/mutants.mjs` (return без причини дозволено; часткове схвалення дає `approved`;
+- [x] 1.3 Мутанти D1, D2, D3 у `scripts/mutants.mjs` (return без причини дозволено; часткове схвалення дає `approved`;
   `submit_purchase` для `returned` не міняє статус) — `npm run mutation:sql` → `KILLED`; таблиця «AC → що зламали → який тест упав»
   в описі PR. Перевірка: `npm run mutation:sql`
-- [ ] 1.4 Рядки AC-DEC-01, 04, 06, 07 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
+- [x] 1.4 Рядки AC-DEC-01, 04, 06, 07 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
 
 Done when: AC-DEC-01, AC-DEC-04, AC-DEC-06, AC-DEC-07
 

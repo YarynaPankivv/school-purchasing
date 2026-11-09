@@ -334,6 +334,23 @@ describe("сторінка закупівлі /requests/[id]", () => {
     expect(row3).not.toContain("Rejected");
   });
 
+  it("AC-DEC-01: автор частково схваленої заявки бачить статус «Partially approved», рядок 2 «Rejected», рядки 1 і 3 «Approved»", async () => {
+    const html = await renderDetail({
+      viewer: asAuthor,
+      request: requestRow("partially_approved"),
+      members: authorMember,
+      lines: partiallyApprovedLines,
+    });
+    expect(html).toContain("Partially approved");
+    const [row1, row2, row3] = lineRows(html);
+    expect(row1).toContain("Approved");
+    expect(row1).not.toContain("Rejected");
+    expect(row2).toContain("Rejected");
+    expect(row2).not.toContain("Approved");
+    expect(row3).toContain("Approved");
+    expect(row3).not.toContain("Rejected");
+  });
+
   it("AC-PUR-42: далі до відділу закупівель ідуть лише схвалені рядки — у сумі заявки відхилений рядок не враховано", async () => {
     const html = await renderDetail({
       viewer: asAuthor,
