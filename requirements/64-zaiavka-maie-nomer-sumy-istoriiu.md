@@ -1,4 +1,4 @@
-> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/64 · оновлено 2026-11-06T10:34:18Z
+> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/64 · оновлено 2026-11-09T13:24:19Z
 
 # Вимога: заявка має номер, суми рядків і історію рішень
 
@@ -46,6 +46,7 @@
 - Номер заявки не змінюється при повторному поданні: це та сама заявка — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/68.
 - Кожне подання, зокрема повторне, і часткове схвалення мають окремий запис в історії — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/67.
 - Номери глобальні й ідуть підряд; наявним заявкам номери видано за датою подання (найстаріша — `PUR-1`). Правило «перша — `PUR-1`» перевіряється автотестом на порожній базі; на проді в UAT і при прийманні — дві заявки, подані одна за одною, мають номери `PUR-n` і `PUR-(n+1)` — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/73.
+- Номер може бути виданий уже при створенні чернетки (чернетка — додаткова функція), тому між номерами можуть бути прогалини від неподаних чи видалених чернеток; номер не повторюється. Для приймання AC-HIST-01 беруть дві заявки, створені й подані одна за одною — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/76.
 - Запис «Подано» має вигляд «Submitted · PM Demo Requester · 05.11.2026, 14:32»: формат дати як у списках зрізу 2, час 24-годинний, без позначки часового поясу (за `America/New_York`); якщо імені немає — показується email, як в AC-APR-09 — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/74.
 
 ### Відкриті питання
@@ -58,3 +59,4 @@
 - 2026-11-02 — додано AC-HIST-12 (запис «Частково схвалено»), AC-HIST-13 (повторне подання — ще один запис «Подано») і AC-HIST-14 (номер після повторного подання); додано припущення про суму для «Частково схвалено» — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/65, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/67, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/68
 - 2026-11-05 — зріз скорочено за часом: лишено AC-HIST-01, AC-HIST-02, AC-HIST-06, AC-HIST-10; прибрано AC-HIST-03, AC-HIST-04, AC-HIST-05, AC-HIST-07, AC-HIST-08, AC-HIST-09, AC-HIST-11, AC-HIST-12, AC-HIST-13, AC-HIST-14; ID не використовуються повторно — власне рішення PM
 - 2026-11-06 — уточнено припущення до AC-HIST-01 (нумерація на проді) і AC-HIST-06 (формат запису «Подано»); тексти AC не змінено — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/73, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/74
+- 2026-11-09 — додано припущення: номер може видаватися при створенні чернетки, прогалини між номерами допустимі; тексти AC не змінено — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/76
