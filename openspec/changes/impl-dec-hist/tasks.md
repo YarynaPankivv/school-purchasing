@@ -26,7 +26,8 @@ Done when: AC-DEC-01, AC-DEC-04, AC-DEC-06, AC-DEC-07
   послідовно, мають номери 1 і 2 (у «Мої заявки» — `PUR-1`, `PUR-2`). Перевірка: `npm test`
 - [ ] 2.2 Сума заявки — сума всіх рядків, зокрема відхилених; «Approved total» — лише схвалених; оновити тест
   `AC-PUR-42`. `tests/pur/lines.test.ts` і `tests/pur/pages.test.tsx`: `it("AC-HIST-02: …")` — рядки 60.00 і 31.00, сума 91.00.
-  Перевірка: `npm test`
+  У сторінковому тесті `AC-PUR-42` — частково схвалена заявка: схвалені рядки 60.00 і 7.00, відхилений 10.00; `Request total`
+  77.00, `Approved total` 67.00, кожна сума прив'язана до свого підпису. Перевірка: `npm test`
 - [ ] 2.3 Рядки AC-HIST-01, 02 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
 
 Done when: AC-HIST-01, AC-HIST-02
@@ -38,8 +39,9 @@ Done when: AC-HIST-01, AC-HIST-02
   під новий формат. Перевірка: `npm test`
 - [ ] 3.2 `it("AC-HIST-06: …")` у `tests/pur/pages.test.tsx` (запис з іменем автора, датою й часом; email, якщо імені немає) і
   у `tests/db/dec-hist.test.ts` (рядок історії `submitted` з `actor_name`). Перевірка: `npm test`
-- [ ] 3.3 `it("AC-HIST-10: …")` у `tests/db/dec-hist.test.ts`: схвалювач іншого відділу читає нуль рядків `request_history` і не
-  відкриває заявку, статус не змінився; автор-схвалювач іншого відділу бачить власну історію; сторінковий тест — `Forbidden`
+- [ ] 3.3 `it("AC-HIST-10: …")` у `tests/db/dec-hist.test.ts`: заявка має історію рішень (схвалювач її відділу повертає
+  заявку з причиною, у `request_history` є запис рішення з його іменем); схвалювач іншого відділу читає нуль рядків
+  `request_history` і не відкриває заявку, статус не змінився; автор-схвалювач іншого відділу бачить власну історію; сторінковий тест — `Forbidden`
   без історії. Мутант H1 у `scripts/mutants.mjs` (`request_history_select` без `can_view_request`) → `KILLED`. Перевірка:
   `npm test`, `npm run mutation:sql`
 - [ ] 3.4 Рядки AC-HIST-06, 10 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
@@ -59,17 +61,24 @@ Done when: AC-LANG-09
 
 - [ ] 5.1 `tests/e2e/slice3.spec.ts`: специфікація на кожен з 9 AC — назва з ID, анотація `ac`, тег `@uat`,
   `given`/`when`/`thenStep`, «Тоді» дослівно з `requirements/63`, `64`, `49`; AC, що пишуть дані (DEC-01, 04, 07, HIST-01),
-  — з `uat-<запуск>@example.test` і прибиранням (`tests/e2e/support/admin.ts`). Перевірка: `npm run test:e2e` на локальному стеку
-- [ ] 5.2 Прогін `npm run uat -- --url <прод>` після `db-deploy`, рецензент «наосліп» і звіт `docs/qa/uat/<дата>/` (`report.md`,
+  — з `uat-<запуск>@example.test` і прибиранням (`tests/e2e/support/admin.ts`); для AC-HIST-01 — перевірка ізоляції номерів
+  (немає стороннього номера між двома заявками, інакше повтор або «Не перевірено»); для AC-HIST-10 — передумова з записом
+  рішення. Перевірка: `npm run test:e2e` на локальному стеку
+- [ ] 5.2 `scripts/uat-cleanup.mjs` і `npm run uat:cleanup`: окреме очищення за маскою `uat-*@example.test` (користувачі й їхні
+  заявки) на випадок перерваного прогону, з перевіркою, що залишків немає; запуск до й після прогону. Перевірка:
+  `npm run uat:cleanup` двічі (другий раз — «нічого прибирати»)
+- [ ] 5.3 Прогін `npm run uat -- --url <прод>` після `db-deploy`, рецензент «наосліп» і звіт `docs/qa/uat/<дата>/` (`report.md`,
   `manifest.json`, `frames/`); відео — вкладенням в описі PR. Перевірка: `npm run uat:review`
-- [ ] 5.3 Негативний контроль: `npm run uat:nc` → FAIL, а не PASS. Перевірка: `npm run uat:nc`
+- [ ] 5.4 Негативний контроль: `npm run uat:nc` → FAIL, а не PASS. Перевірка: `npm run uat:nc`
 
 Done when: AC-DEC-01, AC-DEC-04, AC-DEC-06, AC-DEC-07, AC-HIST-01, AC-HIST-02, AC-HIST-06, AC-HIST-10, AC-LANG-09
 
 ## 6. Proof pack, ретро, прод і archive (`task/proof-pack-ws9`)
 
 - [ ] 6.1 `docs/qa/proof-pack.md` за шаблоном WS9: рядок на кожен з 9 AC (рівень і назва тесту, доказ, що тест здатен упасти,
-  специфікація, рядок звіту UAT і кадр, вердикт, PR і SHA злиття) і розділ «Не перевірено» з причинами. Перевірка: рядок на кожен AC
+  специфікація, рядок звіту UAT і кадр, вердикт, PR і SHA злиття) і розділ «Не перевірено» з причинами; `deployedSha` зі
+  звіту UAT порівняно з SHA в `/api/health` на момент фіналізації (якщо `main` змінився й це могло вплинути на AC — UAT повторено).
+  Перевірка: рядок на кожен AC
 - [ ] 6.2 `docs/qa/retro-ws9.md`: до 10 рядків «що б ви взяли з фабрики у свій звичайний процес» — «уже є», «візьмемо: <конкретний
   крок і де>», «не потрібно, бо …». Перевірка: у кожного «візьмемо» є файл чи налаштування
 - [ ] 6.3 Прод: усі PR злито, `db-deploy` зелений, `/api/health` показує SHA `main`; `accounts.zip` актуальний, у чаті команди —
