@@ -67,9 +67,9 @@ Done when: AC-LANG-09
 - [x] 5.2 `scripts/uat-cleanup.mjs` і `npm run uat:cleanup`: окреме очищення за маскою `uat-*@example.test` (користувачі й їхні
   заявки) на випадок перерваного прогону, з перевіркою, що залишків немає; запуск до й після прогону. Перевірка:
   `npm run uat:cleanup` двічі (другий раз — «нічого прибирати»)
-- [ ] 5.3 Прогін `npm run uat -- --url <прод>` після `db-deploy`, рецензент «наосліп» і звіт `docs/qa/uat/<дата>/` (`report.md`,
+- [x] 5.3 Прогін `npm run uat -- --url <прод>` після `db-deploy`, рецензент «наосліп» і звіт `docs/qa/uat/<дата>/` (`report.md`,
   `manifest.json`, `frames/`); відео — вкладенням в описі PR. Перевірка: `npm run uat:review`
-- [ ] 5.4 Негативний контроль: `npm run uat:nc` → FAIL, а не PASS. Перевірка: `npm run uat:nc`
+- [x] 5.4 Негативний контроль: `npm run uat:nc` → FAIL, а не PASS. Перевірка: `npm run uat:nc`
 
 Done when: AC-DEC-01, AC-DEC-04, AC-DEC-06, AC-DEC-07, AC-HIST-01, AC-HIST-02, AC-HIST-06, AC-HIST-10, AC-LANG-09
 
