@@ -112,6 +112,14 @@ describe("інтерфейс англійською (ui-language)", () => {
     expect(purchaseStatusLabel("rejected")).toBe("Rejected");
   });
 
+  it("AC-LANG-09: «Partially approved» і «Returned for revision» — англійський текст статусу, не лише колір", () => {
+    expect(purchaseStatusLabel("partially_approved")).toBe("Partially approved");
+    expect(purchaseStatusLabel("returned")).toBe("Returned for revision");
+    expect(PURCHASE_STATUS_LABELS.partially_approved).toBe("Partially approved");
+    expect(PURCHASE_STATUS_LABELS.returned).toBe("Returned for revision");
+    expect(CYRILLIC.test(PURCHASE_STATUS_LABELS.partially_approved + PURCHASE_STATUS_LABELS.returned)).toBe(false);
+  });
+
   it("AC-LANG-08: ідентифікатори ролей без змін, підпис ролі англійською", () => {
     expect(Object.keys(ROLE_LABELS).sort()).toEqual(["admin", "approver", "requester"]);
     for (const role of Object.keys(ROLE_LABELS)) expect(isAppRole(role)).toBe(true);

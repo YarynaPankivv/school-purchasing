@@ -616,6 +616,38 @@ describe("тексти інтерфейсу на сторінках (табли�
     expect(pending).toContain("Awaiting approval");
   });
 
+  it("AC-LANG-09: статуси «Partially approved» і «Returned for revision» підписано текстом у списку й на сторінці заявки", async () => {
+    const mock = createSupabaseMock({
+      profile: asAuthor,
+      profiles: [],
+      results: {
+        "requests.select": { data: [requestRow("partially_approved"), requestRow("returned", { id: REQ_2, number: 13 })] },
+        "request_lines.select": { data: lines },
+        "departments.select": { data: [{ id: DEP, name: "Primary School" }] },
+        "department_approvers.select": { data: [] },
+      },
+    });
+    createClient.mockResolvedValue(mock.client);
+    const { RequestsPageContent } = await import("@/app/(app)/requests/(list)/page");
+    const list = renderToStaticMarkup(await RequestsPageContent({ searchParams: Promise.resolve({}) } as never));
+    // Підпис — у рядку своєї заявки (не переплутано між PUR-12 і PUR-13).
+    const myRequests = tableOf(list, "my-requests");
+    const partialRow = rowOf(myRequests, "PUR-12");
+    const returnedRow = rowOf(myRequests, "PUR-13");
+    expect(partialRow).toContain("Partially approved");
+    expect(partialRow).not.toContain("Returned for revision");
+    expect(returnedRow).toContain("Returned for revision");
+    expect(returnedRow).not.toContain("Partially approved");
+
+    // На сторінці заявки текст статусу лежить у бейджі статусу (після декоративної крапки), а не лише в кольорі.
+    const statusBadge = (html: string) =>
+      html.slice(html.indexOf('data-testid="request-status"')).match(/^[^>]*>(?:<span[^>]*><\/span>)?([^<]*)</)?.[1];
+    const partial = await renderDetail({ viewer: asAuthor, request: requestRow("partially_approved"), members: authorMember });
+    expect(statusBadge(partial)).toBe("Partially approved");
+    const returned = await renderDetail({ viewer: asAuthor, request: requestRow("returned"), members: authorMember });
+    expect(statusBadge(returned)).toBe("Returned for revision");
+  });
+
   it("AC-LANG-03: не-адміністратор на сторінці відділів бачить «Not enough permissions» без даних", async () => {
     const mock = createSupabaseMock({
       profile: makeProfile({ id: VIEWER, role: "requester" }),

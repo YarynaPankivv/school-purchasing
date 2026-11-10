@@ -50,10 +50,10 @@ Done when: AC-HIST-06, AC-HIST-10
 
 ## 4. Підписи нових статусів (`task/lang-09-statuses`)
 
-- [ ] 4.1 `it("AC-LANG-09: …")` у `tests/pur/pages.test.tsx` і `tests/ui/interface-language.test.ts`: статуси «Partially approved» і
+- [x] 4.1 `it("AC-LANG-09: …")` у `tests/pur/pages.test.tsx` і `tests/ui/interface-language.test.ts`: статуси «Partially approved» і
   «Returned for revision» підписано текстом у списку й на сторінці заявки, не лише кольором; «в історії» не перевіряємо
   (ValiaBihun/2026-quitcode-dream-team#75). Перевірка: `npm test`
-- [ ] 4.2 Рядок AC-LANG-09 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
+- [x] 4.2 Рядок AC-LANG-09 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
 
 Done when: AC-LANG-09
 
