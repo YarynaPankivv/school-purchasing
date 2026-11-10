@@ -29,6 +29,7 @@
     "test:e2e": "playwright test",
     "uat": "node scripts/uat/run.mjs",
     "uat:nc": "node scripts/uat/run.mjs --negative-controls",
+    "uat:cleanup": "node --env-file=.env.local scripts/uat-cleanup.mjs",
     "uat:review": "node scripts/uat/review.mjs && node scripts/uat/report.mjs",
     "accounts:zip": "node scripts/zip-accounts.mjs"
   },
