@@ -102,6 +102,13 @@ export const mutants = [
     find: " || chr(11) || chr(160)",
     replace: " || E'\\v' || chr(160)",
   },
+  // AC-HIST-10: історію чужого відділу не видно — політика читання історії спирається на can_view_request.
+  {
+    id: "H1", kind: "sql", ac: "AC-HIST-10", file: PUR, tests: [DEC_HIST_DB],
+    what: "request_history_select: історію бачить будь-який активний користувач, а не лише той, хто бачить заявку",
+    find: "create policy request_history_select\n  on public.request_history\n  for select\n  to authenticated\n  using (\n    (select private.is_active_user())\n    and private.can_view_request(request_id)",
+    replace: "create policy request_history_select\n  on public.request_history\n  for select\n  to authenticated\n  using (\n    (select private.is_active_user())\n    and true",
+  },
 ];
 
 // Приклади з демо (інша схема — у вашому репо цих файлів немає, тож не розкоментовуйте як є):

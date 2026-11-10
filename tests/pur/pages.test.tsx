@@ -4,7 +4,7 @@
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { formatDateTime } from "@/lib/pur/time";
+import { formatHistoryTime } from "@/lib/pur/time";
 import { createSupabaseMock, makeProfile, type Call } from "../org/supabase-mock";
 
 vi.mock("next/navigation", async () => {
@@ -143,6 +143,8 @@ async function renderDetail({
 
 // Запис історії й рядки таблиці — із відрендереної сторінки (data-testid="history", "line-row").
 const historyOf = (html: string) => html.slice(html.indexOf('data-testid="history"'));
+// Текст історії без розмітки: «Submitted · Anna Author · 05.11.2026, 14:32» одним рядком, як його читає людина.
+const historyText = (html: string) => historyOf(html).replace(/<[^>]*>/g, "");
 const lineRows = (html: string) =>
   html
     .split('data-testid="line-row"')
@@ -284,6 +286,16 @@ describe("сторінка закупівлі /requests/[id]", () => {
     expect(html).not.toContain('data-testid="purchase-form"');
   });
 
+  it("AC-HIST-10: схвалювач іншого відділу відкриває заявку за прямим посиланням — «Not enough permissions», історії й даних немає", async () => {
+    const otherDepartment = [{ department_id: "dep-office", user_id: VIEWER }];
+    // RLS не віддає заявку чужого відділу, а з нею й її історію (request_history_select через can_view_request).
+    const html = await renderDetail({ viewer: asApprover, request: null, approvers: otherDepartment, history: defaultHistory });
+    expect(html).toContain("Not enough permissions");
+    expect(html).not.toContain('data-testid="history"');
+    expect(html).not.toContain("Anna Author");
+    expect(html).not.toContain("Autumn supplies");
+  });
+
   it("AC-PUR-03: чужу чернетку RLS не віддає — сторінка дає «Not enough permissions» без даних", async () => {
     const html = await renderDetail({ viewer: asApprover, request: null, approvers: approverOf });
     expect(html).toContain("Not enough permissions");
@@ -308,10 +320,22 @@ describe("сторінка закупівлі /requests/[id]", () => {
 
   it("AC-PUR-37: в історії поданої заявки є запис «Submitted» з автором і часом", async () => {
     const html = await renderDetail({ viewer: asApprover, request: requestRow("pending"), approvers: approverOf });
-    const history = historyOf(html);
+    const history = historyText(html);
     expect(history).toContain("Submitted");
     expect(history).toContain("Anna Author");
-    expect(history).toContain(formatDateTime("2026-10-21T12:10:00Z"));
+    expect(history).toContain(`Submitted · Anna Author · ${formatHistoryTime("2026-10-21T12:10:00Z")}`);
+  });
+
+  it("AC-HIST-06: в історії є запис «Submitted» з іменем автора, датою й часом America/New_York — «Submitted · Anna Author · 05.11.2026, 14:32»", async () => {
+    const history = [{ ...defaultHistory[0], created_at: "2026-11-05T19:32:00Z" }];
+    const html = await renderDetail({ viewer: asAuthor, request: requestRow("pending"), members: authorMember, history });
+    expect(historyText(html)).toContain("Submitted · Anna Author · 05.11.2026, 14:32");
+  });
+
+  it("AC-HIST-06: без імені в записі історії замість нього email автора", async () => {
+    const history = [{ ...defaultHistory[0], actor_name: "anna@example.test", created_at: "2026-11-05T19:32:00Z" }];
+    const html = await renderDetail({ viewer: asAuthor, request: requestRow("pending"), members: authorMember, history });
+    expect(historyText(html)).toContain("Submitted · anna@example.test · 05.11.2026, 14:32");
   });
 
   it("AC-PUR-39: після схвалення в історії є запис «Approved» з ім'ям схвалювача й часом", async () => {
@@ -321,10 +345,10 @@ describe("сторінка закупівлі /requests/[id]", () => {
       { id: "h2", request_id: REQ, actor_id: VIEWER, actor_name: "Ivan Approver", action: "approved", reason: null, created_at: approvedAt },
     ];
     const html = await renderDetail({ viewer: asAuthor, request: requestRow("approved"), members: authorMember, history });
-    const entries = historyOf(html);
+    const entries = historyText(html);
     expect(entries).toContain("Approved");
     expect(entries).toContain("Ivan Approver");
-    expect(entries).toContain(formatDateTime(approvedAt));
+    expect(entries).toContain(`Approved · Ivan Approver · ${formatHistoryTime(approvedAt)}`);
   });
 
   it("AC-PUR-41: автор бачить, що відхилено рядок 2: у ньому «Rejected», в рядках 1 і 3 — «Approved»", async () => {

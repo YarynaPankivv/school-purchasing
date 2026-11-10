@@ -209,4 +209,53 @@ describe("AC-HIST: номер заявки (база)", () => {
     // Номери прив'язані до заявок у порядку подання: перша — PUR-1, друга — PUR-2.
     expect(mine.map((row) => row.id)).toEqual([firstId, secondId]);
   }, 120_000);
+
+  it("AC-HIST-06: подана закупівля має в історії запис «submitted» з іменем автора, датою й часом", async () => {
+    const anna = await t.addUser("anna@example.test", { fullName: "Anna Author" });
+    const nameless = await t.addUser("nameless@example.test", { fullName: null });
+    await t.addMember("Primary School", anna);
+    await t.addMember("Primary School", nameless);
+
+    const withName = await submitted(anna, ["Paper A4"]);
+    const withoutName = await submitted(nameless, ["Paper A4"]);
+
+    // Автор відкриває історію від свого імені (RLS діє): запис один, ім'я — з профілю, а без імені — email.
+    const own = await t.asUser<{ action: string; actor_name: string; created_at: Date | string }>(
+      anna,
+      "select action, actor_name, created_at from public.request_history where request_id = $1",
+      [withName],
+    );
+    expect(own).toHaveLength(1);
+    expect(own[0]).toMatchObject({ action: "submitted", actor_name: "Anna Author" });
+    // Час запису — момент подання (останні хвилини), а не порожнє значення: сторінка показує його за America/New_York.
+    expect(Math.abs(Date.now() - new Date(own[0].created_at).getTime())).toBeLessThan(5 * 60_000);
+    expect((await historyOf(withoutName))[0]).toMatchObject({ action: "submitted", actor_name: "nameless@example.test" });
+  });
+
+  it("AC-HIST-10: історію заявки чужого відділу схвалювач, який не автор і не схвалює її відділ, не бачить; автор-схвалювач бачить власну", async () => {
+    const peter = await t.addUser("peter@example.test");
+    await t.addMember("Office", peter, { approver: true });
+
+    // Заявка Primary School з історією рішень: схвалювач її відділу повертає її з причиною.
+    const id = await submitted(andrii, ["Paper A4"]);
+    await t.asUser(maria, "select public.decide_purchase($1, 'return', 'Уточніть кількість')", [id]);
+    expect((await historyOf(id)).map((h) => h.action).sort()).toEqual(["returned", "submitted"]);
+    expect((await historyOf(id)).find((h) => h.action === "returned")).toMatchObject({ reason: "Уточніть кількість", actor_name: expect.any(String) });
+    const statusBefore = (await requestOf(id)).status;
+
+    // Петро (схвалювач лише Office) читає нуль рядків історії й не відкриває заявку за прямим посиланням.
+    expect(await t.asUser(peter, "select id from public.request_history where request_id = $1", [id])).toEqual([]);
+    expect(await t.asUser(peter, "select id from public.requests where id = $1", [id])).toEqual([]);
+    // Рішення чужого відділу теж не виконується, статус не змінився.
+    await expect(t.asUser(peter, "select public.decide_purchase($1, 'approve')", [id])).rejects.toThrow("pur:forbidden");
+    expect((await requestOf(id)).status).toBe(statusBefore);
+
+    // Автор-схвалювач іншого відділу бачить історію власної заявки (але не чужої).
+    const own = await createDraft(peter, "Office");
+    await fillLines(peter, own, ["Chalk"]);
+    await t.asUser(peter, "select public.submit_purchase($1)", [own]);
+    const ownHistory = await t.asUser<{ action: string }>(peter, "select action from public.request_history where request_id = $1", [own]);
+    expect(ownHistory.map((h) => h.action)).toEqual(["submitted"]);
+    expect(await t.asUser(peter, "select id from public.request_history where request_id = $1", [id])).toEqual([]);
+  });
 });

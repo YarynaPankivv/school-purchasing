@@ -33,7 +33,7 @@ import { purchaseNumberLabel } from "@/lib/pur/numbers";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
 import { PURCHASE_STATUS_LABELS, cancelOutcome } from "@/lib/pur/statuses";
-import { formatDate, formatDateTime } from "@/lib/pur/time";
+import { formatDate, formatDateTime, formatHistoryTime } from "@/lib/pur/time";
 import { formatUsd, lineTotal, lineTotalCents, requestTotal } from "@/lib/pur/totals";
 import { LiveLineTotal } from "./live-line-total";
 import type { Actor, LineRow } from "@/lib/pur/types";
@@ -572,13 +572,13 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
         ) : (
           <ul className="flex flex-col divide-y divide-border" data-testid="history">
             {(historyRes.data ?? []).map((h) => (
-              <li key={h.id} className="flex flex-wrap items-baseline justify-between gap-2 py-3 text-sm first:pt-0 last:pb-0">
+              <li key={h.id} className="py-3 text-sm first:pt-0 last:pb-0">
                 <span className="text-foreground">
                   <span className="font-medium">{HISTORY_LABELS[h.action] ?? h.action}</span>
-                  <span className="text-muted-foreground"> · {h.actor_name ?? names.get(h.actor_id) ?? "—"}</span>
+                  {/* «Submitted · <ім'я або email> · 05.11.2026, 14:32» (AC-HIST-06): ім'я з actor_name, а без нього — email з нього ж. */}
+                  <span className="text-muted-foreground">{` · ${h.actor_name ?? names.get(h.actor_id) ?? "—"} · ${formatHistoryTime(h.created_at)}`}</span>
                   {h.reason ? <span className="block text-muted-foreground">Reason: {h.reason}</span> : null}
                 </span>
-                <span className="text-xs text-muted-foreground">{formatDateTime(h.created_at)}</span>
               </li>
             ))}
           </ul>

@@ -12,6 +12,18 @@ const dateTime = new Intl.DateTimeFormat("en-US", {
   timeZoneName: "short",
 });
 
+// Запис історії за формулою PM: «05.11.2026, 14:32» — ДД.ММ.РРРР, 24-годинний час, без позначки поясу (AC-HIST-06;
+// ValiaBihun/2026-quitcode-dream-team#74). Пояс — America/New_York, як у решти застосунку.
+const historyParts = new Intl.DateTimeFormat("en-US", {
+  timeZone: APP_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
 // День без часу для переліків («Oct 21, 2026»): момент у тому самому часовому поясі, що й повний запис.
 const day = new Intl.DateTimeFormat("en-US", {
   timeZone: APP_TIME_ZONE,
@@ -35,6 +47,15 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   if (value === null || value === undefined) return "—";
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? "—" : dateTime.format(date);
+}
+
+// «21.10.2026, 15:45» для запису історії.
+export function formatHistoryTime(value: string | Date | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const part = (type: Intl.DateTimeFormatPartTypes) => historyParts.formatToParts(date).find((p) => p.type === type)?.value ?? "";
+  return `${part("day")}.${part("month")}.${part("year")}, ${part("hour")}:${part("minute")}`;
 }
 
 // «Oct 21, 2026» для моменту в переліку: рядок списку не потребує хвилин, повний запис — у підказці.
