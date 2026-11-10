@@ -204,7 +204,7 @@ SQL-мутації (`npm run mutation:sql -- --markdown`, PGlite, 14 мутан�
 
 ## UAT на проді
 
-- Звіт: [`docs/qa/uat/2026-11-10/report.md`](https://github.com/YarynaPankivv/school-purchasing/blob/main/docs/qa/uat/2026-11-10/report.md) (прод `/api/health`: коміт `d45d876`), PR [#75](https://github.com/YarynaPankivv/school-purchasing/pull/75).
+- Звіт: [`docs/qa/uat/2026-11-10/report.md`](https://github.com/YarynaPankivv/school-purchasing/blob/main/docs/qa/uat/2026-11-10/report.md) (прод `/api/health`: коміт `d45d876`), PR [#75](https://github.com/YarynaPankivv/school-purchasing/pull/75) `004199f`.
 - Прогін: 16 з 16 тестів, 12 AC у звіті — **PASS 12, FAIL 0, NEEDS-HUMAN 0** (9 AC зрізу 3 і AC-FRM-09, AC-FRM-14, AC-APR-03 зі зрізу 2); правило R6.
 - Рецензент `claude-haiku-5-5`; на AC-APR-03, AC-DEC-01, AC-DEC-04, AC-DEC-06, AC-DEC-07, AC-FRM-14, AC-HIST-10 суперечка → `claude-sonnet-5-5`, у всіх Sonnet — PASS. Разом $0,2409 за цінами API.
 - Перший прогін (до #74) давав NEEDS-HUMAN на AC-DEC-01 і AC-HIST-06: кадр «Тоді» був обрізаний висотою екрана 800 px, а не вадою продукту. Виправлення — вищий екран у цих двох кроках ([#74](https://github.com/YarynaPankivv/school-purchasing/pull/74) `d45d876`), повторний прогін — PASS.
