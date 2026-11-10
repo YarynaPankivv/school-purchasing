@@ -63,6 +63,14 @@ describe("суми рядка й заявки", () => {
     expect(requestTotal(lines)).toBe(lines.reduce((s, l) => s + lineTotal(l), 0));
   });
 
+  it("AC-HIST-02: рядки 3 × 20.00 і 2 × 15.50 дають суми 60.00 і 31.00, сума заявки — 91.00", () => {
+    const first = { quantity: 3, unit_price: 20 };
+    const second = { quantity: 2, unit_price: 15.5 };
+    expect(formatUsd(lineTotal(first))).toBe("$60.00");
+    expect(formatUsd(lineTotal(second))).toBe("$31.00");
+    expect(formatUsd(requestTotal([first, second]))).toBe("$91.00");
+  });
+
   it("AC-PUR-06: сума рядка під час набору — з тексту полів: 5 × 1 дає 5.00, порожнє чи неприпустиме дає 0", () => {
     expect(lineTotalCentsFromInput("5", "1")).toBe(500);
     expect(lineTotalCentsFromInput("3", "20.00")).toBe(6000);

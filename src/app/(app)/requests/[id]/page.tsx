@@ -133,7 +133,11 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   const editFields = canEditFields(request, actor);
   const editLines = canEditLines(request, actor);
   const editable = editFields || editLines;
-  const total = requestTotal(forwardedLines(lines));
+  // Сума заявки — усіх рядків, зокрема відхилених (AC-HIST-02, припущення PM); суму лише схвалених, що йдуть далі
+  // (AC-PUR-42), показуємо окремо, коли є відхилені рядки.
+  const total = requestTotal(lines);
+  const approvedTotal = requestTotal(forwardedLines(lines));
+  const hasRejectedLines = lines.some((l) => l.status === "rejected");
   const decide = canDecide(request, actor, approvers.filter((a) => a.department_id === request.department_id));
   const blocked = decisionBlockReason(request, actor, approvers.filter((a) => a.department_id === request.department_id));
   const isAuthor = request.author_id === user.id;
@@ -229,7 +233,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
       <SummaryStrip
         label="Request summary"
         items={[
-          { label: "Total", value: formatUsd(total), testId: "request-total" },
+          { label: "Request total", value: formatUsd(total), testId: "request-total" },
+          ...(hasRejectedLines ? [{ label: "Approved total", value: formatUsd(approvedTotal), testId: "approved-total" }] : []),
           { label: "Status", value: <PurchaseStatusBadge status={request.status} /> },
           { label: "Delivery date", value: formatDate(request.delivery_date) },
         ]}

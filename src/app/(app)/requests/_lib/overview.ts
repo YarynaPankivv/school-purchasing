@@ -3,7 +3,7 @@
 import { loadPeople } from "@/lib/org/people";
 import type { CurrentUser } from "@/lib/auth/session";
 import { personLabel, type Approver } from "@/lib/org/departments";
-import { awaitingDecision, decisionQueue, forwardedLines } from "@/lib/pur/decisions";
+import { awaitingDecision, decisionQueue } from "@/lib/pur/decisions";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
 import { isParticipant } from "@/lib/pur/visibility";
@@ -59,8 +59,8 @@ export async function loadOverview(supabase: Supabase, user: CurrentUser): Promi
 
   const item = (request: PurchaseRow): RequestListItem => ({
     request,
-    // Відхилені рядки в суму не входять (AC-PUR-42): далі йдуть лише схвалені.
-    total: requestTotal(forwardedLines(linesByRequest.get(request.id) ?? [])),
+    // Сума заявки — усіх рядків, зокрема відхилених (AC-HIST-02): так само, як «Request total» на сторінці заявки.
+    total: requestTotal(linesByRequest.get(request.id) ?? []),
     // Відділ є, але автор його не бачить (RLS віддає відділи лише заявникам) — «—», а не «ще без відділу».
     departmentName: request.department_id ? (departmentNames.get(request.department_id) ?? "—") : null,
     authorName: names.get(request.author_id) ?? "—",

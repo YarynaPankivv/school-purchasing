@@ -3,6 +3,7 @@
 // тому доводимо їх тут, а не моком rpc: кожен відмовний AC перевіряє і відмову, і те, що дані не змінилися.
 // Тест падає, якщо зламати відповідне правило в міграції (мутанти D1–D3 у scripts/mutants.mjs, npm run mutation:sql).
 import { beforeAll, describe, expect, it } from "vitest";
+import { formatPurchaseNumber } from "@/lib/pur/numbers";
 import { createPurchasingDb, type PurchasingDb } from "./supabase-pglite";
 
 let t: PurchasingDb;
@@ -172,4 +173,40 @@ describe("AC-DEC: рішення схвалювача й повторне под
     expect(lines[0].quantity).toBe(5);
     expect(lines.map((l) => l.status)).toEqual(["pending", "pending"]);
   });
+});
+
+describe("AC-HIST: номер заявки (база)", () => {
+  it("AC-HIST-01: на порожній базі перша й друга закупівлі, створені й подані послідовно, мають номери PUR-1 і PUR-2", async () => {
+    // Окрема порожня база: у спільній `t` номери вже витрачено іншими тестами.
+    const fresh = await createPurchasingDb();
+    const worker = await fresh.addUser("worker1@example.test");
+    await fresh.addMember("Primary School", worker);
+
+    const createAndSubmit = async (name: string) => {
+      const [row] = await fresh.asUser<{ id: string }>(
+        worker,
+        "insert into public.requests (type, purchase_type, department_id, author_id, status) values ('PUR', 'procurement', $1, $2, 'draft') returning id",
+        [fresh.departments["Primary School"], worker],
+      );
+      await fresh.asUser(
+        worker,
+        "update public.request_lines set name = $2, purpose = 'For printing', quantity = 3, unit_price = 20.00 where request_id = $1 and position = 1",
+        [row.id, name],
+      );
+      await fresh.asUser(worker, "select public.submit_purchase($1)", [row.id]);
+      return row.id;
+    };
+    const firstId = await createAndSubmit("Paper A4");
+    const secondId = await createAndSubmit("Markers");
+
+    // «Мої заявки» — заявки автора через RLS; номер лежить у колонці number, у списку це «PUR-<number>».
+    const mine = await fresh.asUser<{ id: string; number: string | number }>(
+      worker,
+      "select id, number from public.requests where author_id = $1 order by number",
+      [worker],
+    );
+    expect(mine.map((row) => formatPurchaseNumber(Number(row.number)))).toEqual(["PUR-1", "PUR-2"]);
+    // Номери прив'язані до заявок у порядку подання: перша — PUR-1, друга — PUR-2.
+    expect(mine.map((row) => row.id)).toEqual([firstId, secondId]);
+  }, 120_000);
 });
