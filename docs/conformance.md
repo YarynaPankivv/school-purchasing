@@ -1,5 +1,3 @@
-| AC-HIST-02 | суми рядків 60.00 і 31.00, сума заявки 91.00 | `src/lib/pur/totals.ts` (lineTotal, requestTotal); `src/app/(app)/requests/[id]/page.tsx` («Request total», «Approved total»); `src/app/(app)/requests/_lib/overview.ts` | `tests/pur/lines.test.ts`; `tests/pur/pages.test.tsx` | реалізовано |
-| AC-HIST-01 | перша й друга закупівлі в «Мої заявки» мають номери PUR-1 і PUR-2 | `supabase/migrations/20261021140000_pur_drafts.sql` (private.purchase_number_seq, private.assign_request_number); `src/lib/pur/numbers.ts` (formatPurchaseNumber) | `tests/db/dec-hist.test.ts` | реалізовано |
 # Матриця відповідності (AC → код → тест → статус)
 
 <!--
@@ -192,8 +190,8 @@
 | AC-DEC-04 | повернення на доопрацювання з причиною дає статус «Повернено на доопрацювання» | `supabase/migrations/20261021140000_pur_drafts.sql` (private.decide_purchase); `src/lib/pur/decisions.ts` (decisionOutcome) | `tests/db/dec-hist.test.ts` | реалізовано |
 | AC-DEC-06 | повернення без причини не виконано, «Вкажіть причину», статус «Очікує схвалення» | `supabase/migrations/20261110075942_reason_whitespace.sql` (private.decide_purchase, private.pur_clean_reason, pur:reason_required) | `tests/db/dec-hist.test.ts` | реалізовано |
 | AC-DEC-07 | повторне подання виправленої заявки: «Очікує схвалення», відділ той самий | `supabase/migrations/20261103140000_submit_without_auto_approval.sql` (private.submit_purchase) | `tests/db/dec-hist.test.ts` | реалізовано |
-| AC-HIST-01 | перша й друга закупівлі в «Мої заявки» мають номери PUR-1 і PUR-2 | — | — | відкладено (чекає реалізації) |
-| AC-HIST-02 | суми рядків 60.00 і 31.00, сума заявки 91.00 | — | — | відкладено (чекає реалізації) |
+| AC-HIST-01 | перша й друга закупівлі в «Мої заявки» мають номери PUR-1 і PUR-2 | `supabase/migrations/20261021140000_pur_drafts.sql` (private.purchase_number_seq, private.assign_request_number); `src/lib/pur/numbers.ts` (formatPurchaseNumber) | `tests/db/dec-hist.test.ts` | реалізовано |
+| AC-HIST-02 | суми рядків 60.00 і 31.00, сума заявки 91.00 | `src/lib/pur/totals.ts` (lineTotal, requestTotal); `src/app/(app)/requests/[id]/page.tsx` («Request total», «Approved total»); `src/app/(app)/requests/_lib/overview.ts` | `tests/pur/lines.test.ts`; `tests/pur/pages.test.tsx` | реалізовано |
 | AC-HIST-06 | в історії заявки запис «Подано» з іменем автора, датою й часом America/New_York | — | — | відкладено (чекає реалізації) |
 | AC-HIST-10 | історію заявки чужого відділу за прямим посиланням не показано, «Недостатньо прав», статус не змінився | — | — | відкладено (чекає реалізації) |
 | AC-LANG-09 | статуси «Partially approved» і «Returned for revision» підписано текстом, не лише кольором | — | — | відкладено (чекає реалізації) |
