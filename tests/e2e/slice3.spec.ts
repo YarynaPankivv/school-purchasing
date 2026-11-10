@@ -66,6 +66,8 @@ test.describe("рішення схвалювача й повторне пода�
           ],
         },
         async () => {
+          // Вищий екран: статус і всі три рядки мають потрапити в один кадр «Тоді» (на 800 px рядок 3 лишався за межами).
+          await page.setViewportSize({ width: 1280, height: 1400 });
           await loginAs(page, author);
           await page.goto(`/requests/${id}`);
           await expect(statusOnPage(page)).toHaveText("Partially approved");
@@ -275,6 +277,8 @@ test.describe("номер, суми й історія заявки", () => {
       });
 
       await when("він відкриває історію цієї заявки", async () => {
+        // Вищий екран: картка «History» лежить нижче «Details» і «Lines», на 800 px її не було в кадрі «Тоді».
+        await page.setViewportSize({ width: 1280, height: 1400 });
         await loginAs(page, worker);
         await page.goto(`/requests/${id}`);
       });
