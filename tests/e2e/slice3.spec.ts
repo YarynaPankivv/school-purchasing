@@ -6,7 +6,6 @@
 // Кожен AC пише дані, тож працює з синтетичними uat-<run>-<суфікс>@example.test (support/slice3.ts) і прибирається
 // teardown-ом (cleanup.teardown.ts). Тег @writes: без SUPABASE_SECRET_KEY ці тести не запускаємо.
 import { expect, test, type Page } from "@playwright/test";
-import { formatHistoryTime } from "../../src/lib/pur/time";
 import { attachRuntimeErrors, given, signIn, thenStep, when } from "./support/uat";
 import { addToDepartment, createUatUser, decideAs, requestInfo, submitPurchaseAs, type UatLine, type UatUser } from "./support/slice3";
 
@@ -292,7 +291,17 @@ test.describe("номер, суми й історія заявки", () => {
           const text = (await history.innerText()).replace(/\s+/g, " ");
           const match = /Submitted · Anna Author · (\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2})/.exec(text);
           expect(match, `у картці «History» немає запису «Submitted · Anna Author · дата, час»: ${text}`).not.toBeNull();
-          const expected = Array.from({ length: 6 }, (_, k) => formatHistoryTime(new Date(Date.now() - k * 60_000)));
+          // Незалежний еталон: явний пояс America/New_York, 24 години, формат «ДД.ММ.РРРР, ГГ:ХХ».
+          const ny = new Intl.DateTimeFormat("en-GB", {
+            timeZone: "America/New_York",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+          });
+          const expected = Array.from({ length: 6 }, (_, k) => ny.format(new Date(Date.now() - k * 60_000)).replaceAll("/", "."));
           expect(expected).toContain(match![1]);
         },
       );

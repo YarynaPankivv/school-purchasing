@@ -10,18 +10,9 @@
 import { randomBytes } from "node:crypto";
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { OWNED_ROWS } from "../../../scripts/lib/uat-owned-rows.mjs";
 
-/**
- * ВАШЕ: рядки синтетичного користувача, які треба видалити ДО deleteUser, — таблиці з FK на користувача без
- * on delete cascade (інакше Auth відповідає «Database error deleting user»). У демо: leave_requests.employee_id.
- * Якщо таких таблиць немає (або всі FK — cascade), лишіть порожнім.
- */
-// requests.author_id і request_history.actor_id → profiles ON DELETE RESTRICT. Спершу заявки синтетичного автора (рядки й
-// історія заявки видаляються каскадом), потім записи історії, які він лишив як схвалювач.
-const OWNED_ROWS: { table: string; column: string }[] = [
-  { table: "requests", column: "author_id" },
-  { table: "request_history", column: "actor_id" },
-];
+// OWNED_ROWS (рядки з FK на користувача без cascade, які треба прибрати до deleteUser) — спільне з scripts/uat-cleanup.mjs.
 
 /** Лише такі адреси прибирання має право видалити: uat-<run>[-<суфікс>]@example.test. */
 export const UAT_EMAIL = /^uat-[0-9a-z-]+@example\.test$/;
@@ -83,8 +74,9 @@ export async function deleteUatUsers(onlyEmail?: string): Promise<CleanupResult>
   const targets = (await listUatUsers(supabase)).filter((u) => !onlyEmail || u.email === onlyEmail);
   const deleted: string[] = [];
   for (const u of targets) {
-    for (const { table, column } of OWNED_ROWS) {
-      const { error: rowsError } = await supabase.from(table).delete().eq(column, u.id);
+    for (const { table, column, action } of OWNED_ROWS) {
+      const query = action === "null" ? supabase.from(table).update({ [column]: null }) : supabase.from(table).delete();
+      const { error: rowsError } = await query.eq(column, u.id);
       if (rowsError) throw rowsError;
     }
     const { error } = await supabase.auth.admin.deleteUser(u.id);

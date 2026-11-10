@@ -5,16 +5,10 @@
 // Секретний ключ береться з .env.local (node --env-file), значень не друкуємо — лише адреси синтетичних користувачів.
 // Видаляє лише адреси за маскою UAT_EMAIL: інших користувачів (pm-*, demo-*) скрипт не чіпає.
 import { createClient } from "@supabase/supabase-js";
+import { OWNED_ROWS } from "./lib/uat-owned-rows.mjs";
 
 const UAT_EMAIL = /^uat-[0-9a-z-]+@example\.test$/;
 const PAGE_SIZE = 1000;
-// requests.author_id і request_history.actor_id → profiles ON DELETE RESTRICT: спершу заявки автора (рядки й історія заявки —
-// каскадом), потім записи історії, які користувач лишив як схвалювач. Як OWNED_ROWS у tests/e2e/support/admin.ts.
-const OWNED_ROWS = [
-  { table: "requests", column: "author_id" },
-  { table: "request_history", column: "actor_id" },
-];
-
 const isUat = (user) => UAT_EMAIL.test(user.email ?? "");
 
 function connect() {
@@ -35,9 +29,10 @@ async function listUatUsers(db) {
 }
 
 async function deleteOwnedRows(db, ids) {
-  for (const { table, column } of OWNED_ROWS) {
-    const { error } = await db.from(table).delete().in(column, ids);
-    if (error) throw new Error(`не вдалося видалити рядки ${table}.${column}: ${error.message}`);
+  for (const { table, column, action } of OWNED_ROWS) {
+    const query = action === "null" ? db.from(table).update({ [column]: null }) : db.from(table).delete();
+    const { error } = await query.in(column, ids);
+    if (error) throw new Error(`не вдалося прибрати рядки ${table}.${column}: ${error.message}`);
   }
 }
 
