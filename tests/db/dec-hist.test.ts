@@ -247,7 +247,7 @@ describe("AC-HIST: номер заявки (база)", () => {
     expect(await t.asUser(peter, "select id from public.request_history where request_id = $1", [id])).toEqual([]);
     expect(await t.asUser(peter, "select id from public.requests where id = $1", [id])).toEqual([]);
     // Рішення чужого відділу теж не виконується, статус не змінився.
-    await expect(t.asUser(peter, "select public.decide_purchase($1, 'approve')", [id])).rejects.toThrow(/pur:(forbidden|not_found)/);
+    await expect(t.asUser(peter, "select public.decide_purchase($1, 'approve')", [id])).rejects.toThrow("pur:forbidden");
     expect((await requestOf(id)).status).toBe(statusBefore);
 
     // Автор-схвалювач іншого відділу бачить історію власної заявки (але не чужої).
