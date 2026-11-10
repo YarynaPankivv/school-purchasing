@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { formatDateTime } from "@/lib/pur/time";
-import { createSupabaseMock, makeProfile } from "../org/supabase-mock";
+import { createSupabaseMock, makeProfile, type Call } from "../org/supabase-mock";
 
 vi.mock("next/navigation", async () => {
   const { RedirectSignal } = await import("../org/supabase-mock");
@@ -110,6 +110,10 @@ const defaultHistory = [
   },
 ];
 
+// Запити останнього renderDetail (таблиця, операція, фільтри): мок повертає задані рядки незалежно від фільтра, тож
+// тест, що сторінка питає рядки саме цієї заявки, дивиться на самі фільтри.
+let lastCalls: Call[] = [];
+
 async function renderDetail({
   viewer,
   request,
@@ -133,6 +137,7 @@ async function renderDetail({
   createClient.mockResolvedValue(mock.client);
   const { RequestPageContent: Page } = await import("@/app/(app)/requests/[id]/page");
   const element = await Page({ params: Promise.resolve({ id: REQ }), searchParams: Promise.resolve({}) } as never);
+  lastCalls = mock.calls;
   return renderToStaticMarkup(element);
 }
 
@@ -342,11 +347,18 @@ describe("сторінка закупівлі /requests/[id]", () => {
       lines: partiallyApprovedLines,
     });
     expect(html).toContain("Partially approved");
+    // Рядки питаємо за ID заявки (а не автора чи іншого поля) — мок сам фільтра не застосовує.
+    const linesQuery = lastCalls.find((call) => call.table === "request_lines" && call.op === "select");
+    expect(linesQuery?.filters).toContainEqual(["request_id", REQ]);
+    // Статус — у тому самому рядку, що й назва товару: рядки не переплутано місцями.
     const [row1, row2, row3] = lineRows(html);
+    expect(row1).toContain("Markers");
     expect(row1).toContain("Approved");
     expect(row1).not.toContain("Rejected");
+    expect(row2).toContain("Paper");
     expect(row2).toContain("Rejected");
     expect(row2).not.toContain("Approved");
+    expect(row3).toContain("Glue");
     expect(row3).toContain("Approved");
     expect(row3).not.toContain("Rejected");
   });

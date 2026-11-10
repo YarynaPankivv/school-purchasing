@@ -11,6 +11,7 @@
 //
 const PUR = "supabase/migrations/20261021140000_pur_drafts.sql";
 const ORG = "supabase/migrations/20261018182200_org_departments.sql";
+const REASON = "supabase/migrations/20261110075942_reason_whitespace.sql";
 const SUBMIT = "supabase/migrations/20261103140000_submit_without_auto_approval.sql";
 const FRM_APR_DB = "tests/db/frm-apr.test.ts";
 const DEC_HIST_DB = "tests/db/dec-hist.test.ts";
@@ -31,7 +32,7 @@ export const mutants = [
     replace: "or (r.status <> 'draft')",
   },
   {
-    id: "A3", kind: "sql", ac: "AC-APR-03", file: PUR, tests: [FRM_APR_DB],
+    id: "A3", kind: "sql", ac: "AC-APR-03", file: REASON, tests: [FRM_APR_DB],
     what: "decide_purchase: рішення дозволено будь-кому, хто не автор, якщо у заявки є відділ",
     find: "    or (req.department_id is not null and private.is_department_approver(req.department_id))",
     replace: "    or (req.department_id is not null)",
@@ -63,14 +64,14 @@ export const mutants = [
   // ── Зріз 3 (WS9): рішення схвалювача й повторне подання. Усі тести — tests/db/dec-hist.test.ts ──────────────────
   // AC-DEC-06: повернення на доопрацювання без причини не виконується.
   {
-    id: "D1", kind: "sql", ac: "AC-DEC-06", file: PUR, tests: [DEC_HIST_DB],
+    id: "D1", kind: "sql", ac: "AC-DEC-06", file: REASON, tests: [DEC_HIST_DB],
     what: "decide_purchase: причину перевіряємо лише для відхилення, повернення без причини дозволено",
     find: "    -- AC-PUR-20, 51: причина обов'язкова.\n    if clean_reason is null then",
     replace: "    -- AC-PUR-20, 51: причина обов'язкова.\n    if clean_reason is null and decision = 'reject' then",
   },
   // AC-DEC-01: відхилений рядок + схвалення = «Частково схвалено».
   {
-    id: "D2", kind: "sql", ac: "AC-DEC-01", file: PUR, tests: [DEC_HIST_DB],
+    id: "D2", kind: "sql", ac: "AC-DEC-01", file: REASON, tests: [DEC_HIST_DB],
     what: "decide_purchase: схвалення з відхиленим рядком дає «Схвалено», а не «Частково схвалено»",
     find: "new_status := case when rejected_count = 0 then 'approved' else 'partially_approved' end;",
     replace: "new_status := 'approved';",
@@ -81,6 +82,13 @@ export const mutants = [
     what: "submit_purchase: повернена заявка після повторного подання лишається «Повернено на доопрацювання»",
     find: "     set status = 'pending', editing = false, decision_reason = null",
     replace: "     set status = case when req.status = 'returned' then req.status else 'pending' end, editing = false, decision_reason = null",
+  },
+  // AC-DEC-06: причина з табуляцій і переведень рядка — теж «без причини» (btrim за замовчуванням прибирає лише пробіл).
+  {
+    id: "D4", kind: "sql", ac: "AC-DEC-06", file: REASON, tests: [DEC_HIST_DB],
+    what: "pur_clean_reason: прибирає лише пробіли, причина з табуляцій і переведень рядка проходить як змістовна",
+    find: "select nullif(btrim(reason_text, E' \\t\\r\\n\\f\\v' || chr(160)), '');",
+    replace: "select nullif(btrim(reason_text), '');",
   },
 ];
 

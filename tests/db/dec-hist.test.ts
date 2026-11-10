@@ -60,7 +60,7 @@ const linesOf = (id: string) =>
 
 const historyOf = (id: string) =>
   t.asService<{ action: string; reason: string | null; actor_name: string | null }>(
-    "select action, reason, actor_name from public.request_history where request_id = $1 order by created_at, id",
+    "select action, reason, actor_name from public.request_history where request_id = $1",
     [id],
   );
 
@@ -99,7 +99,7 @@ describe("AC-DEC: рішення схвалювача й повторне под
       [2, "rejected"],
       [3, "approved"],
     ]);
-    expect((await historyOf(id)).map((h) => h.action)).toEqual(["submitted", "partially_approved"]);
+    expect((await historyOf(id)).map((h) => h.action).sort()).toEqual(["partially_approved", "submitted"]);
   });
 
   it("AC-DEC-04: повернення на доопрацювання з причиною «Уточніть кількість» дає статус «Повернено на доопрацювання»", async () => {
@@ -115,8 +115,12 @@ describe("AC-DEC: рішення схвалювача й повторне под
     const request = await requestOf(id);
     expect(request.status).toBe("returned");
     expect(request.decision_reason).toBe("Уточніть кількість");
+    // Склад історії без залежності від порядку: записи з однаковим created_at мають довільний порядок за id.
     const history = await historyOf(id);
-    expect(history.at(-1)).toMatchObject({ action: "returned", reason: "Уточніть кількість" });
+    expect(history.map((h) => h.action).sort()).toEqual(["returned", "submitted"]);
+    expect(history.filter((h) => h.action === "returned")).toEqual([
+      expect.objectContaining({ reason: "Уточніть кількість" }),
+    ]);
   });
 
   it("AC-DEC-06: повернення без причини відхилено — «Вкажіть причину» (pur:reason_required), статус лишається «Очікує схвалення»", async () => {
@@ -124,10 +128,12 @@ describe("AC-DEC: рішення схвалювача й повторне под
     const historyBefore = (await historyOf(id)).length;
 
     await expect(t.asUser(maria, "select public.decide_purchase($1, 'return')", [id])).rejects.toThrow("pur:reason_required");
-    // Порожня причина з пробілів — теж «без причини».
-    await expect(t.asUser(maria, "select public.decide_purchase($1, 'return', '   ')", [id])).rejects.toThrow(
-      "pur:reason_required",
-    );
+    // Порожня причина з пробільних символів (пробіл, табуляція, перенос рядка, нерозривний пробіл) — теж «без причини».
+    for (const blank of ["   ", "\t\t", "\n", " \r\n\t ", " "]) {
+      await expect(t.asUser(maria, "select public.decide_purchase($1, 'return', $2::text)", [id, blank])).rejects.toThrow(
+        "pur:reason_required",
+      );
+    }
 
     const request = await requestOf(id);
     expect(request.status).toBe("pending");
