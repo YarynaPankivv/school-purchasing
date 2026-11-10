@@ -10,8 +10,9 @@ language sql
 immutable
 set search_path = ''
 as $$
-  -- Пробіл, табуляція, \n, \r, \f, \v і нерозривний пробіл (U+00A0), як JS String.prototype.trim() для типових випадків.
-  select nullif(btrim(reason_text, E' \t\r\n\f\v' || chr(160)), '');
+  -- Пробіл, табуляція, \n, \r, \f, вертикальна табуляція і нерозривний пробіл (U+00A0), як JS trim() для типових випадків.
+  -- \v у E'…' PostgreSQL не розпізнає (це літера v), тож вертикальна табуляція — chr(11).
+  select nullif(btrim(reason_text, E' \t\r\n\f' || chr(11) || chr(160)), '');
 $$;
 
 revoke execute on function private.pur_clean_reason(text) from public, anon;

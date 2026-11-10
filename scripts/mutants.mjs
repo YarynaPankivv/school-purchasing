@@ -87,8 +87,15 @@ export const mutants = [
   {
     id: "D4", kind: "sql", ac: "AC-DEC-06", file: REASON, tests: [DEC_HIST_DB],
     what: "pur_clean_reason: прибирає лише пробіли, причина з табуляцій і переведень рядка проходить як змістовна",
-    find: "select nullif(btrim(reason_text, E' \\t\\r\\n\\f\\v' || chr(160)), '');",
+    find: "select nullif(btrim(reason_text, E' \\t\\r\\n\\f' || chr(11) || chr(160)), '');",
     replace: "select nullif(btrim(reason_text), '');",
+  },
+  // AC-DEC-06: \v у E'…' PostgreSQL — літера v, тож «valid» обрізається до «alid» (вертикальна табуляція — chr(11)).
+  {
+    id: "D5", kind: "sql", ac: "AC-DEC-06", file: REASON, tests: [DEC_HIST_DB],
+    what: "pur_clean_reason: набір символів містить E'\\v' (літеру v) замість chr(11), причина «valid» зберігається як «alid»",
+    find: " || chr(11) || chr(160)",
+    replace: " || E'\\v' || chr(160)",
   },
 ];
 

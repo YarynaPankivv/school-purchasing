@@ -128,8 +128,8 @@ describe("AC-DEC: рішення схвалювача й повторне под
     const historyBefore = (await historyOf(id)).length;
 
     await expect(t.asUser(maria, "select public.decide_purchase($1, 'return')", [id])).rejects.toThrow("pur:reason_required");
-    // Порожня причина з пробільних символів (пробіл, табуляція, перенос рядка, нерозривний пробіл) — теж «без причини».
-    for (const blank of ["   ", "\t\t", "\n", " \r\n\t ", " "]) {
+    // Порожня причина з пробільних символів (пробіл, табуляція, \v, \f, перенос рядка, нерозривний пробіл) — теж «без причини».
+    for (const blank of ["   ", "\t\t", "\n", " \r\n\t ", "\v", "\f", "\u00a0"]) {
       await expect(t.asUser(maria, "select public.decide_purchase($1, 'return', $2::text)", [id, blank])).rejects.toThrow(
         "pur:reason_required",
       );
@@ -139,6 +139,14 @@ describe("AC-DEC: рішення схвалювача й повторне под
     expect(request.status).toBe("pending");
     expect(request.decision_reason).toBeNull();
     expect(await historyOf(id)).toHaveLength(historyBefore);
+  });
+
+  it("AC-DEC-06: причина, що починається чи закінчується на «v», зберігається без змін, а пробільні краї обрізаються", async () => {
+    const id = await submitted(andrii, ["Paper A4"]);
+
+    await t.asUser(maria, "select public.decide_purchase($1, 'return', $2::text)", [id, "\t valid reason v\v\n"]);
+
+    expect((await requestOf(id)).decision_reason).toBe("valid reason v");
   });
 
   it("AC-DEC-07: виправлена повернена заявка після повторного подання знову «Очікує схвалення», відділ той самий", async () => {
