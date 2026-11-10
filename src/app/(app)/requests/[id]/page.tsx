@@ -32,7 +32,7 @@ import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail
 import { purchaseNumberLabel } from "@/lib/pur/numbers";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
-import { cancelOutcome } from "@/lib/pur/statuses";
+import { PURCHASE_STATUS_LABELS, cancelOutcome } from "@/lib/pur/statuses";
 import { formatDate, formatDateTime } from "@/lib/pur/time";
 import { formatUsd, lineTotal, lineTotalCents, requestTotal } from "@/lib/pur/totals";
 import { LiveLineTotal } from "./live-line-total";
@@ -78,14 +78,15 @@ const SAVED: Record<string, string> = {
   admin_rejected: "Request rejected.",
 };
 
+// Дії рішень підписано тими самими текстами, що й статуси (AC-LANG-06, 09): «Returned for revision», не окремий переклад.
 const HISTORY_LABELS: Record<string, string> = {
   submitted: "Submitted",
-  approved: "Approved",
-  partially_approved: "Partially approved",
-  rejected: "Rejected",
-  returned: "Returned for changes",
+  approved: PURCHASE_STATUS_LABELS.approved,
+  partially_approved: PURCHASE_STATUS_LABELS.partially_approved,
+  rejected: PURCHASE_STATUS_LABELS.rejected,
+  returned: PURCHASE_STATUS_LABELS.returned,
   reopened: "Returned to approval",
-  cancelled: "Cancelled",
+  cancelled: PURCHASE_STATUS_LABELS.cancelled,
 };
 
 export const metadata: Metadata = { title: "Request · School Purchasing" };

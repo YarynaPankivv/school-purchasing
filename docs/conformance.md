@@ -194,4 +194,4 @@
 | AC-HIST-02 | суми рядків 60.00 і 31.00, сума заявки 91.00 | — | — | відкладено (чекає реалізації) |
 | AC-HIST-06 | в історії заявки запис «Подано» з іменем автора, датою й часом America/New_York | — | — | відкладено (чекає реалізації) |
 | AC-HIST-10 | історію заявки чужого відділу за прямим посиланням не показано, «Недостатньо прав», статус не змінився | — | — | відкладено (чекає реалізації) |
-| AC-LANG-09 | статуси «Partially approved» і «Returned for revision» підписано текстом, не лише кольором | `src/lib/pur/statuses.ts` (PURCHASE_STATUS_LABELS); `src/app/(app)/requests/_components/status-badge.tsx` | `tests/pur/pages.test.tsx`; `tests/ui/interface-language.test.ts` | реалізовано |
+| AC-LANG-09 | статуси «Partially approved» і «Returned for revision» підписано текстом, не лише кольором | `src/lib/pur/statuses.ts` (PURCHASE_STATUS_LABELS); `src/app/(app)/requests/_components/status-badge.tsx`; `src/app/(app)/requests/[id]/page.tsx` (HISTORY_LABELS) | `tests/pur/pages.test.tsx`; `tests/ui/interface-language.test.ts` | реалізовано |

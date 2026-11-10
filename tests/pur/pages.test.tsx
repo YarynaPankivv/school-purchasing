@@ -646,6 +646,18 @@ describe("тексти інтерфейсу на сторінках (табли�
     expect(statusBadge(partial)).toBe("Partially approved");
     const returned = await renderDetail({ viewer: asAuthor, request: requestRow("returned"), members: authorMember });
     expect(statusBadge(returned)).toBe("Returned for revision");
+
+    // В історії записи рішень підписано тими самими текстами (специфікація включає «в історії», хоч PM її перевірку відклала).
+    const history = [
+      { ...defaultHistory[0] },
+      { id: "h2", request_id: REQ, actor_id: VIEWER, actor_name: "Ivan Approver", action: "returned", reason: "Уточніть кількість", created_at: "2026-10-22T09:15:00Z" },
+      { id: "h3", request_id: REQ, actor_id: VIEWER, actor_name: "Ivan Approver", action: "partially_approved", reason: null, created_at: "2026-10-23T09:15:00Z" },
+    ];
+    const withHistory = await renderDetail({ viewer: asAuthor, request: requestRow("returned"), members: authorMember, history });
+    const entries = historyOf(withHistory);
+    expect(entries).toContain("Returned for revision");
+    expect(entries).toContain("Partially approved");
+    expect(entries).not.toContain("Returned for changes");
   });
 
   it("AC-LANG-03: не-адміністратор на сторінці відділів бачить «Not enough permissions» без даних", async () => {
