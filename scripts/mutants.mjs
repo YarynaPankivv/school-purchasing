@@ -11,7 +11,10 @@
 //
 const PUR = "supabase/migrations/20261021140000_pur_drafts.sql";
 const ORG = "supabase/migrations/20261018182200_org_departments.sql";
+const REASON = "supabase/migrations/20261110075942_reason_whitespace.sql";
+const SUBMIT = "supabase/migrations/20261103140000_submit_without_auto_approval.sql";
 const FRM_APR_DB = "tests/db/frm-apr.test.ts";
+const DEC_HIST_DB = "tests/db/dec-hist.test.ts";
 
 export const mutants = [
   // ── Ваші мутанти: по одному на правило в SQL за кожним із ваших 3 AC ──────────────────────────────────────────
@@ -29,7 +32,7 @@ export const mutants = [
     replace: "or (r.status <> 'draft')",
   },
   {
-    id: "A3", kind: "sql", ac: "AC-APR-03", file: PUR, tests: [FRM_APR_DB],
+    id: "A3", kind: "sql", ac: "AC-APR-03", file: REASON, tests: [FRM_APR_DB],
     what: "decide_purchase: рішення дозволено будь-кому, хто не автор, якщо у заявки є відділ",
     find: "    or (req.department_id is not null and private.is_department_approver(req.department_id))",
     replace: "    or (req.department_id is not null)",
@@ -57,6 +60,47 @@ export const mutants = [
     what: "requests: select дозволено гостю (anon)",
     find: "grant select, insert on table public.requests to authenticated;",
     replace: "grant select, insert on table public.requests to authenticated, anon;",
+  },
+  // ── Зріз 3 (WS9): рішення схвалювача й повторне подання. Усі тести — tests/db/dec-hist.test.ts ──────────────────
+  // AC-DEC-06: повернення на доопрацювання без причини не виконується.
+  {
+    id: "D1", kind: "sql", ac: "AC-DEC-06", file: REASON, tests: [DEC_HIST_DB],
+    what: "decide_purchase: причину перевіряємо лише для відхилення, повернення без причини дозволено",
+    find: "    -- AC-PUR-20, 51: причина обов'язкова.\n    if clean_reason is null then",
+    replace: "    -- AC-PUR-20, 51: причина обов'язкова.\n    if clean_reason is null and decision = 'reject' then",
+  },
+  // AC-DEC-01: відхилений рядок + схвалення = «Частково схвалено».
+  {
+    id: "D2", kind: "sql", ac: "AC-DEC-01", file: REASON, tests: [DEC_HIST_DB],
+    what: "decide_purchase: схвалення з відхиленим рядком дає «Схвалено», а не «Частково схвалено»",
+    find: "new_status := case when rejected_count = 0 then 'approved' else 'partially_approved' end;",
+    replace: "new_status := 'approved';",
+  },
+  // AC-DEC-07: подана знову повернена заявка очікує схвалення.
+  {
+    id: "D3", kind: "sql", ac: "AC-DEC-07", file: SUBMIT, tests: [DEC_HIST_DB],
+    what: "submit_purchase: повернена заявка після повторного подання лишається «Повернено на доопрацювання»",
+    find: "     set status = 'pending', editing = false, decision_reason = null",
+    replace: "     set status = case when req.status = 'returned' then req.status else 'pending' end, editing = false, decision_reason = null",
+  },
+  // AC-DEC-06: причина з табуляцій і переведень рядка — теж «без причини» (btrim за замовчуванням прибирає лише пробіл).
+  {
+    id: "D4", kind: "sql", ac: "AC-DEC-06", file: REASON, tests: [DEC_HIST_DB],
+    what: "pur_clean_reason: прибирає лише пробіли, причина з табуляцій і переведень рядка проходить як змістовна",
+    find: "select nullif(btrim(reason_text, E' \\t\\r\\n\\f' || chr(11) || chr(160)), '');",
+    replace: "select nullif(btrim(reason_text), '');",
+  },
+  // AC-DEC-06: \v у E'…' PostgreSQL — літера v, тож «valid» обрізається до «alid» (вертикальна табуляція — chr(11)).
+  {
+    id: "D5", kind: "sql", ac: "AC-DEC-06", file: REASON, tests: [DEC_HIST_DB],
+    expect: "survive",
+    reason:
+      "еквівалентний у тестовому середовищі: PGlite — PostgreSQL 18, де E'\\v' = вертикальна табуляція (ascii 11), тож «valid» " +
+      "не псується; у supabase/config.toml major_version = 17 (\\v там — літера v), і chr(11) у 20261110075942_reason_whitespace.sql " +
+      "працює однаково в обох версіях; тести AC-DEC-06 (рядок \"\\v\" і «valid reason v») доводять результат на PG 18",
+    what: "pur_clean_reason: набір символів містить E'\\v' (літеру v) замість chr(11), причина «valid» зберігається як «alid»",
+    find: " || chr(11) || chr(160)",
+    replace: " || E'\\v' || chr(160)",
   },
 ];
 
