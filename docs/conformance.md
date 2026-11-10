@@ -1,3 +1,5 @@
+| AC-HIST-02 | суми рядків 60.00 і 31.00, сума заявки 91.00 | `src/lib/pur/totals.ts` (lineTotal, requestTotal); `src/app/(app)/requests/[id]/page.tsx` («Request total», «Approved total»); `src/app/(app)/requests/_lib/overview.ts` | `tests/pur/lines.test.ts`; `tests/pur/pages.test.tsx` | реалізовано |
+| AC-HIST-01 | перша й друга закупівлі в «Мої заявки» мають номери PUR-1 і PUR-2 | `supabase/migrations/20261021140000_pur_drafts.sql` (private.purchase_number_seq, private.assign_request_number); `src/lib/pur/numbers.ts` (formatPurchaseNumber) | `tests/db/dec-hist.test.ts` | реалізовано |
 # Матриця відповідності (AC → код → тест → статус)
 
 <!--

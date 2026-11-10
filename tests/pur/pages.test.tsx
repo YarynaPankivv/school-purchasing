@@ -149,6 +149,10 @@ const lineRows = (html: string) =>
     .slice(1)
     .map((row) => row.slice(0, row.indexOf("</tr>")));
 
+// Значення з панелі підсумку за її підписом (<dt>підпис</dt><dd>значення</dd>): сума прив'язана до свого підпису.
+const summaryValue = (html: string, label: string) =>
+  new RegExp(`<dt[^>]*>${label}</dt><dd[^>]*>([^<]*)</dd>`).exec(html)?.[1];
+
 // Таблиця списку за data-testid ("my-requests", "to-decide", …) і її рядок за номером заявки: перевірки не виходять за секцію.
 const tableOf = (html: string, testId: string) => {
   const start = html.indexOf(`data-testid="${testId}"`);
@@ -363,16 +367,39 @@ describe("сторінка закупівлі /requests/[id]", () => {
     expect(row3).not.toContain("Rejected");
   });
 
-  it("AC-PUR-42: далі до відділу закупівель ідуть лише схвалені рядки — у сумі заявки відхилений рядок не враховано", async () => {
+  it("AC-HIST-02: автор відкриває заявку з рядками 3 × 20.00 і 2 × 15.50 — суми рядків 60.00 і 31.00, сума заявки 91.00", async () => {
+    const html = await renderDetail({
+      viewer: asAuthor,
+      request: requestRow("pending"),
+      members: authorMember,
+      lines: [
+        { ...lines[0], quantity: 3, unit_price: 20 },
+        { ...lines[1], quantity: 2, unit_price: 15.5 },
+      ],
+    });
+    const [row1, row2] = lineRows(html);
+    expect(row1).toContain("$60.00");
+    expect(row2).toContain("$31.00");
+    // Сума заявки стоїть під підписом «Request total», а не просто десь на сторінці.
+    expect(summaryValue(html, "Request total")).toBe("$91.00");
+  });
+
+  it("AC-PUR-42: далі до відділу закупівель ідуть лише схвалені рядки — «Approved total» без відхиленого, «Request total» з ним", async () => {
     const html = await renderDetail({
       viewer: asAuthor,
       request: requestRow("partially_approved"),
       members: authorMember,
       lines: partiallyApprovedLines,
     });
-    // 3 × 20 + 1 × 7 = $67.00; з відхиленим рядком 2 (2 × 5) було б $77.00.
-    expect(html).toContain("$67.00");
-    expect(html).not.toContain("$77.00");
+    // Схвалені рядки 3 × 20 і 1 × 7 = $67.00; відхилений рядок 2 × 5 = $10.00 — сума заявки $77.00 (усі рядки).
+    expect(summaryValue(html, "Approved total")).toBe("$67.00");
+    expect(summaryValue(html, "Request total")).toBe("$77.00");
+  });
+
+  it("AC-HIST-02: без відхилених рядків окремої суми «Approved total» немає — вона збігалася б із сумою заявки", async () => {
+    const html = await renderDetail({ viewer: asAuthor, request: requestRow("pending"), members: authorMember });
+    expect(summaryValue(html, "Request total")).toBe("$70.00");
+    expect(html).not.toContain("Approved total");
   });
 
   it("AC-PUR-43: автор відхиленої заявки бачить причину «Не передбачено бюджетом»", async () => {

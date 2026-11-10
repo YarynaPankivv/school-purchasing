@@ -22,13 +22,13 @@ Done when: AC-DEC-01, AC-DEC-04, AC-DEC-06, AC-DEC-07
 
 ## 2. Номер заявки й суми (`task/hist-numbers-totals`)
 
-- [ ] 2.1 `tests/db/dec-hist.test.ts`: `it("AC-HIST-01: …")` — на порожній базі перша й друга закупівлі, створені й подані
+- [x] 2.1 `tests/db/dec-hist.test.ts`: `it("AC-HIST-01: …")` — на порожній базі перша й друга закупівлі, створені й подані
   послідовно, мають номери 1 і 2 (у «Мої заявки» — `PUR-1`, `PUR-2`). Перевірка: `npm test`
-- [ ] 2.2 Сума заявки — сума всіх рядків, зокрема відхилених; «Approved total» — лише схвалених; оновити тест
+- [x] 2.2 Сума заявки — сума всіх рядків, зокрема відхилених; «Approved total» — лише схвалених; оновити тест
   `AC-PUR-42`. `tests/pur/lines.test.ts` і `tests/pur/pages.test.tsx`: `it("AC-HIST-02: …")` — рядки 60.00 і 31.00, сума 91.00.
   У сторінковому тесті `AC-PUR-42` — частково схвалена заявка: схвалені рядки 60.00 і 7.00, відхилений 10.00; `Request total`
   77.00, `Approved total` 67.00, кожна сума прив'язана до свого підпису. Перевірка: `npm test`
-- [ ] 2.3 Рядки AC-HIST-01, 02 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
+- [x] 2.3 Рядки AC-HIST-01, 02 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
 
 Done when: AC-HIST-01, AC-HIST-02
 
