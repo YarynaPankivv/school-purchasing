@@ -93,6 +93,11 @@ export const mutants = [
   // AC-DEC-06: \v у E'…' PostgreSQL — літера v, тож «valid» обрізається до «alid» (вертикальна табуляція — chr(11)).
   {
     id: "D5", kind: "sql", ac: "AC-DEC-06", file: REASON, tests: [DEC_HIST_DB],
+    expect: "survive",
+    reason:
+      "еквівалентний у тестовому середовищі: PGlite — PostgreSQL 18, де E'\\v' = вертикальна табуляція (ascii 11), тож «valid» " +
+      "не псується; у supabase/config.toml major_version = 17 (\\v там — літера v), і chr(11) у 20261110075942_reason_whitespace.sql " +
+      "працює однаково в обох версіях; тести AC-DEC-06 (рядок \"\\v\" і «valid reason v») доводять результат на PG 18",
     what: "pur_clean_reason: набір символів містить E'\\v' (літеру v) замість chr(11), причина «valid» зберігається як «alid»",
     find: " || chr(11) || chr(160)",
     replace: " || E'\\v' || chr(160)",
