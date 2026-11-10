@@ -73,9 +73,9 @@ export async function attachRuntimeErrors(page: Page) {
     .filter((m) => m.type() === "error")
     .map((m) => m.text());
   const pageErrors = (await page.pageErrors({ filter: "all" })).map((e) => String(e));
-  const responses = await Promise.all(
-    (await page.requests()).map(async (r) => ({ r, status: (await r.response())?.status() ?? 0 })),
-  );
+  // existingResponse(), а не response(): на проді лишаються запити без відповіді (скасовані prefetch), і response()
+  // чекав би їх до кінця тесту — afterEach упирався в таймаут 60 с, хоча сам тест уже пройшов.
+  const responses = (await page.requests()).map((r) => ({ r, status: r.existingResponse()?.status() ?? 0 }));
   const failed = responses
     .filter(({ r, status }) => r.failure() !== null || status >= 500)
     .map(({ r, status }) => `${r.method()} ${new URL(r.url()).pathname} → ${r.failure()?.errorText ?? status}`);
