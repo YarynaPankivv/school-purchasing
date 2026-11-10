@@ -34,17 +34,17 @@ Done when: AC-HIST-01, AC-HIST-02
 
 ## 3. Історія заявки: запис «Подано» і закритість чужому відділу (`task/hist-history`)
 
-- [ ] 3.1 `src/lib/pur/time.ts`: `formatHistoryTime` («05.11.2026, 14:32», 24 год, `America/New_York`, без позначки поясу) і
+- [x] 3.1 `src/lib/pur/time.ts`: `formatHistoryTime` («05.11.2026, 14:32», 24 год, `America/New_York`, без позначки поясу) і
   `tests/pur/time.test.ts`; картка «History» показує «Submitted · <ім'я або email> · <час>». Оновити тести `AC-PUR-37`, `AC-PUR-39`
   під новий формат. Перевірка: `npm test`
-- [ ] 3.2 `it("AC-HIST-06: …")` у `tests/pur/pages.test.tsx` (запис з іменем автора, датою й часом; email, якщо імені немає) і
+- [x] 3.2 `it("AC-HIST-06: …")` у `tests/pur/pages.test.tsx` (запис з іменем автора, датою й часом; email, якщо імені немає) і
   у `tests/db/dec-hist.test.ts` (рядок історії `submitted` з `actor_name`). Перевірка: `npm test`
-- [ ] 3.3 `it("AC-HIST-10: …")` у `tests/db/dec-hist.test.ts`: заявка має історію рішень (схвалювач її відділу повертає
+- [x] 3.3 `it("AC-HIST-10: …")` у `tests/db/dec-hist.test.ts`: заявка має історію рішень (схвалювач її відділу повертає
   заявку з причиною, у `request_history` є запис рішення з його іменем); схвалювач іншого відділу читає нуль рядків
   `request_history` і не відкриває заявку, статус не змінився; автор-схвалювач іншого відділу бачить власну історію; сторінковий тест — `Forbidden`
   без історії. Мутант H1 у `scripts/mutants.mjs` (`request_history_select` без `can_view_request`) → `KILLED`. Перевірка:
   `npm test`, `npm run mutation:sql`
-- [ ] 3.4 Рядки AC-HIST-06, 10 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
+- [x] 3.4 Рядки AC-HIST-06, 10 у `docs/conformance.md` → «реалізовано». Перевірка: `npm run ac:coverage`
 
 Done when: AC-HIST-06, AC-HIST-10
 
