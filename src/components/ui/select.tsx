@@ -10,6 +10,7 @@ import {
   isValidElement,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -58,7 +59,7 @@ export function Select({
   const currentRef = useRef(current);
   const listId = useId();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     currentRef.current = current;
   }, [current]);
 
