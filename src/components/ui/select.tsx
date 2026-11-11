@@ -54,7 +54,13 @@ export function Select({
   const [active, setActive] = useState(selectedIndex);
   const root = useRef<HTMLSpanElement>(null);
   const native = useRef<HTMLSelectElement>(null);
+  // Остання вибрана величина: таймер відновлення читає її в момент спрацювання, а не значення з часу, коли його поставили.
+  const currentRef = useRef(current);
   const listId = useId();
+
+  useEffect(() => {
+    currentRef.current = current;
+  }, [current]);
 
   // React 19 після кожної Server Action робить form.reset(): справжній <select> повертається до першого пункту
   // («Select a department» → порожнє значення), а кнопка далі показує вибране зі стану. Наступне «Save» чи «Submit»
@@ -64,12 +70,12 @@ export function Select({
     if (!form) return;
     const restore = () => {
       setTimeout(() => {
-        if (native.current) native.current.value = current;
+        if (native.current) native.current.value = currentRef.current;
       }, 0);
     };
     form.addEventListener("reset", restore);
     return () => form.removeEventListener("reset", restore);
-  }, [current]);
+  }, []);
   const optionId = (index: number) => `${listId}-${index}`;
 
   // Закриваємо меню кліком поза ним.
