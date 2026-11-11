@@ -44,15 +44,15 @@
 
 ## B. Якість тестів
 
-Посилання на тести й міграції — на коміті `cb77ca3` (гілка PR треку B).
+Посилання на тести й міграції — на merge-коміті `f458c84` (PR [#48](https://github.com/YarynaPankivv/school-purchasing/pull/48), `main`).
 
 ### Рівень для кожного AC
 
 | AC | Де живе правило | Рівень | Чому | Тест |
 |---|---|---|---|---|
-| AC-FRM-09 | SQL: `revoke` від `anon` на `requests` і функціях подання (`supabase/migrations/20261018182200_org_departments.sql`, `20261021140000_pur_drafts.sql`); TS: `updateSession` у `src/lib/supabase/proxy.ts` (редірект гостя на `/login`) | база (PGlite, `asAnon`) + unit proxy; текст сторінки входу — UAT | відмову гостю тримає SQL, а «бачить сторінку входу» — редірект proxy; TS-копія SQL тут не потрібна | [`tests/db/frm-apr.test.ts#L185`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/db/frm-apr.test.ts#L185) (AC-FRM-09), [`tests/auth/proxy-guest.test.ts`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/auth/proxy-guest.test.ts) (4 тести, нові) |
-| AC-FRM-14 | сторінка `src/app/(app)/requests/(list)/page.tsx` (порожній стан «My requests») | unit рендеру сторінки (`renderToStaticMarkup`, мок лише клієнта Supabase) + UAT для дослівного тексту на проді | правило не в SQL: це стан інтерфейсу; точний текст доводить лише UAT | [`tests/pur/pages.test.tsx#L511`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/pur/pages.test.tsx#L511), [`#L530`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/pur/pages.test.tsx#L530), [`#L549`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/pur/pages.test.tsx#L549) (AC-FRM-14: було 1 тест, стало 3) |
-| AC-APR-03 | SQL: `requests_select`, `private.can_view_request`, `private.is_department_approver`, `decide_purchase` (`20261021140000_pur_drafts.sql`); сторінка `requests/[id]/page.tsx` (`Forbidden`) | база (PGlite, `asUser` + `asService`-читання статусу) + unit сторінки + UAT | відмова «чужий відділ» — це RLS і функція SQL; TS-дзеркало (`canViewRequest`) окремо; повідомлення «Not enough permissions» доводить UAT | [`tests/db/frm-apr.test.ts#L283`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/db/frm-apr.test.ts#L283) і [`#L340`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/db/frm-apr.test.ts#L340) (AC-APR-03), [`tests/ui/frm-apr-pages.test.tsx#L372`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/ui/frm-apr-pages.test.tsx#L372) |
+| AC-FRM-09 | SQL: `revoke` від `anon` на `requests` і функціях подання (`supabase/migrations/20261018182200_org_departments.sql`, `20261021140000_pur_drafts.sql`); TS: `updateSession` у `src/lib/supabase/proxy.ts` (редірект гостя на `/login`) | база (PGlite, `asAnon`) + unit proxy; текст сторінки входу — UAT | відмову гостю тримає SQL, а «бачить сторінку входу» — редірект proxy; TS-копія SQL тут не потрібна | [`tests/db/frm-apr.test.ts#L185`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/tests/db/frm-apr.test.ts#L185) (AC-FRM-09), [`tests/auth/proxy-guest.test.ts`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/tests/auth/proxy-guest.test.ts) (4 тести, нові) |
+| AC-FRM-14 | сторінка `src/app/(app)/requests/(list)/page.tsx` (порожній стан «My requests») | unit рендеру сторінки (`renderToStaticMarkup`, мок лише клієнта Supabase) + UAT для дослівного тексту на проді | правило не в SQL: це стан інтерфейсу; точний текст доводить лише UAT | [`tests/pur/pages.test.tsx#L511`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/tests/pur/pages.test.tsx#L511), [`#L530`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/tests/pur/pages.test.tsx#L530), [`#L549`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/tests/pur/pages.test.tsx#L549) (AC-FRM-14: було 1 тест, стало 3) |
+| AC-APR-03 | SQL: `requests_select`, `private.can_view_request`, `private.is_department_approver`, `decide_purchase` (`20261021140000_pur_drafts.sql`); сторінка `requests/[id]/page.tsx` (`Forbidden`) | база (PGlite, `asUser` + `asService`-читання статусу) + unit сторінки + UAT | відмова «чужий відділ» — це RLS і функція SQL; TS-дзеркало (`canViewRequest`) окремо; повідомлення «Not enough permissions» доводить UAT | [`tests/db/frm-apr.test.ts#L283`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/tests/db/frm-apr.test.ts#L283) і [`#L340`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/tests/db/frm-apr.test.ts#L340) (AC-APR-03), [`tests/ui/frm-apr-pages.test.tsx#L372`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/tests/ui/frm-apr-pages.test.tsx#L372) |
 
 ### Покриття
 
@@ -68,11 +68,11 @@
 
 ### Доказ мутацією
 
-**TS, Stryker 10.1.1** (`npx stryker run --mutate <файл>`):
+**TS, Stryker 10.1.1** (`npx stryker run --mutate src/lib/supabase/proxy.ts` для `proxy.ts`; `stryker.config.json` виключає `src/lib/supabase/**` із `mutate`, тож без явного `--mutate` результат не повториться):
 
 | Мутант (файл:рядок, що змінено) | AC під загрозою | До | Тест, посилений з тексту AC | Після |
 |---|---|---|---|---|
-| `src/lib/supabase/proxy.ts:24–44` — тіло `updateSession` (умова `!claims && !isPublic`, редірект на `/login`) цілком без покриття: 18 мутантів NoCoverage | AC-FRM-09 | не покрито: score 43,75 % (14 убито, 0 вижили, 18 NoCoverage) | [`tests/auth/proxy-guest.test.ts`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/tests/auth/proxy-guest.test.ts): гість (`data: null` і `claims: null`) за прямим посиланням `/requests/new` → 307 на `/login`; `/login` для гостя — без редіректу; користувач з входом — без редіректу | убито: score 71,88 % (23 убито, 3 вижили, 6 NoCoverage); мутанти на гілці гостя вбито |
+| `src/lib/supabase/proxy.ts#L51-L55` — гілка гостя в `updateSession` (умова `!claims && !isPublic`, редірект на `/login`; уся функція — `:24–58`) цілком без покриття: 18 мутантів NoCoverage | AC-FRM-09 | не покрито: score 43,75 % (14 убито, 0 вижили, 18 NoCoverage) | [`tests/auth/proxy-guest.test.ts`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/tests/auth/proxy-guest.test.ts): гість (`data: null` і `claims: null`) за прямим посиланням `/requests/new` → 307 на `/login`; `/login` для гостя — без редіректу; користувач з входом — без редіректу | убито: score 71,88 % (23 убито, 3 вижили, 6 NoCoverage); мутанти на гілці гостя вбито |
 | `(list)/page.tsx:224` — умова показу «My requests» і текст порожнього стану; рядок `empty="You have not submitted any requests yet"` | AC-FRM-14 | текст мутантів убивав 1 тест; «списку заявок немає» не перевірялось | 2 нові тести: порожня сторінка — немає `<table` і `PUR-`; працівник із заявкою — повідомлення відсутнє | мутанти на тексті й гілці «є/немає заявок» убиті |
 
 Вижили після посилення (розбір, не приховано):
@@ -95,28 +95,29 @@
 | F1 | AC-FRM-09 | `submit_purchase`: execute дозволено `anon` | SURVIVED — еквівалентний (див. нижче) |
 | F2 | AC-FRM-09 | `requests`: select дозволено `anon` | KILLED (AC-FRM-09) |
 
-- Еквівалентні мутанти: **F1** — `public.submit_purchase` є `security invoker` і лише викликає `private.submit_purchase`, у якої `execute` забрано в `anon` ([`20261021140000_pur_drafts.sql#L893`](https://github.com/YarynaPankivv/school-purchasing/blob/cb77ca34ec27bcf01919cafdbda04001b6a7e9f8/supabase/migrations/20261021140000_pur_drafts.sql#L893), `revoke execute on function private.submit_purchase(uuid) from public, anon`); гість однаково отримує `permission denied`. Тест із точнішим текстом помилки це не розрізнить: повідомлення `permission denied for function submit_purchase` однакове для обох шарів. Причина записана в `scripts/mutants.mjs` (`expect: "survive"`, `reason`).
+- Еквівалентні мутанти: **F1** — `public.submit_purchase` є `security invoker` і лише викликає `private.submit_purchase`, у якої `execute` забрано в `anon` ([`20261021140000_pur_drafts.sql#L893`](https://github.com/YarynaPankivv/school-purchasing/blob/f458c84/supabase/migrations/20261021140000_pur_drafts.sql#L893), `revoke execute on function private.submit_purchase(uuid) from public, anon`); гість однаково отримує `permission denied`. Тест із точнішим текстом помилки це не розрізнить: повідомлення `permission denied for function submit_purchase` однакове для обох шарів. Причина записана в `scripts/mutants.mjs` (`expect: "survive"`, `reason`).
 - Чесне зауваження: усі SQL-мутанти AC-APR-03 були вбиті з першого прогону — тести бази вже були з тексту AC; прогалини знайшли TS-мутанти `proxy.ts` (гілку гостя не виконував жоден тест).
 
 ## C. UAT на проді
 
 | AC | Специфікація | Тест (твердження) | Агент | Вердикт | Кадр |
 |---|---|---|---|---|---|
-| AC-FRM-09 | [`tests/e2e/slice2.spec.ts#L14`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/tests/e2e/slice2.spec.ts#L14) | passed | Haiku: PASS | PASS, R6 | [`AC-FRM-09-then-1.png`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/docs/qa/uat/2026-11-02/frames/AC-FRM-09-then-1.png) |
-| AC-FRM-14 | [`tests/e2e/slice2.spec.ts#L46`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/tests/e2e/slice2.spec.ts#L46) | passed | Haiku: NEEDS-HUMAN → Sonnet: PASS | PASS, R6 | [`AC-FRM-14-then-1.png`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/docs/qa/uat/2026-11-02/frames/AC-FRM-14-then-1.png) |
-| AC-APR-03 | [`tests/e2e/slice2.spec.ts#L115`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/tests/e2e/slice2.spec.ts#L115) | passed | Haiku: NEEDS-HUMAN → Sonnet: PASS | PASS, R6 | [`AC-APR-03-then-1.png`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/docs/qa/uat/2026-11-02/frames/AC-APR-03-then-1.png) |
+| AC-FRM-09 | [`tests/e2e/slice2.spec.ts#L14`](https://github.com/YarynaPankivv/school-purchasing/blob/44384cc/tests/e2e/slice2.spec.ts#L14) | passed | Haiku: PASS | PASS, R6 | [`AC-FRM-09-then-1.png`](https://github.com/YarynaPankivv/school-purchasing/blob/44384cc/docs/qa/uat/2026-11-02/frames/AC-FRM-09-then-1.png) |
+| AC-FRM-14 | [`tests/e2e/slice2.spec.ts#L46`](https://github.com/YarynaPankivv/school-purchasing/blob/44384cc/tests/e2e/slice2.spec.ts#L46) | passed | Haiku: NEEDS-HUMAN → Sonnet: PASS | PASS, R6 | [`AC-FRM-14-then-1.png`](https://github.com/YarynaPankivv/school-purchasing/blob/44384cc/docs/qa/uat/2026-11-02/frames/AC-FRM-14-then-1.png) |
+| AC-APR-03 | [`tests/e2e/slice2.spec.ts#L115`](https://github.com/YarynaPankivv/school-purchasing/blob/44384cc/tests/e2e/slice2.spec.ts#L115) | passed | Haiku: NEEDS-HUMAN → Sonnet: PASS | PASS, R6 | [`AC-APR-03-then-1.png`](https://github.com/YarynaPankivv/school-purchasing/blob/44384cc/docs/qa/uat/2026-11-02/frames/AC-APR-03-then-1.png) |
 
-- Звіт: [`docs/qa/uat/2026-11-02/report.md`](https://github.com/YarynaPankivv/school-purchasing/blob/8f4752081f4430cef273c15e714f49da7543dd3a/docs/qa/uat/2026-11-02/report.md) (прод `/api/health`: коміт `f458c84`, 02.11.2026 12:35 за Києвом, Playwright 29,9 с)
+- Звіт: [`docs/qa/uat/2026-11-02/report.md`](https://github.com/YarynaPankivv/school-purchasing/blob/44384cc/docs/qa/uat/2026-11-02/report.md) (прод `/api/health`: коміт `f458c84`, 02.11.2026 12:35 за Києвом, Playwright 29,9 с)
 - Відео: у вкладенні опису PR (не в git)
 - Рецензент: `claude-haiku-5-5`, на двох AC суперечка → `claude-sonnet-5-5`; разом $0,0615 за цінами API
 - Негативний контроль (`npm run uat:nc`, 02.11.2026): **NC-1** (AC-FRM-14, у тесті навмисно інший текст порожнього стану) → **FAIL**, R1: твердження впало, агент його не перекриває; **NC-2** (AC-FRM-09, текст «Тоді» у вимозі змінено на «Welcome back», тест і застосунок без змін) → **NEEDS-HUMAN**, R3: твердження зелені, Haiku — NEEDS-HUMAN, Sonnet — FAIL; рядки з PR UAT, звіт NC лишається в `test-results/uat-report-nc/` (не в git).
 - Дані: лише читання. `@writes` немає; прибирання: видалено 0, лишилось 0 (рядок «Прибирання» зі звіту). Для AC-APR-03 спека не створює даних: бере наявну подану заявку чужого відділу, яку бачить адміністратор, а схвалювач — ні.
+- **Фікстура AC-APR-03 на проді** (спека створює дані лише в CI через `scripts/e2e-seed.mjs`, на проді їх готує людина): під `pm-requester@example.test` подати заявку у відділ **Upper School** (його `pm-approver` не схвалює) хоча б з одним заповненим рядком і не вирішувати її. Якщо заявку вирішили чи скасували, «Дано» спеки падає з повідомленням `на проді немає поданої заявки чужого для pm-approver відділу`, і фікстуру треба подати знову. Варіант без людини — окрема спека `@writes`, яка створює й прибирає заявку (поки не робили).
 
 ### Приймання PM
 
 | AC | Рішення PM | Посилання |
 |---|---|---|
-| AC-…-NN | <!-- ✅ / ❌ / NEEDS-HUMAN → … --> | <!-- коментар-підпис або issue «Відхилення від вимог» --> |
+| AC-FRM-09, AC-FRM-14, AC-APR-03 | ✅ прийнято 03.11.2026, оцінка 3 за кожен | [коментар PM у PR #49](https://github.com/YarynaPankivv/school-purchasing/pull/49#issuecomment-6605570889); [звірка вердикту агента із записом](https://github.com/YarynaPankivv/school-purchasing/pull/49#issuecomment-6615164580) |
 
 ## D. Eval рецензента
 

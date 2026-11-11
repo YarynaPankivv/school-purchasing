@@ -57,6 +57,7 @@ export function createSupabaseMock(options: {
       delete: () => ((call.op = "delete"), builder),
       eq: (column: string, value: unknown) => (call.filters.push([column, value]), builder),
       order: () => builder,
+      range: () => builder,
       maybeSingle: () => ((single = true), builder),
       then<T>(resolve: (value: { data: unknown; error: MockError }) => T, reject?: (reason: unknown) => T) {
         calls.push(call);

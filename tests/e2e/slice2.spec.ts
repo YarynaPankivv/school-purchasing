@@ -44,10 +44,10 @@ test.describe("працівник без жодної заявки", () => {
   test.use({ storageState: "playwright/.auth/empty.json" });
 
   test(
-    "AC-FRM-14: працівник без жодної поданої заявки відкриває «Мої заявки» і бачить повідомлення про порожній список, а списку заявок немає",
+    "AC-FRM-14: працівник без жодної заявки відкриває «Мої заявки» і бачить повідомлення про порожній список, а списку заявок немає",
     { tag: ["@uat"], annotation: { type: "ac", description: "AC-FRM-14" } },
     async ({ page }) => {
-      await given("працівник pm-empty@example.test без жодної поданої заявки увійшов у застосунок", async () => {
+      await given("працівник pm-empty@example.test без жодної заявки (чернеток теж) увійшов у застосунок", async () => {
         await page.goto("/");
         await expect(page).not.toHaveURL(/\/login/);
       });
@@ -103,9 +103,12 @@ async function statusSeenByAdmin(browser: Browser, baseURL: string, id: string):
   try {
     const page: Page = await context.newPage();
     await page.goto(`/requests/${id}`);
-    // goto чекає лише на load: сторінку Next стрімить, і без цього очікування innerText читає скелет «Loading…».
-    await expect(page.locator("body")).not.toContainText("Loading…");
-    return await page.locator("body").innerText();
+    // Читаємо лише поле статусу (data-testid="request-status"), а не текст усієї сторінки: на сторінці заявки є ще
+    // бейджі рядків та історія, і рядок «Awaiting approval» знайшовся б там і в уже вирішеної заявки (хибний PASS).
+    // toBeVisible чекає, поки сторінка, яку стрімить Next, замінить скелет «Loading…».
+    const status = page.getByTestId("request-status");
+    await expect(status).toBeVisible();
+    return (await status.innerText()).trim();
   } finally {
     await context.close();
   }
@@ -154,7 +157,7 @@ test.describe("схвалювач і чужа заявка", () => {
           expect(text).not.toContain(foreign!.label);
           expect(text).not.toContain(foreign!.department);
           await expect(page.getByRole("table")).toHaveCount(0);
-          expect(await statusSeenByAdmin(browser, baseURL!, foreign!.id)).toContain("Awaiting approval");
+          expect(await statusSeenByAdmin(browser, baseURL!, foreign!.id)).toBe("Awaiting approval");
         },
       );
     },

@@ -4,6 +4,7 @@ import { loadPeople } from "@/lib/org/people";
 import type { CurrentUser } from "@/lib/auth/session";
 import { personLabel, type Approver } from "@/lib/org/departments";
 import { awaitingDecision, decisionQueue } from "@/lib/pur/decisions";
+import { selectAll } from "@/lib/pur/paging";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
 import { isParticipant } from "@/lib/pur/visibility";
@@ -33,8 +34,11 @@ export type RequestOverview = {
 
 export async function loadOverview(supabase: Supabase, user: CurrentUser): Promise<RequestOverview> {
   const [requests, lines, departments, approvers, personList, authorLabels] = await Promise.all([
-    supabase.from("requests").select("*").eq("type", "PUR").order("created_at", { ascending: false }),
-    supabase.from("request_lines").select("*"),
+    // Сторінками: PostgREST обрізає відповідь на 1000 рядках. Порядок із id — стабільний між сторінками.
+    selectAll((from, to) =>
+      supabase.from("requests").select("*").eq("type", "PUR").order("created_at", { ascending: false }).order("id").range(from, to),
+    ),
+    selectAll((from, to) => supabase.from("request_lines").select("*").order("id").range(from, to)),
     supabase.from("departments").select("id, name"),
     supabase.from("department_approvers").select("department_id, user_id"),
     loadPeople(supabase, user.role),
