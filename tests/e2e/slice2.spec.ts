@@ -4,6 +4,7 @@
 // «Ви ще не подали жодної заявки» = «You have not submitted any requests yet».
 // Акаунти — tests/e2e/auth.setup.ts (admin — лише щоб знайти чужу заявку й перевірити її статус).
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 import { attachRuntimeErrors, given, thenStep, when } from "./support/uat";
 
 test.afterEach(async ({ page }) => attachRuntimeErrors(page));
@@ -40,6 +41,22 @@ test.describe("гість без входу", () => {
   );
 });
 
+/** Скільки заявок (з чернетками) має сам працівник за API під своєю сесією: передумова «без жодної заявки» не залежить від сторінки, яку перевіряє тест. */
+async function requestCountOf(email: string, password: string | undefined): Promise<number> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  expect(url && key && password, "для перевірки передумови потрібні NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY і пароль акаунта").toBeTruthy();
+  const client = createClient(url!, key!, { auth: { persistSession: false, autoRefreshToken: false } });
+  const signedIn = await client.auth.signInWithPassword({ email, password: password! });
+  expect(signedIn.error, "вхід за API для перевірки передумови").toBeNull();
+  const { count, error } = await client
+    .from("requests")
+    .select("id", { count: "exact", head: true })
+    .eq("author_id", signedIn.data.user!.id);
+  expect(error, "читання заявок працівника за API").toBeNull();
+  return count ?? 0;
+}
+
 test.describe("працівник без жодної заявки", () => {
   test.use({ storageState: "playwright/.auth/empty.json" });
 
@@ -48,6 +65,10 @@ test.describe("працівник без жодної заявки", () => {
     { tag: ["@uat"], annotation: { type: "ac", description: "AC-FRM-14" } },
     async ({ page }) => {
       await given("працівник pm-empty@example.test без жодної заявки (чернеток теж) увійшов у застосунок", async () => {
+        expect(
+          await requestCountOf("pm-empty@example.test", process.env.UAT_PASSWORD_EMPTY ?? process.env.DEMO_USER_PASSWORD),
+          "у pm-empty@example.test є заявка (чернетка теж): порожній стан не перевірити",
+        ).toBe(0);
         await page.goto("/");
         await expect(page).not.toHaveURL(/\/login/);
       });
