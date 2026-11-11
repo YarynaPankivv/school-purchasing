@@ -109,6 +109,20 @@ export const mutants = [
     find: "create policy request_history_select\n  on public.request_history\n  for select\n  to authenticated\n  using (\n    (select private.is_active_user())\n    and private.can_view_request(request_id)",
     replace: "create policy request_history_select\n  on public.request_history\n  for select\n  to authenticated\n  using (\n    (select private.is_active_user())\n    and true",
   },
+  // AC-HIST-06: подання пише в історію запис «submitted» (ім'я автора й час беруться з цього рядка).
+  {
+    id: "H2", kind: "sql", ac: "AC-HIST-06", file: SUBMIT, tests: [DEC_HIST_DB],
+    what: "submit_purchase: запис «submitted» в історію не пишеться",
+    find: "perform private.pur_log(target_request, actor, 'submitted');",
+    replace: "null;",
+  },
+  // AC-HIST-01: перша закупівля на порожній базі має номер PUR-1, а не наступний за пропущеним.
+  {
+    id: "N1", kind: "sql", ac: "AC-HIST-01", file: PUR, tests: [DEC_HIST_DB],
+    what: "purchase_number_seq: початкове значення послідовності зсунуто на 1 (перша закупівля — PUR-2)",
+    find: "coalesce((select max(number) from public.requests where type = 'PUR'), 0) + 1,",
+    replace: "coalesce((select max(number) from public.requests where type = 'PUR'), 0) + 2,",
+  },
 ];
 
 // Приклади з демо (інша схема — у вашому репо цих файлів немає, тож не розкоментовуйте як є):

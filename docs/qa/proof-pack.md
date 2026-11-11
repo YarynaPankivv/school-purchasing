@@ -170,3 +170,59 @@ Upper School), збирає застосунок і ганяє специфік�
 - Зелений прогін `workflow_dispatch` на `main`: https://github.com/YarynaPankivv/school-purchasing/actions/runs/41620421190 (коміт `aac9ff0`, 7 пройшли, 0 впали, 0 пропущено, 0 нестабільних; артефакт `e2e-41620421190`).
 - Чому сід: на локальному Supabase немає подачі чужого відділу, яку на проді тримає PM, тож без `e2e:seed` AC-APR-03 лише «пропускався». Тепер він виконується, а не пропускається.
 - Висновок: UAT уміє падати й у CI. Після merge виявився флейк хелпера `statusSeenByAdmin` (читав скелет «Loading…» замість сторінки заявки); виправлено очікуванням, поки скелет зникне.
+
+---
+
+# WS9: зріз 3 — рішення схвалювача, історія й підписи статусів (9 AC)
+
+- Прод-URL: https://school-purchasing.vercel.app
+- Вимоги: https://github.com/ValiaBihun/2026-quitcode-dream-team · джерело: issues · знімок 2026-11-09
+- `/api/health` на момент UAT: коміт `d45d876`, db ok, 10.11.2026
+- Спосіб: звичайний (специфікація → задачі з PR і CodeRabbit → merge → `db-deploy` → UAT на проді). Фабрику (бонус) не запускали.
+- Специфікація: `openspec/specs/` (зміна `add-dec-hist`, архів `openspec/changes/archive/2026-11-07-add-dec-hist`), план — `openspec/changes/impl-dec-hist/` (design.md, tasks.md).
+
+## Таблиця доказів: 9 AC
+
+База — `tests/db/dec-hist.test.ts` (PGlite, міграції як у проді), unit — `tests/pur/*.test.ts(x)`, UAT — `tests/e2e/slice3.spec.ts`
+на коміті `d45d876`. У колонці «PR» — merge-коміти в `main`.
+
+| AC | Правило живе в | Тест (рівень) | Доказ, що тест може впасти | UAT на проді | PR | Вердикт |
+|---|---|---|---|---|---|---|
+| AC-DEC-01 | SQL `decide_purchase` (статус «Частково схвалено» за відхиленим рядком); сторінка заявки | база `dec-hist.test.ts:79`; unit `pages.test.tsx:370` | мутант **D2** KILLED (`scripts/mutants.mjs`) | PASS, R6; [`slice3.spec.ts#L39`](https://github.com/YarynaPankivv/school-purchasing/blob/d45d876482087a8b4b2b61ff3aa9454d96f65431/tests/e2e/slice3.spec.ts#L39); [рядок звіту](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md#L13); [кадр](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/frames/AC-DEC-01-then-1.png) | [#68](https://github.com/YarynaPankivv/school-purchasing/pull/68) `cde1607` | доведено на всіх рівнях |
+| AC-DEC-04 | SQL `decide_purchase` (повернення з причиною → «Повернено на доопрацювання») | база `dec-hist.test.ts:106` | окремого мутанта немає (див. «Не перевірено»); сусідню гілку (причина обов'язкова) б'ють D1 і D4 | PASS, R6; [`#L84`](https://github.com/YarynaPankivv/school-purchasing/blob/d45d876482087a8b4b2b61ff3aa9454d96f65431/tests/e2e/slice3.spec.ts#L84); [рядок звіту](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md#L14); [кадр](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/frames/AC-DEC-04-then-1.png) | #68 `cde1607` | доведено; мутацією лише побічно |
+| AC-DEC-06 | SQL `private.pur_clean_reason` і `decide_purchase` (причина обов'язкова, пробільні символи обрізаються) | база `dec-hist.test.ts:127`, `:145` | мутанти **D1**, **D4** KILLED; **D5** SURVIVED — еквівалентний: PGlite — PG 18, де `E'\v'` це вертикальна табуляція; у проді PG 17 це літера `v`, але в міграції `chr(11)`, тож результат однаковий | PASS, R6; [`#L117`](https://github.com/YarynaPankivv/school-purchasing/blob/d45d876482087a8b4b2b61ff3aa9454d96f65431/tests/e2e/slice3.spec.ts#L117); [рядок звіту](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md#L15); [кадр](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/frames/AC-DEC-06-then-1.png) | #68 `cde1607` | доведено, 1 еквівалентний мутант розібрано |
+| AC-DEC-07 | SQL `submit_purchase` (повторне подання повернутої → «Очікує схвалення») | база `dec-hist.test.ts:153` | мутант **D3** KILLED | PASS, R6; [`#L151`](https://github.com/YarynaPankivv/school-purchasing/blob/d45d876482087a8b4b2b61ff3aa9454d96f65431/tests/e2e/slice3.spec.ts#L151); [рядок звіту](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md#L16); [кадр](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/frames/AC-DEC-07-then-1.png) | #68 `cde1607` | доведено |
+| AC-HIST-01 | SQL: послідовність `private.purchase_number_seq` і тригер `assign_request_number` | база `dec-hist.test.ts:179` (порожня база: PUR-1, PUR-2) | мутант **N1** KILLED (доданий у цьому PR) | PASS, R6; [`#L194`](https://github.com/YarynaPankivv/school-purchasing/blob/d45d876482087a8b4b2b61ff3aa9454d96f65431/tests/e2e/slice3.spec.ts#L194); перевіряє лише відносний порядок (див. «Не перевірено»); [рядок звіту](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md#L19); [кадр](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/frames/AC-HIST-01-then-1.png) | [#70](https://github.com/YarynaPankivv/school-purchasing/pull/70) `83ae2c4` | доведено в базі; на проді частково |
+| AC-HIST-02 | TS `src/lib/pur/totals.ts` (суми рядків і заявки в центах) | unit `tests/pur/lines.test.ts:66`, `pages.test.tsx:394`, `:423` | Stryker у функціях сум (`lineTotalCents`, `requestTotalCents`, `formatCents`): 17 з 21 мутантів вбито, 4 вижили, усі на `totals.ts:9` (гілка «незаповнений рядок чернетки → 0» — це AC-PUR-06, не AC-HIST-02) | PASS, R6; [`#L232`](https://github.com/YarynaPankivv/school-purchasing/blob/d45d876482087a8b4b2b61ff3aa9454d96f65431/tests/e2e/slice3.spec.ts#L232); [рядок звіту](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md#L20); [кадр](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/frames/AC-HIST-02-then-1.png) | #70 `83ae2c4` | доведено |
+| AC-HIST-06 | SQL `submit_purchase` (запис `submitted`); TS `formatHistoryTime` (`ДД.ММ.РРРР, ГГ:ХХ`, America/New_York) | база `dec-hist.test.ts:213`; unit `time.test.ts:6,10,15`, `pages.test.tsx:329,335` | мутант **H2** KILLED (доданий у цьому PR); Stryker, функція `formatHistoryTime`: 23 з 26 вбито, 2 вижили (`time.ts:54` вхід `null`, `:57` запасне значення) і 1 NoCoverage (`:57`) — захисні гілки, у AC їх немає | PASS, R6; [`#L267`](https://github.com/YarynaPankivv/school-purchasing/blob/d45d876482087a8b4b2b61ff3aa9454d96f65431/tests/e2e/slice3.spec.ts#L267); еталон формату в спеці — незалежний `Intl.DateTimeFormat`, а не імпорт функції застосунку; [рядок звіту](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md#L21); [кадр](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/frames/AC-HIST-06-then-1.png) | [#71](https://github.com/YarynaPankivv/school-purchasing/pull/71) `8852f10` | доведено |
+| AC-HIST-10 | SQL `request_history_select` (через `can_view_request`); сторінка заявки (`Forbidden`) | база `dec-hist.test.ts:235`; unit `pages.test.tsx:289` | мутант **H1** KILLED | PASS, R6; [`#L315`](https://github.com/YarynaPankivv/school-purchasing/blob/d45d876482087a8b4b2b61ff3aa9454d96f65431/tests/e2e/slice3.spec.ts#L315); [рядок звіту](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md#L22); [кадр](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/frames/AC-HIST-10-then-1.png) | #71 `8852f10` | доведено |
+| AC-LANG-09 | TS `src/lib/pur/statuses.ts` (`PURCHASE_STATUS_LABELS`) | unit `interface-language.test.ts:115`, `pages.test.tsx:670` | Stryker `statuses.ts`: 91 з 95 вбито; 4 вижили — `typeof`-охоронці `isPurchaseStatus` і `isLineStatus` (`:31`, `:35`) та `isTerminal` (`:50`); жоден не торкається текстів підписів | PASS, R6; [`#L354`](https://github.com/YarynaPankivv/school-purchasing/blob/d45d876482087a8b4b2b61ff3aa9454d96f65431/tests/e2e/slice3.spec.ts#L354); [рядок звіту](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md#L23); [кадр](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/frames/AC-LANG-09-then-1.png) | [#69](https://github.com/YarynaPankivv/school-purchasing/pull/69) `e95e2e9` | доведено |
+
+SQL-мутації (`npm run mutation:sql -- --markdown`, PGlite, 14 мутантів, 81 с): **12 з 14 вбито**, 2 прийнято як еквівалентні
+(**F1** зі зрізу 2 і **D5**), обидва з поясненням у `scripts/mutants.mjs`. Мутанти зрізу 3: D1–D5, H1, H2, N1.
+Специфікації UAT на 9 AC і `npm run uat:cleanup` — [#72](https://github.com/YarynaPankivv/school-purchasing/pull/72) `467d068`.
+
+## UAT на проді
+
+- Звіт: [`docs/qa/uat/2026-11-10/report.md`](https://github.com/YarynaPankivv/school-purchasing/blob/004199f/docs/qa/uat/2026-11-10/report.md) (прод `/api/health`: коміт `d45d876`), PR [#75](https://github.com/YarynaPankivv/school-purchasing/pull/75) `004199f`.
+- Прогін: 16 з 16 тестів, 12 AC у звіті — **PASS 12, FAIL 0, NEEDS-HUMAN 0** (9 AC зрізу 3 і AC-FRM-09, AC-FRM-14, AC-APR-03 зі зрізу 2); правило R6.
+- Рецензент `claude-haiku-5-5`; на AC-APR-03, AC-DEC-01, AC-DEC-04, AC-DEC-06, AC-DEC-07, AC-FRM-14, AC-HIST-10 суперечка → `claude-sonnet-5-5`, у всіх Sonnet — PASS. Разом $0,2409 за цінами API.
+- Перший прогін (до #74) давав NEEDS-HUMAN на AC-DEC-01 і AC-HIST-06: кадр «Тоді» був обрізаний висотою екрана 800 px, а не вадою продукту. Виправлення — вищий екран у цих двох кроках ([#74](https://github.com/YarynaPankivv/school-purchasing/pull/74) `d45d876`), повторний прогін — PASS.
+- [#73](https://github.com/YarynaPankivv/school-purchasing/pull/73) `62fbdf5`: `afterEach` більше не чекає запитів без відповіді (на проді 9 тестів із `@writes` зависали).
+- Негативний контроль (`npm run uat:nc`, 10.11.2026): **NC-1** (AC-FRM-14, у тесті навмисно інший текст) → **FAIL**, R1; **NC-2** (AC-FRM-09, текст «Тоді» уточнено, тест і застосунок ні) → **NEEDS-HUMAN**, R3 (Haiku і Sonnet — FAIL). PASS не отримав жоден. Звіт NC — у `test-results/uat-report-nc/` (не в git).
+- Дані: синтетичні `uat-*@example.test`, видалено 16, лишилось 0 (рядок «Прибирання» зі звіту); `npm run uat:cleanup` після прогону — «нічого прибирати».
+- Відео й траси: не в git, лишаються локально в `test-results/`.
+
+### Приймання PM
+
+| AC | Рішення PM | Посилання |
+|---|---|---|
+| AC-DEC-01, 04, 06, 07, AC-HIST-01, 02, 06, 10, AC-LANG-09 | рішення PM ще немає | коментар-підпис або issue «Відхилення від вимог» з'явиться в репо PM |
+
+## Не перевірено
+
+- **AC-HIST-01 на проді:** вимога «перша й друга закупівлі мають PUR-1 і PUR-2» припускає порожню базу, а на проді нумерація спільна для всіх. UAT перевіряє лише, що дві поспіль подані заявки отримали різні номери в зростаючому порядку без стороннього між ними. Точні PUR-1 і PUR-2 доведено лише в базі тесту (`dec-hist.test.ts:179`, мутант N1).
+- **AC-DEC-04, мутація:** окремого SQL-мутанта немає; повернення з причиною — звичайний шлях `decide_purchase`. Це слабший доказ, ніж для інших AC.
+- **Stryker зрізу 3** запускали лише на файлах цих AC (`time.ts`, `lines.ts`, `totals.ts`, `statuses.ts`), не на всьому `src/lib/pur`; повний `npm run mutation:ts` не гнали. Для `lines.ts` вижилі мутанти не розбирали.
+- **Вижилі TS-мутанти** (`totals.ts:9`, `time.ts:54,57`, `statuses.ts:31,35,50`) не про AC зрізу 3; тестів під них не дописували.
+- **Приймання PM** — ще немає.
