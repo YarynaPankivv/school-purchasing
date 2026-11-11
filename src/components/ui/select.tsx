@@ -55,6 +55,21 @@ export function Select({
   const root = useRef<HTMLSpanElement>(null);
   const native = useRef<HTMLSelectElement>(null);
   const listId = useId();
+
+  // React 19 після кожної Server Action робить form.reset(): справжній <select> повертається до першого пункту
+  // («Select a department» → порожнє значення), а кнопка далі показує вибране зі стану. Наступне «Save» чи «Submit»
+  // тоді надсилало б порожнє значення й стирало відділ у заявці. Після скидання повертаємо значення зі стану.
+  useEffect(() => {
+    const form = native.current?.form;
+    if (!form) return;
+    const restore = () => {
+      setTimeout(() => {
+        if (native.current) native.current.value = current;
+      }, 0);
+    };
+    form.addEventListener("reset", restore);
+    return () => form.removeEventListener("reset", restore);
+  }, [current]);
   const optionId = (index: number) => `${listId}-${index}`;
 
   // Закриваємо меню кліком поза ним.
