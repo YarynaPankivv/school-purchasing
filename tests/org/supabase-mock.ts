@@ -49,6 +49,8 @@ export function createSupabaseMock(options: {
   function from(table: string) {
     const call: Call = { table, op: "select", filters: [] };
     let single = false;
+    let cursor: { column: string; value: string } | undefined;
+    let limitCount: number | undefined;
     const builder = {
       select: () => builder,
       insert: (payload: unknown) => ((call.op = "insert"), (call.payload = payload), builder),
@@ -57,6 +59,9 @@ export function createSupabaseMock(options: {
       delete: () => ((call.op = "delete"), builder),
       eq: (column: string, value: unknown) => (call.filters.push([column, value]), builder),
       order: () => builder,
+      // Курсорне читання сторінками (src/lib/pur/paging.ts): gt("id", …) і limit(n) діють на відповідь за id, як у PostgREST.
+      gt: (column: string, value: unknown) => ((cursor = { column, value: String(value) }), builder),
+      limit: (count: number) => ((limitCount = count), builder),
       maybeSingle: () => ((single = true), builder),
       then<T>(resolve: (value: { data: unknown; error: MockError }) => T, reject?: (reason: unknown) => T) {
         calls.push(call);
@@ -73,6 +78,13 @@ export function createSupabaseMock(options: {
         } else {
           const configured = results[`${table}.${call.op}`];
           result = { data: configured?.data ?? (single ? null : []), error: configured?.error ?? null };
+        }
+        if (call.op === "select" && Array.isArray(result.data) && limitCount !== undefined) {
+          const key = cursor?.column ?? "id";
+          const rows = (result.data as Array<Record<string, unknown>>)
+            .filter((row) => !cursor || String(row[key] ?? "") > cursor.value)
+            .sort((a, b) => String(a[key] ?? "").localeCompare(String(b[key] ?? "")));
+          result = { data: rows.slice(0, limitCount), error: result.error };
         }
         return Promise.resolve(result).then(resolve, reject);
       },

@@ -4,6 +4,7 @@ import { loadPeople } from "@/lib/org/people";
 import type { CurrentUser } from "@/lib/auth/session";
 import { personLabel, type Approver } from "@/lib/org/departments";
 import { awaitingDecision, decisionQueue } from "@/lib/pur/decisions";
+import { PAGE_SIZE, selectAll } from "@/lib/pur/paging";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
 import { isParticipant } from "@/lib/pur/visibility";
@@ -33,8 +34,16 @@ export type RequestOverview = {
 
 export async function loadOverview(supabase: Supabase, user: CurrentUser): Promise<RequestOverview> {
   const [requests, lines, departments, approvers, personList, authorLabels] = await Promise.all([
-    supabase.from("requests").select("*").eq("type", "PUR").order("created_at", { ascending: false }),
-    supabase.from("request_lines").select("*"),
+    // Сторінками за курсором id: PostgREST обрізає відповідь на 1000 рядках, а зсув між сторінками міг би повторити чи
+    // загубити рядок. Порядок «нові зверху» виставляємо нижче, вже після завантаження.
+    selectAll((after) => {
+      const query = supabase.from("requests").select("*").eq("type", "PUR").order("id").limit(PAGE_SIZE);
+      return after ? query.gt("id", after) : query;
+    }),
+    selectAll((after) => {
+      const query = supabase.from("request_lines").select("*").order("id").limit(PAGE_SIZE);
+      return after ? query.gt("id", after) : query;
+    }),
     supabase.from("departments").select("id, name"),
     supabase.from("department_approvers").select("department_id, user_id"),
     loadPeople(supabase, user.role),
@@ -46,7 +55,10 @@ export async function loadOverview(supabase: Supabase, user: CurrentUser): Promi
   }
 
   const actor: Actor = { id: user.id, role: user.role, is_active: user.isActive };
-  const purchases = (requests.data ?? []).map(toPurchaseRow).filter((r): r is PurchaseRow => r !== null);
+  const purchases = (requests.data ?? [])
+    .map(toPurchaseRow)
+    .filter((r): r is PurchaseRow => r !== null)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id));
   const linesByRequest = new Map<string, LineRow[]>();
   for (const row of lines.data ?? []) {
     const line = toLineRow(row);
