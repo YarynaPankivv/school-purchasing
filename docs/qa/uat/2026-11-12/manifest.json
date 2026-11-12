@@ -1,0 +1,515 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-12T09:24:24.064Z",
+  "baseURL": "https://school-purchasing.vercel.app",
+  "deployedSha": "eaaf2fd6b5eece2534a0ad3f59fb4b8a914b7c58",
+  "testsCommit": "d62f2c37c14994054dc9f9c3452392e8feb138b0",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [
+    {
+      "id": "AC-APR-03",
+      "proof": "AC-APR-03",
+      "title": "AC-APR-03: схвалювач відкриває за прямим посиланням заявку відділу, який не схвалює, і бачить «Недостатньо прав», даних заявки немає, а статус лишається «Очікує схвалення»",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-APR-03-then-1.png",
+      "video": "test-results/artifacts/slice2-схвалювач-і-чужа-за-245ff-ишається-«Очікує-схвалення»-chromium/video.webm",
+      "trace": "test-results/artifacts/slice2-схвалювач-і-чужа-за-245ff-ишається-«Очікує-схвалення»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінка 403 із заголовком «Not enough permissions» і текстом «You do not have access to this request.». Номера, відділу, рядків і статусу заявки на сторінці немає, є лише кнопка «Back to home»."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "Not enough permissions",
+          "onPage": true
+        },
+        {
+          "quote": "403",
+          "onPage": true
+        },
+        {
+          "quote": "Not enough permissions",
+          "onPage": true
+        },
+        {
+          "quote": "You do not have access to this request.",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 15090,
+      "reviewCostUsd": 0.03147,
+      "reviewWallMs": 21521
+    },
+    {
+      "id": "AC-DEC-01",
+      "proof": "AC-DEC-01",
+      "title": "AC-DEC-01: Марія відхиляє рядок 2 і схвалює заявку — статус заявки «Частково схвалено», автор бачить рядок 2 зі статусом «Відхилено», а рядки 1 і 3 — зі статусом «Схвалено»",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-DEC-01-then-1.png",
+      "video": "test-results/artifacts/slice3-рішення-схвалювача--fc215--3-—-зі-статусом-«Схвалено»-chromium/video.webm",
+      "trace": "test-results/artifacts/slice3-рішення-схвалювача--fc215--3-—-зі-статусом-«Схвалено»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі заявка PUR-75 має статус «Partially approved» у картці статусу під заголовком. У таблиці Lines рядки 1 (Paper A4) і 3 (Folders) мають «Approved», рядок 2 (Markers) має «Rejected»."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "FAIL",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "PUR-75",
+          "onPage": true
+        },
+        {
+          "quote": "Status",
+          "onPage": true
+        },
+        {
+          "quote": "Partially approved",
+          "onPage": true
+        },
+        {
+          "quote": "1 Paper A4 For printing 3 $20.00 $60.00 Approved",
+          "onPage": true
+        },
+        {
+          "quote": "2 Markers For printing 2 $15.50 $31.00 Rejected",
+          "onPage": true
+        },
+        {
+          "quote": "3 Folders For printing 1 $7.00 $7.00 Approved",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 20850,
+      "reviewCostUsd": 0.03655,
+      "reviewWallMs": 24873
+    },
+    {
+      "id": "AC-DEC-04",
+      "proof": "AC-DEC-04",
+      "title": "AC-DEC-04: Марія повертає заявку на доопрацювання з причиною «Уточніть кількість» — статус заявки «Повернено на доопрацювання»",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-DEC-04-then-1.png",
+      "video": "test-results/artifacts/slice3-рішення-схвалювача--a5ed7-Повернено-на-доопрацювання»-chromium/video.webm",
+      "trace": "test-results/artifacts/slice3-рішення-схвалювача--a5ed7-Повернено-на-доопрацювання»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На сторінці PUR-76 (Primary School) у блоці Status видно бейдж «Returned for revision», а в жовтому банері — «Reason: Уточніть кількість». Також є зелене повідомлення про повернення заявки автору. Користувач — Maria Approver."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "Returned for revision",
+          "onPage": true
+        },
+        {
+          "quote": "Reason: Уточніть кількість",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 11996,
+      "reviewCostUsd": 0.03146,
+      "reviewWallMs": 22515
+    },
+    {
+      "id": "AC-DEC-06",
+      "proof": "AC-DEC-06",
+      "title": "AC-DEC-06: Марія повертає заявку на доопрацювання без причини — вона бачить повідомлення «Вкажіть причину», а статус заявки лишається «Очікує схвалення»",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-DEC-06-then-1.png",
+      "video": "test-results/artifacts/slice3-рішення-схвалювача--b1ecd-ишається-«Очікує-схвалення»-chromium/video.webm",
+      "trace": "test-results/artifacts/slice3-рішення-схвалювача--b1ecd-ишається-«Очікує-схвалення»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінки PUR-77 (Primary School) над блоком з підсумком заявки є червоний банер «Provide a reason». У полі Status стоїть «Awaiting approval». Частину про базу даних не оцінював."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "FAIL",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "Provide a reason",
+          "onPage": true
+        },
+        {
+          "quote": "Awaiting approval",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 11222,
+      "reviewCostUsd": 0.03188,
+      "reviewWallMs": 28106
+    },
+    {
+      "id": "AC-DEC-07",
+      "proof": "AC-DEC-07",
+      "title": "AC-DEC-07: автор виправив рядок 1 повернутої заявки й подає її знову — статус заявки «Очікує схвалення», відділ той самий",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-DEC-07-then-1.png",
+      "video": "test-results/artifacts/slice3-рішення-схвалювача--3746b-схвалення»-відділ-той-самий-chromium/video.webm",
+      "trace": "test-results/artifacts/slice3-рішення-схвалювача--3746b-схвалення»-відділ-той-самий-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На сторінці Requests є банер «Purchase submitted» і рядок PUR-78 з відділом «Primary School» та статусом «Awaiting approval». Статус стоїть у колонці Status рядка таблиці, а не біля заголовка сторінки, але це статус тієї самої заявки."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "FAIL",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "Awaiting approval",
+          "onPage": true
+        },
+        {
+          "quote": "Primary School",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 12708,
+      "reviewCostUsd": 0.03126,
+      "reviewWallMs": 23527
+    },
+    {
+      "id": "AC-FRM-09",
+      "proof": "AC-FRM-09",
+      "title": "AC-FRM-09: гість за прямим посиланням на форму закупівлі бачить сторінку входу, а форму закупівлі не показано",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-FRM-09-then-1.png",
+      "video": "test-results/artifacts/slice2-гість-без-входу-AC--2c359-форму-закупівлі-не-показано-chromium/video.webm",
+      "trace": "test-results/artifacts/slice2-гість-без-входу-AC--2c359-форму-закупівлі-не-показано-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі видно сторінку входу: заголовок «Sign in», підзаголовок про обліковий запис від школи, поля «Email» і «Password», кнопка «Sign in». Ознак форми закупівлі (заголовка «New request» чи поля відділу) на кадрі немає, але цю частину за правилами не оцінюю."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Sign in",
+          "onPage": true
+        },
+        {
+          "quote": "Email",
+          "onPage": true
+        },
+        {
+          "quote": "Password",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 2803,
+      "reviewCostUsd": 0.00211,
+      "reviewWallMs": 7045
+    },
+    {
+      "id": "AC-FRM-14",
+      "proof": "AC-FRM-14",
+      "title": "AC-FRM-14: працівник без жодної заявки відкриває «Мої заявки» і бачить повідомлення про порожній список, а списку заявок немає",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-FRM-14-then-1.png",
+      "video": "test-results/artifacts/slice2-працівник-без-жодно-38de7-писок-а-списку-заявок-немає-chromium/video.webm",
+      "trace": "test-results/artifacts/slice2-працівник-без-жодно-38de7-писок-а-списку-заявок-немає-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На сторінці Requests видно розділ «My requests» і під ним текст «You have not submitted any requests yet». Лічильники вкладок показують 0. Відсутність таблиці не оцінювалась."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "FAIL",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "My requests",
+          "onPage": true
+        },
+        {
+          "quote": "You have not submitted any requests yet",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 4753,
+      "reviewCostUsd": 0.03001,
+      "reviewWallMs": 20213
+    },
+    {
+      "id": "AC-HIST-01",
+      "proof": "AC-HIST-01",
+      "title": "AC-HIST-01: працівник 1 подає першу закупівлю, а потім другу — в списку «Мої заявки» вони мають номери «PUR-1» і «PUR-2»",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-HIST-01-then-1.png",
+      "video": "test-results/artifacts/slice3-номер-суми-й-історі-8c172-ть-номери-«PUR-1»-і-«PUR-2»-chromium/video.webm",
+      "trace": "test-results/artifacts/slice3-номер-суми-й-історі-8c172-ть-номери-«PUR-1»-і-«PUR-2»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінка «Requests» із розділом «My requests» (лічильник 2), і в рядках 1 та 2 видно «PUR-80» (Markers, $31.00) та «PUR-79» (Paper A4, $60.00), тобто два номери стоять поспіль. Буквальний текст критерію «PUR-1» і «PUR-2» на кадрі немає, але за переліком видимих частин перевіряються PUR-79 і PUR-80, а відсутність стороннього номера між ними віднесено до «не з кадрів», тому оцінка стосується лише видимої частини."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "My requests",
+          "onPage": true
+        },
+        {
+          "quote": "PUR-80",
+          "onPage": true
+        },
+        {
+          "quote": "PUR-79",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 8005,
+      "reviewCostUsd": 0.00222,
+      "reviewWallMs": 9588
+    },
+    {
+      "id": "AC-HIST-02",
+      "proof": "AC-HIST-02",
+      "title": "AC-HIST-02: автор відкриває закупівлю з двома рядками (кількість 3 за ціною 20.00 і кількість 2 за ціною 15.50) — суми рядків 60.00 і 31.00, а сума заявки 91.00",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-HIST-02-then-1.png",
+      "video": "test-results/artifacts/slice3-номер-суми-й-історі-3d864-і-31-00-а-сума-заявки-91-00-chromium/video.webm",
+      "trace": "test-results/artifacts/slice3-номер-суми-й-історі-3d864-і-31-00-а-сума-заявки-91-00-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі видно таблицю «Lines» з двома рядками: Paper A4 (Qty 3, Unit price $20.00, Total $60.00) і Markers (Qty 2, Unit price $15.50, Total $31.00). Під підписом «Request total» показано $91.00. Нижній рядок таблиці частково обрізаний кадром, але суму $31.00 видно повністю і читабельно."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "$60.00",
+          "onPage": true
+        },
+        {
+          "quote": "$31.00",
+          "onPage": true
+        },
+        {
+          "quote": "Request total",
+          "onPage": true
+        },
+        {
+          "quote": "$91.00",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 8307,
+      "reviewCostUsd": 0.00215,
+      "reviewWallMs": 8471
+    },
+    {
+      "id": "AC-HIST-06",
+      "proof": "AC-HIST-06",
+      "title": "AC-HIST-06: працівник 1 подав закупівлю у відділ «Початкова школа» і відкриває її історію — в історії є запис «Подано» з його іменем і датою та часом за часом America/New_York",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-HIST-06-then-1.png",
+      "video": "test-results/artifacts/slice3-номер-суми-й-історі-ce3de-м-за-часом-America-New-York-chromium/video.webm",
+      "trace": "test-results/artifacts/slice3-номер-суми-й-історі-ce3de-м-за-часом-America-New-York-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "У картці History на кадрі видно запис «Submitted · Anna Author · 12.11.2026, 04:22»: формат дати ДД.ММ.РРРР, часу ГГ:ХХ у 24-годинному форматі, без позначки поясу, як вимагає перевірка. Поле Created на тому самому кадрі показує «Nov 12, 2026, 4:22 AM EST», що узгоджується з часом запису. Зауваження: у загальному тексті критерію сказано «Подано», а на екрані напис англійський «Submitted»; за переліком видимих частин, який є еталоном для цієї перевірки, відповідність є, тож позначаю PASS, але PM варто підтвердити мову напису."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Submitted · Anna Author · 12.11.2026, 04:22",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 7653,
+      "reviewCostUsd": 0.00263,
+      "reviewWallMs": 9934
+    },
+    {
+      "id": "AC-HIST-10",
+      "proof": "AC-HIST-10",
+      "title": "AC-HIST-10: Петро схвалює лише відділ «Офіс» і відкриває за прямим посиланням історію заявки відділу «Початкова школа» з історією рішень — він бачить повідомлення «Недостатньо прав», історії не показано, а статус заявки не змінився",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-HIST-10-then-1.png",
+      "video": "test-results/artifacts/slice3-номер-суми-й-історі-f5109-а-статус-заявки-не-змінився-chromium/video.webm",
+      "trace": "test-results/artifacts/slice3-номер-суми-й-історі-f5109-а-статус-заявки-не-змінився-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі видно сторінку з кодом 403, заголовком «Not enough permissions» і текстом «You do not have access to this request.». Карток «History» та даних заявки немає, є лише кнопка «Back to home». Статус у базі за кадром не оцінювався."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "FAIL",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "Not enough permissions",
+          "onPage": true
+        },
+        {
+          "quote": "You do not have access to this request.",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 8910,
+      "reviewCostUsd": 0.03114,
+      "reviewWallMs": 20328
+    },
+    {
+      "id": "AC-LANG-09",
+      "proof": "AC-LANG-09",
+      "title": "AC-LANG-09: заявки зі статусами «Частково схвалено» і «Повернено на доопрацювання» показано у списку й на сторінці заявки — статус підписано текстом «Partially approved» чи «Returned for revision», а не лише кольором",
+      "screenshot": "docs/qa/uat/2026-11-12/frames/AC-LANG-09-then-1.png",
+      "video": "test-results/artifacts/slice3-підписи-статусів-AC-1463e-evision»-а-не-лише-кольором-chromium/video.webm",
+      "trace": "test-results/artifacts/slice3-підписи-статусів-AC-1463e-evision»-а-не-лише-кольором-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінки /requests у таблиці «My requests» статус рядка PUR-84 підписано текстом «Partially approved», а рядка PUR-85 — текстом «Returned for revision», обидва написи читаються посимвольно збіжно з критерієм. Частина про сторінки окремих заявок та історію на цьому кадрі не видна і в моїй оцінці не береться."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "PUR-84",
+          "onPage": true
+        },
+        {
+          "quote": "Partially approved",
+          "onPage": true
+        },
+        {
+          "quote": "PUR-85",
+          "onPage": true
+        },
+        {
+          "quote": "Returned for revision",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 12977,
+      "reviewCostUsd": 0.00212,
+      "reviewWallMs": 9366
+    }
+  ],
+  "negativeControls": [],
+  "cleanup": {
+    "at": "2026-11-12T09:23:05.163Z",
+    "deleted": [
+      "uat-261112092000-lang09-maria@example.test",
+      "uat-261112092000-lang09-author@example.test",
+      "uat-261112092000-hist10-petro@example.test",
+      "uat-261112092000-hist10-maria@example.test",
+      "uat-261112092000-hist10-author@example.test",
+      "uat-261112092000-hist06-worker@example.test",
+      "uat-261112092000-hist02-author@example.test",
+      "uat-261112092000-hist01-worker@example.test",
+      "uat-261112092000-dec07-maria@example.test",
+      "uat-261112092000-dec07-author@example.test",
+      "uat-261112092000-dec06-maria@example.test",
+      "uat-261112092000-dec06-author@example.test",
+      "uat-261112092000-dec04-maria@example.test",
+      "uat-261112092000-dec04-author@example.test",
+      "uat-261112092000-dec01-maria@example.test",
+      "uat-261112092000-dec01-author@example.test",
+      "uat-261112092000-selreset@example.test"
+    ],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}
