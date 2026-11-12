@@ -5,7 +5,7 @@
 
 | Станція фабрики | Рішення |
 |---|---|
-| Допуск (затверджена задача до коду) | уже є: `openspec/changes/impl-dec-hist/tasks.md` (задачі з «Done when: AC-…»), `spec-review`, PR «Специфікація» до реалізації |
+| Допуск (затверджена задача до коду) | уже є: `openspec/changes/archive/2026-11-12-impl-dec-hist/tasks.md` (задачі з «Done when: AC-…»), `spec-review`, PR «Специфікація» до реалізації |
 | Захищені тести (червоні до коду) | візьмемо: у `.github/pull_request_template.md` рядок чекліста «тест з AC ID був червоним до коду (окремий коміт)»; зараз тести пишуться разом із кодом |
 | Приховані сценарії | не потрібно, бо код пише людина з рев'ю, а `tests/e2e/slice3.spec.ts` уже перевіряє AC незалежно від unit-тестів, з дослівним «Тоді» з вимог PM |
 | Мутації й повтор | уже є для SQL: `npm run mutation:sql` (`scripts/mutants.mjs`, D1–D5, H1, H2, N1); візьмемо: нічний або ручний job `mutation:ts` (Stryker) у `.github/workflows/` для `src/lib/pur/*.ts`, у CI його ще немає |
