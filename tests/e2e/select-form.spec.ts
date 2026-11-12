@@ -9,7 +9,8 @@ import { addToDepartment, createUatUser, requestInfo } from "./support/slice3";
 
 test(
   "AC-PUR-05: відділ, вибраний у чернетці, не губиться після «Add line» й зберігається в поданій заявці",
-  { tag: ["@writes"], annotation: { type: "ac", description: "AC-PUR-05" } },
+  // Без анотації `ac`: це регресія, а не UAT-перевірка для PM, тож у звіт UAT (scripts/uat/pack.mjs) вона не потрапляє.
+  { tag: ["@writes"] },
   async ({ page }) => {
     const user = await createUatUser("selreset", "Select Reset");
     let id = "";
