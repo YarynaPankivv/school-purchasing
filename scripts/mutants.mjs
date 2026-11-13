@@ -119,6 +119,12 @@ export const mutants = [
     replace: "check (char_length(decision_reason) <= 2000000)",
   },
   {
+    id: "L3", kind: "sql", ac: "AC-DEC-06", file: MIGRATION_LENGTH, tests: [WRITE_GUARDS_DB],
+    what: "request_history_reason_length: межу причини в історії знято (2000 → 2000000)",
+    find: "check (char_length(reason) <= 2000)",
+    replace: "check (char_length(reason) <= 2000000)",
+  },
+  {
     id: "L2", kind: "sql", ac: "AC-DEC-06", file: MIGRATION_LENGTH, tests: [WRITE_GUARDS_DB],
     what: "request_lines_purpose_length: межу мети рядка знято (500 → 500000)",
     find: "check (char_length(purpose) <= 500)",

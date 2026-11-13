@@ -131,6 +131,17 @@ describe("межі довжини вільного тексту", () => {
     expect(await historyCount(id)).toBe(historyBefore);
   });
 
+  it("CHECK діє й поза функціями переходів: навіть service_role не записує причину понад 2000 символів ні в заявку, ні в історію", async () => {
+    const id = await submitted();
+    await expect(t.asService("update public.requests set decision_reason = $2 where id = $1", [id, long(2001)])).rejects.toThrow(
+      /requests_decision_reason_length|violates check constraint/i,
+    );
+    await expect(
+      t.asService("insert into public.request_history (request_id, actor_id, action, reason) values ($1, $2, 'returned', $3)", [id, maria, long(2001)]),
+    ).rejects.toThrow(/request_history_reason_length|violates check constraint/i);
+    expect((await requestOf(id)).decision_reason).toBeNull();
+  });
+
   it("мета рядка понад 500 символів відхилена і при вставці, і при зміні; рівно 500 — приймається", async () => {
     const id = await createDraft(andrii);
     await expect(
