@@ -32,6 +32,38 @@ export type RequestOverview = {
   all: RequestListItem[];
 };
 
+// Рядки заявок за id заявки: спільне для списків і підказок пошуку.
+function groupLines(rows: readonly Parameters<typeof toLineRow>[0][]): Map<string, LineRow[]> {
+  const byRequest = new Map<string, LineRow[]>();
+  for (const row of rows) {
+    const line = toLineRow(row);
+    if (line) byRequest.set(line.request_id, [...(byRequest.get(line.request_id) ?? []), line]);
+  }
+  return byRequest;
+}
+
+// Рядок списку. Сума заявки — усіх рядків, зокрема відхилених (AC-HIST-02): так само, як «Request total» на сторінці
+// заявки. Відділ є, але автор його не бачить (RLS віддає відділи лише заявникам) — «—», а не «ще без відділу».
+function listItemBuilder(
+  linesByRequest: ReadonlyMap<string, LineRow[]>,
+  departments: readonly { id: string; name: string }[],
+  names: ReadonlyMap<string, string>,
+) {
+  const departmentNames = new Map(departments.map((d) => [d.id, d.name]));
+  return (request: PurchaseRow): RequestListItem => ({
+    request,
+    total: requestTotal(linesByRequest.get(request.id) ?? []),
+    departmentName: request.department_id ? (departmentNames.get(request.department_id) ?? "—") : null,
+    authorName: names.get(request.author_id) ?? "—",
+    items: itemsSummary(linesByRequest.get(request.id) ?? []),
+  });
+}
+
+// Підписи з request_author_labels (усі автори видимих заявок) мають перевагу над профілями колег.
+function nameMap(people: readonly (Parameters<typeof personLabel>[0] & { id: string })[], authorLabels: ReadonlyMap<string, string>) {
+  return new Map([...people.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);
+}
+
 export async function loadOverview(supabase: Supabase, user: CurrentUser): Promise<RequestOverview> {
   const [requests, lines, departments, approvers, personList, authorLabels] = await Promise.all([
     // Сторінками за курсором id: PostgREST обрізає відповідь на 1000 рядках, а зсув між сторінками міг би повторити чи
@@ -59,25 +91,8 @@ export async function loadOverview(supabase: Supabase, user: CurrentUser): Promi
     .map(toPurchaseRow)
     .filter((r): r is PurchaseRow => r !== null)
     .sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id));
-  const linesByRequest = new Map<string, LineRow[]>();
-  for (const row of lines.data ?? []) {
-    const line = toLineRow(row);
-    if (line) linesByRequest.set(line.request_id, [...(linesByRequest.get(line.request_id) ?? []), line]);
-  }
-  const departmentNames = new Map((departments.data ?? []).map((d) => [d.id, d.name]));
-  // Підписи з request_author_labels (усі автори видимих заявок) мають перевагу над профілями колег.
-  const names = new Map([...personList.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);
   const approverList: Approver[] = approvers.data ?? [];
-
-  const item = (request: PurchaseRow): RequestListItem => ({
-    request,
-    // Сума заявки — усіх рядків, зокрема відхилених (AC-HIST-02): так само, як «Request total» на сторінці заявки.
-    total: requestTotal(linesByRequest.get(request.id) ?? []),
-    // Відділ є, але автор його не бачить (RLS віддає відділи лише заявникам) — «—», а не «ще без відділу».
-    departmentName: request.department_id ? (departmentNames.get(request.department_id) ?? "—") : null,
-    authorName: names.get(request.author_id) ?? "—",
-    items: itemsSummary(linesByRequest.get(request.id) ?? []),
-  });
+  const item = listItemBuilder(groupLines(lines.data ?? []), departments.data ?? [], nameMap(personList, authorLabels));
 
   const isAdmin = user.role === "admin" && user.isActive;
   return {
@@ -105,18 +120,6 @@ export async function loadRecentRequests(supabase: Supabase, user: CurrentUser, 
   for (const result of [lines, departments]) {
     if (result.error) throw new Error(`Failed to read requests: ${result.error.message}`);
   }
-  const linesByRequest = new Map<string, LineRow[]>();
-  for (const row of lines.data ?? []) {
-    const line = toLineRow(row);
-    if (line) linesByRequest.set(line.request_id, [...(linesByRequest.get(line.request_id) ?? []), line]);
-  }
-  const departmentNames = new Map((departments.data ?? []).map((d) => [d.id, d.name]));
-  const names = new Map([...personList.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);
-  return purchases.map((request) => ({
-    request,
-    total: requestTotal(linesByRequest.get(request.id) ?? []),
-    departmentName: request.department_id ? (departmentNames.get(request.department_id) ?? "—") : null,
-    authorName: names.get(request.author_id) ?? "—",
-    items: itemsSummary(linesByRequest.get(request.id) ?? []),
-  }));
+  const item = listItemBuilder(groupLines(lines.data ?? []), departments.data ?? [], nameMap(personList, authorLabels));
+  return purchases.map(item);
 }

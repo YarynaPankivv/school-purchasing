@@ -29,6 +29,7 @@ import { isAppRole } from "@/lib/org/roles";
 import { canAdminReject, canDecide, canReopen, decisionBlockReason, forwardedLines } from "@/lib/pur/decisions";
 import { PUR_ERROR_MESSAGES, purErrorMessage } from "@/lib/pur/errors";
 import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail, LINE_NAME_MAX, NOTE_MAX, PURPOSE_MAX, REASON_MAX } from "@/lib/pur/lines";
+import { loadDepartmentApprovers } from "../_lib/approvers";
 import { LinesTable } from "./lines-table";
 import { purchaseNumberLabel } from "@/lib/pur/numbers";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
@@ -125,11 +126,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   const lines = (linesRes.data ?? []).map(toLineRow).filter((l): l is LineRow => l !== null);
   const departments = departmentsRes.data ?? [];
   // Рішення залежить лише від схвалювачів відділу цієї заявки: інших не читаємо.
-  const approversRes = request.department_id
-    ? await supabase.from("department_approvers").select("department_id, user_id").eq("department_id", request.department_id)
-    : { data: [], error: null };
-  if (approversRes.error) throw new Error(`Failed to read the request: ${approversRes.error.message}`);
-  const approvers: Approver[] = approversRes.data ?? [];
+  const approvers: Approver[] = await loadDepartmentApprovers(supabase, request.department_id);
   const memberships: Membership[] = (membersRes.data ?? []).map((m) => ({ ...m }));
   // Підписи з request_author_labels (автор і особа «від імені» видимої заявки) мають перевагу над профілями колег.
   const names = new Map([...people.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);
