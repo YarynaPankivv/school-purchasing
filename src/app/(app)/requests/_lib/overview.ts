@@ -112,7 +112,14 @@ export async function loadRecentRequests(supabase: Supabase, user: CurrentUser, 
   const purchases = (requests.data ?? []).map(toPurchaseRow).filter((r): r is PurchaseRow => r !== null);
   const ids = purchases.map((r) => r.id);
   const [lines, departments, personList, authorLabels] = await Promise.all([
-    ids.length > 0 ? supabase.from("request_lines").select("*").in("request_id", ids) : Promise.resolve({ data: [], error: null }),
+    // Рядків може бути більше за ліміт заявок (300 заявок × кілька рядків), а PostgREST обрізає відповідь на 1000:
+    // тому сторінками за курсором id, як у loadOverview.
+    ids.length > 0
+      ? selectAll((after) => {
+          const query = supabase.from("request_lines").select("*").in("request_id", ids).order("id").limit(PAGE_SIZE);
+          return after ? query.gt("id", after) : query;
+        })
+      : Promise.resolve({ data: [], error: null }),
     supabase.from("departments").select("id, name"),
     loadPeople(supabase, user.role),
     loadAuthorLabels(supabase),
