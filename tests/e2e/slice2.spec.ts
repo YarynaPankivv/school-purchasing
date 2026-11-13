@@ -1,11 +1,12 @@
 // UAT зрізу 2 на проді: AC-FRM-09 (гість), AC-FRM-14 (порожній стан «My requests»), AC-APR-03 (чужа заявка).
-// Усі три лише читають дані: прод спільний з PM. Тексти «Тоді» — з requirements/47 і 48; англійські повідомлення
+// AC-FRM-09 і AC-FRM-14 лише читають дані (прод спільний з PM); AC-APR-03 створює власну заявку відділу «Office» (@writes). Тексти «Тоді» — з requirements/47 і 48; англійські повідомлення
 // інтерфейсу — з таблиці PM (requirements/49): «Недостатньо прав» = «Not enough permissions»,
 // «Ви ще не подали жодної заявки» = «You have not submitted any requests yet».
-// Акаунти — tests/e2e/auth.setup.ts (admin — лише щоб знайти чужу заявку й перевірити її статус).
+// Акаунти — tests/e2e/auth.setup.ts (admin — лише щоб перевірити статус чужої заявки).
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { attachRuntimeErrors, given, thenStep, when } from "./support/uat";
+import { addToDepartment, createUatUser, requestInfo, submitPurchaseAs } from "./support/slice3";
 
 test.afterEach(async ({ page }) => attachRuntimeErrors(page));
 
@@ -98,27 +99,6 @@ test.describe("працівник без жодної заявки", () => {
 
 type Foreign = { id: string; label: string; department: string };
 
-/** Подані заявки (статус «Awaiting approval») зі списку «Requests» під сесією `statePath`: id → номер і відділ. */
-async function pendingRequests(browser: Browser, baseURL: string, statePath: string): Promise<Map<string, Foreign>> {
-  const context = await browser.newContext({ baseURL, storageState: statePath });
-  try {
-    const page = await context.newPage();
-    await page.goto("/requests?status=pending");
-    const rows = page.getByTestId("request-row");
-    const found = new Map<string, Foreign>();
-    for (const row of await rows.all()) {
-      const href = (await row.getByRole("link").first().getAttribute("href")) ?? "";
-      const id = /^\/requests\/([0-9a-f-]{36})/.exec(href)?.[1];
-      if (!id) continue;
-      const cells = await row.getByRole("cell").allInnerTexts();
-      found.set(id, { id, label: (await row.getByRole("link").first().innerText()).trim(), department: (cells[2] ?? "").trim() });
-    }
-    return found;
-  } finally {
-    await context.close();
-  }
-}
-
 async function statusSeenByAdmin(browser: Browser, baseURL: string, id: string): Promise<string> {
   const context = await browser.newContext({ baseURL, storageState: "playwright/.auth/admin.json" });
   try {
@@ -140,22 +120,22 @@ test.describe("схвалювач і чужа заявка", () => {
 
   test(
     "AC-APR-03: схвалювач відкриває за прямим посиланням заявку відділу, який не схвалює, і бачить «Недостатньо прав», даних заявки немає, а статус лишається «Очікує схвалення»",
-    { tag: ["@uat"], annotation: { type: "ac", description: "AC-APR-03" } },
+    { tag: ["@uat", "@writes"], annotation: { type: "ac", description: "AC-APR-03" } },
     async ({ page, browser, baseURL }) => {
       let foreign: Foreign | undefined;
 
       await given(
         "заявка відділу, який схвалювач pm-approver@example.test не схвалює, має статус «Awaiting approval»",
         async () => {
-          // Заявка, яку адміністратор бачить у списку подач, а схвалювач — ні: відділ не його.
-          const all = await pendingRequests(browser, baseURL!, "playwright/.auth/admin.json");
-          const mine = await pendingRequests(browser, baseURL!, "playwright/.auth/approver.json");
-          foreign = [...all.values()].find((r) => !mine.has(r.id));
-          expect(
-            foreign,
-            "на проді немає поданої заявки чужого для pm-approver відділу: подайте її під pm-requester у відділ, якого pm-approver не схвалює",
-          ).toBeDefined();
-          expect(foreign!.department, "у списку не прочитано відділ заявки").not.toBe("");
+          // Власна заявка відділу «Office» (його pm-approver не схвалює: він схвалює «Primary School», scripts/e2e-seed.mjs):
+          // перевіряємо саме відділ, а не «будь-яку заявку, видиму адміну й невидиму схвалювачу».
+          const author = await createUatUser("apr03-author", "Anna Author");
+          await addToDepartment(author, "Office");
+          const id = await submitPurchaseAs(author, "Office", [{ name: "Paper A4", quantity: 3, unitPrice: 20 }]);
+          const info = await requestInfo(id);
+          expect(info.department, "заявка має бути відділу «Office»").toBe("Office");
+          expect(info.status).toBe("pending");
+          foreign = { id, label: `PUR-${info.number}`, department: info.department };
         },
       );
 

@@ -7,6 +7,8 @@ import {
   DELIVERY_DATE_INVALID,
   LINE_NAME_MAX,
   NOTE_MAX,
+  PURPOSE_MAX,
+  REASON_MAX,
   emptyLine,
   incompleteLines,
   incompleteLinesMessage,
@@ -14,9 +16,11 @@ import {
   isLineComplete,
   parseLineFields,
   parseLineName,
+  parseLinePurpose,
   parseNote,
   parseQuantity,
   parseUnitPrice,
+  reasonTooLong,
 } from "@/lib/pur/lines";
 import { formatPurchaseNumber, nextPurchaseNumber, parsePurchaseNumber, purchaseNumberLabel } from "@/lib/pur/numbers";
 import {
@@ -257,5 +261,22 @@ describe("isKnownInvalidDetail", () => {
     expect(isKnownInvalidDetail("Your account is locked. Call 555-0100 to unlock it.")).toBe(false);
     expect(isKnownInvalidDetail(`${DELIVERY_DATE_INVALID} Call 555-0100.`)).toBe(false);
     expect(isKnownInvalidDetail("")).toBe(false);
+  });
+});
+
+describe("межі довжини мети рядка й причини рішення", () => {
+  it("мета рядка до 500 символів приймається, довша — ні, повідомлення відоме сторінці", () => {
+    expect(parseLinePurpose("x".repeat(PURPOSE_MAX))).toEqual({ ok: true, value: "x".repeat(PURPOSE_MAX) });
+    const tooLong = parseLinePurpose("x".repeat(PURPOSE_MAX + 1));
+    expect(tooLong).toEqual({ ok: false, error: `Purpose must be at most ${PURPOSE_MAX} characters.` });
+    expect(isKnownInvalidDetail((tooLong as { error: string }).error)).toBe(true);
+  });
+
+  it("причина до 2000 символів (без пробілів по краях) проходить, довша — відхиляється до запиту в базу", () => {
+    expect(reasonTooLong("x".repeat(REASON_MAX))).toBe(false);
+    expect(reasonTooLong(`  ${"x".repeat(REASON_MAX)}  `)).toBe(false);
+    expect(reasonTooLong("x".repeat(REASON_MAX + 1))).toBe(true);
+    // Рахуємо символи, як Postgres char_length, а не кодові одиниці UTF-16.
+    expect(reasonTooLong("😀".repeat(REASON_MAX))).toBe(false);
   });
 });

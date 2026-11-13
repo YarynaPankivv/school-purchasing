@@ -239,6 +239,12 @@ describe("сторінка закупівлі /requests/[id]", () => {
     expect(html).toContain("Cancel request");
   });
 
+  it("AC-PUR-18: панель рішення пояснює, що відмічені рядки відхиляються, а запит тоді «Partially approved»", async () => {
+    const html = await renderDetail({ viewer: asApprover, request: requestRow("pending"), approvers: approverOf });
+    expect(html).toContain("Leave all unchecked to approve the whole request.");
+    expect(html).toContain('aria-describedby="reject-lines-hint"');
+  });
+
   it("AC-PUR-26: автор на редагуванні — «Save changes», а схвалювач бачить, що рішення призупинено", async () => {
     const editing = requestRow("pending", { editing: true });
     const authorView = await renderDetail({ viewer: asAuthor, request: editing, members: authorMember });

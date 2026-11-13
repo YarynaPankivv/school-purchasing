@@ -12,7 +12,7 @@ import base from "./vitest.config.mjs";
 // звіт усе одно будується.
 // Загальний відсоток (у демо ≈32 %) не поріг: сторінки й server actions доводять тести бази (PGlite) та e2e, а не Vitest.
 const FLOORED: string[] = [
-  // Доменні файли, що вже тримають 90/85/90/90 (зріз 2 і PUR). Нижчі — org/errors, pur/rows, pur/time — додамо, коли тести їх піднімуть.
+  // Доменні файли, що вже тримають 90/85/90/90 (зріз 2 і PUR). Нижчі — org/errors, pur/rows — додамо, коли тести їх піднімуть.
   "auth/session",
   "health",
   "org/departments",
@@ -26,10 +26,12 @@ const FLOORED: string[] = [
   "pur/errors",
   "pur/lines",
   "pur/numbers",
+  "pur/paging",
   "pur/on-behalf",
   "pur/statuses",
   "pur/submission",
   "pur/summary",
+  "pur/time",
   "pur/totals",
   "pur/visibility",
 ];

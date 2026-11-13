@@ -53,7 +53,7 @@ test.describe("рішення схвалювача й повторне пода�
         await page.goto(`/requests/${id}`);
         await page.getByRole("checkbox", { name: "2. Markers" }).check();
         await page.getByTestId("approve").click();
-        await expect(statusOnPage(page)).toHaveText("Partially approved");
+        await page.waitForURL(/saved=decided_partially_approved/);
       });
 
       await thenStep(
@@ -97,7 +97,7 @@ test.describe("рішення схвалювача й повторне пода�
         await page.goto(`/requests/${id}`);
         await page.getByLabel("Reason").fill("Уточніть кількість");
         await page.getByTestId("return").click();
-        await expect(statusOnPage(page)).toHaveText("Returned for revision");
+        await page.waitForURL(/saved=decided_returned/);
       });
 
       await thenStep(
@@ -129,7 +129,7 @@ test.describe("рішення схвалювача й повторне пода�
         await loginAs(page, maria);
         await page.goto(`/requests/${id}`);
         await page.getByTestId("return").click();
-        await expect(page.getByRole("main")).toContainText("Provide a reason");
+        await page.waitForURL(/error=reason_required/);
       });
 
       await thenStep(
@@ -168,7 +168,7 @@ test.describe("рішення схвалювача й повторне пода�
 
       await when("автор подає заявку знову", async () => {
         await page.getByTestId("submit").click();
-        await expect(statusOnPage(page)).toHaveText("Awaiting approval");
+        await page.waitForURL(/saved=submitted/);
       });
 
       await thenStep(
@@ -192,7 +192,7 @@ test.describe("рішення схвалювача й повторне пода�
 
 test.describe("номер, суми й історія заявки", () => {
   test(
-    "AC-HIST-01: працівник 1 подає першу закупівлю, а потім другу — в списку «Мої заявки» вони мають номери «PUR-1» і «PUR-2»",
+    "AC-HIST-01: працівник 1 подає першу закупівлю, а потім другу — в списку «Мої заявки» вони мають номери «PUR-n» і «PUR-(n+1)» поспіль (на проді нумерація спільна: за погодженням з PM, issues #73 і #76, UAT перевіряє два номери поспіль, а абсолютні «PUR-1» і «PUR-2» доведено тестом на порожній базі, tests/db/dec-hist.test.ts)",
     { tag: ["@uat", "@writes"], annotation: { type: "ac", description: "AC-HIST-01" } },
     async ({ page }) => {
       const worker = await createUatUser("hist01-worker", "Anna Author");
@@ -200,7 +200,7 @@ test.describe("номер, суми й історія заявки", () => {
       let first = { number: 0 };
       let second = { number: 0 };
 
-      await given("працівник 1 у відділі «Primary School»; нумерація на проді спільна, тож перевіряємо дві закупівлі поспіль", async () => {});
+      await given("працівник 1 у відділі «Primary School»; база НЕ порожня (нумерація на проді спільна), тож перевіряємо дві закупівлі поспіль, як погоджено з PM", async () => {});
 
       await when("працівник 1 подає першу закупівлю, а потім другу", async () => {
         const firstId = await submitPurchaseAs(worker, PRIMARY, [PAPER]);
@@ -214,7 +214,8 @@ test.describe("номер, суми й історія заявки", () => {
       await thenStep(
         page,
         {
-          clause: "в списку «Мої заявки» вони мають номери «PUR-1» і «PUR-2»",
+          clause:
+            "в списку «Мої заявки» вони мають номери «PUR-n» і «PUR-(n+1)» поспіль (погоджено з PM, issues #73 і #76: на проді нумерація спільна, тож абсолютні «PUR-1» і «PUR-2» UAT не перевіряє; їх доводить тест бази на порожній базі)",
           visible: [`у розділі «My requests» дві закупівлі з номерами «PUR-${first.number}» і «PUR-${first.number + 1}» поспіль`],
           hidden: ["між номерами двох закупівель немає стороннього номера: нумерація на проді спільна, абсолютні PUR-1 і PUR-2 можливі лише на порожній базі"],
         },
@@ -343,7 +344,14 @@ test.describe("номер, суми й історія заявки", () => {
           await expect(page.getByRole("main").getByRole("heading", { name: "Not enough permissions" })).toBeVisible();
           await expect(page.getByTestId("history")).toHaveCount(0);
           await expect(page.getByText("Уточніть кількість")).toHaveCount(0);
-          expect((await requestInfo(id)).status).toBe("returned");
+          // «Даних заявки немає»: ні статусу, ні таблиці рядків, ні номера й відділу заявки.
+          await expect(statusOnPage(page)).toHaveCount(0);
+          await expect(page.getByTestId("lines")).toHaveCount(0);
+          const info = await requestInfo(id);
+          const text = await page.locator("body").innerText();
+          expect(text).not.toContain(`PUR-${info.number}`);
+          expect(text).not.toContain(PAPER.name);
+          expect(info.status).toBe("returned");
         },
       );
     },

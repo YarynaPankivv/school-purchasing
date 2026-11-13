@@ -28,7 +28,9 @@ import { PURCHASE_TYPE_LABELS } from "@/lib/org/requests";
 import { isAppRole } from "@/lib/org/roles";
 import { canAdminReject, canDecide, canReopen, decisionBlockReason, forwardedLines } from "@/lib/pur/decisions";
 import { PUR_ERROR_MESSAGES, purErrorMessage } from "@/lib/pur/errors";
-import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail, LINE_NAME_MAX, NOTE_MAX } from "@/lib/pur/lines";
+import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail, LINE_NAME_MAX, NOTE_MAX, PURPOSE_MAX, REASON_MAX } from "@/lib/pur/lines";
+import { loadDepartmentApprovers } from "../_lib/approvers";
+import { LinesTable } from "./lines-table";
 import { purchaseNumberLabel } from "@/lib/pur/numbers";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
@@ -93,7 +95,7 @@ export const metadata: Metadata = { title: "Request · School Purchasing" };
 
 // Закупівля: чернетка з рядками (AC-PUR-01…10), подання (05, 09, 14, 16, 23), редагування поданої (26), скасування й копія
 // (29…32), рішення схвалювача й відділу закупівель (17…28, 36, 50…52, 54), історія (37, 39, 43), видимість (03, 11, 35, 49).
-// Видимість рядка вирішує RLS: чужу заявку база просто не віддає, тож сторінка дає 404 (AC-PUR-03, 49).
+// Видимість рядка вирішує RLS: чужу заявку база просто не віддає, тож сторінка показує «Not enough permissions», а не дані (AC-PUR-03, 49).
 export async function RequestPageContent({ params, searchParams }: PageProps<"/requests/[id]">) {
   const { supabase, user } = await requireActiveUser();
   const { id } = await params;
@@ -102,18 +104,17 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   // Куди повертає «Back» і сусіди в порядку списку, з якого людина прийшла (лише адреса, дані читає RLS).
   const back = safeBack(rawBack);
 
-  const [requestRes, linesRes, historyRes, departmentsRes, approversRes, people, membersRes, permissions, authorLabels] = await Promise.all([
+  const [requestRes, linesRes, historyRes, departmentsRes, people, membersRes, permissions, authorLabels] = await Promise.all([
     supabase.from("requests").select("*").eq("id", id).eq("type", "PUR").maybeSingle(),
     supabase.from("request_lines").select("*").eq("request_id", id).order("position"),
     supabase.from("request_history").select("*").eq("request_id", id).order("created_at", { ascending: false }),
     supabase.from("departments").select("id, name"),
-    supabase.from("department_approvers").select("department_id, user_id"),
     loadPeople(supabase, user.role),
     supabase.from("department_members").select("department_id, user_id, auto_approve"),
     loadPermissions(supabase, user.id),
     loadAuthorLabels(supabase),
   ]);
-  for (const result of [requestRes, linesRes, historyRes, departmentsRes, approversRes, membersRes]) {
+  for (const result of [requestRes, linesRes, historyRes, departmentsRes, membersRes]) {
     if (result.error) throw new Error(`Failed to read the request: ${result.error.message}`);
   }
   const request = requestRes.data ? toPurchaseRow(requestRes.data) : null;
@@ -124,7 +125,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
   const actor: Actor = { id: user.id, role: user.role, is_active: user.isActive };
   const lines = (linesRes.data ?? []).map(toLineRow).filter((l): l is LineRow => l !== null);
   const departments = departmentsRes.data ?? [];
-  const approvers: Approver[] = approversRes.data ?? [];
+  // Рішення залежить лише від схвалювачів відділу цієї заявки: інших не читаємо.
+  const approvers: Approver[] = await loadDepartmentApprovers(supabase, request.department_id);
   const memberships: Membership[] = (membersRes.data ?? []).map((m) => ({ ...m }));
   // Підписи з request_author_labels (автор і особа «від імені» видимої заявки) мають перевагу над профілями колег.
   const names = new Map([...people.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);
@@ -320,23 +322,13 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
               </SubmitButton>
             }
           >
-            <div className="overflow-x-auto" role="region" aria-label="Request lines" tabIndex={0}>
-              <table className="w-full text-left text-sm max-md:block md:min-w-176" data-testid="lines">
-                <thead className="text-xs text-muted-foreground max-md:hidden">
-                  <tr>
-                    <th className="pb-2 pr-2 font-medium">#</th>
-                    <th className="pb-2 pr-2 font-medium">Name</th>
-                    <th className="pb-2 pr-2 font-medium">Purpose</th>
-                    <th className="pb-2 pr-2 font-medium">Qty</th>
-                    <th className="pb-2 pr-2 font-medium">Unit price</th>
-                    <th className="pb-2 pr-2 text-right font-medium">Total</th>
-                    <th className="pb-2">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                {/* Нижче md кожен рядок — блок: «Line N» і «Remove» зверху, назва й призначення на всю ширину, кількість і ціна поряд, сума. */}
-                <tbody className="divide-y divide-border max-md:block">
+            <LinesTable
+              lastHeader={
+                <th className="pb-2">
+                  <span className="sr-only">Actions</span>
+                </th>
+              }
+            >
                   {lines.map((line) => (
                     <tr key={line.id} data-testid="line-row" className="max-md:grid max-md:grid-cols-2 max-md:items-center max-md:gap-x-3 max-md:gap-y-3 max-md:py-4 max-md:first:pt-0 max-md:last:pb-0">
                       <td className="py-2 pr-2 text-muted-foreground max-md:order-1 max-md:p-0 max-md:text-sm max-md:font-medium max-md:text-foreground">
@@ -360,6 +352,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                         <Input
                           name={`line_${line.id}_purpose`}
                           defaultValue={line.purpose ?? ""}
+                          maxLength={PURPOSE_MAX}
                           autoComplete="off"
                           aria-label={`Line ${line.position} purpose`}
                           disabled={!editLines}
@@ -409,9 +402,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
+            </LinesTable>
           </Card>
 
           <div className="flex flex-wrap items-center justify-end gap-3">
@@ -450,20 +441,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
           </Card>
 
           <Card title="Lines" action={<Badge>{lines.length}</Badge>}>
-            <div className="overflow-x-auto" role="region" aria-label="Request lines" tabIndex={0}>
-              <table className="w-full text-left text-sm max-md:block md:min-w-176" data-testid="lines">
-                <thead className="text-xs text-muted-foreground max-md:hidden">
-                  <tr>
-                    <th className="pb-2 pr-2 font-medium">#</th>
-                    <th className="pb-2 pr-2 font-medium">Name</th>
-                    <th className="pb-2 pr-2 font-medium">Purpose</th>
-                    <th className="pb-2 pr-2 font-medium">Qty</th>
-                    <th className="pb-2 pr-2 font-medium">Unit price</th>
-                    <th className="pb-2 pr-2 text-right font-medium">Total</th>
-                    <th className="pb-2 font-medium md:pl-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border max-md:block">
+            <LinesTable lastHeader={<th className="pb-2 font-medium md:pl-4">Status</th>}>
                   {lines.map((line) => (
                     <tr key={line.id} data-testid="line-row" className="max-md:grid max-md:grid-cols-2 max-md:items-center max-md:gap-x-3 max-md:gap-y-2 max-md:py-4 max-md:first:pt-0 max-md:last:pb-0">
                       <td className="py-2 pr-2 text-muted-foreground max-md:order-1 max-md:p-0 max-md:text-sm max-md:font-medium max-md:text-foreground">
@@ -489,9 +467,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
+            </LinesTable>
           </Card>
         </>
       )}
@@ -501,8 +477,11 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
           <form className="flex flex-col gap-4" data-testid="decision-form">
             <input type="hidden" name="id" value={request.id} />
             {lines.length > 1 ? (
-              <fieldset className="flex flex-col gap-2">
-                <legend className="mb-1 text-sm font-medium text-foreground">Lines to reject when approving</legend>
+              <fieldset className="flex flex-col gap-2" aria-describedby="reject-lines-hint">
+                <legend className="text-sm font-medium text-foreground">Lines to reject when approving</legend>
+                <p id="reject-lines-hint" className="mb-1 text-xs text-muted-foreground">
+                  Leave all unchecked to approve the whole request. Checked lines are rejected, and the request is then partially approved.
+                </p>
                 {lines.map((line) => (
                   <label key={line.id} className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                     <Checkbox name="rejected_line_id" value={line.id} />
@@ -512,7 +491,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
               </fieldset>
             ) : null}
             <Field label="Reason" hint="Required to reject the request or return it to the author." hintId="reason-hint">
-              <Textarea name="reason" rows={3} aria-describedby="reason-hint" />
+              <Textarea name="reason" rows={3} maxLength={REASON_MAX} aria-describedby="reason-hint" />
             </Field>
             <div className="flex flex-wrap gap-3">
               <SubmitButton formAction={decidePurchase.bind(null, "approve")} formNoValidate testId="approve">
@@ -551,7 +530,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
           <form className="flex flex-col gap-4">
             <input type="hidden" name="id" value={request.id} />
             <Field label="Reason" hintId="admin-reason-hint" hint="Required.">
-              <Textarea name="reason" rows={2} aria-describedby="admin-reason-hint" />
+              <Textarea name="reason" rows={2} maxLength={REASON_MAX} aria-describedby="admin-reason-hint" />
             </Field>
             <SubmitButton
               variant="destructive"

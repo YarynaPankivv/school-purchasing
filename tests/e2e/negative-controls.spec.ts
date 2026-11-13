@@ -4,8 +4,11 @@
 //   NC-1 — у тесті неправильний очікуваний текст → перевірка падає → FAIL, хоч би що сказав агент;
 //   NC-2 — текст «Тоді» у вимозі уточнено, а тест і застосунок ні → перевірки зелені, агент звіряє кадр із НОВИМ текстом PM
 //          і не погоджується → NEEDS-HUMAN (розбіжність іде до людини).
+//   NC-3 — AC зрізу 3 (AC-DEC-06, текст «Provide a reason»): у тесті інший очікуваний текст → FAIL. Пише синтетичні дані
+//          (uat-<run>-…@example.test), які прибирає teardown, тому тег @writes (потрібен SUPABASE_SECRET_KEY).
 import { expect, test } from "@playwright/test";
-import { attachRuntimeErrors, given, thenStep, when } from "./support/uat";
+import { attachRuntimeErrors, given, signIn, thenStep, when } from "./support/uat";
+import { addToDepartment, createUatUser, submitPurchaseAs } from "./support/slice3";
 
 test.afterEach(async ({ page }) => attachRuntimeErrors(page));
 
@@ -76,6 +79,47 @@ test.describe("NC-2: гість", () => {
         async () => {
           await expect(page).toHaveURL((url) => url.pathname === "/login");
           await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
+        },
+      );
+    },
+  );
+});
+
+test.describe("NC-3: схвалювач повертає заявку без причини", () => {
+  test(
+    "NC-3 (AC-DEC-06, навмисно хибне очікування в тесті: інший текст повідомлення про причину)",
+    {
+      tag: ["@negative-control", "@writes"],
+      annotation: [
+        { type: "ac", description: "AC-DEC-06" },
+        { type: "case", description: "NC-3" },
+      ],
+    },
+    async ({ page }) => {
+      const author = await createUatUser("nc3-author", "Anna Author");
+      const maria = await createUatUser("nc3-maria", "Maria Approver");
+      await addToDepartment(author, "Primary School");
+      await addToDepartment(maria, "Primary School", { approver: true });
+      let id = "";
+
+      await given("заявка відділу «Primary School» зі статусом «Awaiting approval», Марія схвалює цей відділ", async () => {
+        id = await submitPurchaseAs(author, "Primary School", [{ name: "Paper A4", quantity: 3, unitPrice: 20 }]);
+      });
+      await when("Марія повертає заявку на доопрацювання без причини", async () => {
+        await page.context().clearCookies();
+        await signIn(page, maria.email, maria.password);
+        await page.goto(`/requests/${id}`);
+        await page.getByTestId("return").click();
+        await page.waitForURL(/error=reason_required/);
+      });
+      await thenStep(
+        page,
+        {
+          clause: "вона бачить повідомлення «Вкажіть причину», а статус заявки лишається «Очікує схвалення»",
+          visible: ["повідомлення «Provide a reason» над карткою заявки", "статус заявки «Awaiting approval»"],
+        },
+        async () => {
+          await expect(page.getByRole("main").getByText("A reason is required", { exact: true })).toBeVisible({ timeout: 5_000 });
         },
       );
     },

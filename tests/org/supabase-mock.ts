@@ -7,7 +7,17 @@ import { vi } from "vitest";
 export type MockError = { code?: string; message?: string; details?: string } | null;
 export type MockResult = { data?: unknown; error?: MockError };
 export type Op = "select" | "insert" | "update" | "upsert" | "delete" | "rpc";
-export type Call = { table: string; op: Op; payload?: unknown; filters: Array<[string, unknown]> };
+// Обмеження PostgREST на кількість рядків відповіді (max-rows) у Supabase за замовчуванням.
+const MAX_ROWS = 1000;
+
+export type Call = {
+  table: string;
+  op: Op;
+  payload?: unknown;
+  filters: Array<[string, unknown]>;
+  // order(column, { ascending }) у порядку викликів: [колонка, за зростанням].
+  orders?: Array<[string, boolean]>;
+};
 
 export type MockProfile = {
   id: string;
@@ -58,7 +68,9 @@ export function createSupabaseMock(options: {
       upsert: (payload: unknown) => ((call.op = "upsert"), (call.payload = payload), builder),
       delete: () => ((call.op = "delete"), builder),
       eq: (column: string, value: unknown) => (call.filters.push([column, value]), builder),
-      order: () => builder,
+      // in(): фільтр за списком значень; мок його лише записує (дані віддає results).
+      in: (column: string, values: unknown[]) => (call.filters.push([`${column} in`, values]), builder),
+      order: (column: string, options?: { ascending?: boolean }) => ((call.orders ??= []).push([column, options?.ascending ?? true]), builder),
       // Курсорне читання сторінками (src/lib/pur/paging.ts): gt("id", …) і limit(n) діють на відповідь за id, як у PostgREST.
       gt: (column: string, value: unknown) => ((cursor = { column, value: String(value) }), builder),
       limit: (count: number) => ((limitCount = count), builder),
@@ -79,12 +91,24 @@ export function createSupabaseMock(options: {
           const configured = results[`${table}.${call.op}`];
           result = { data: configured?.data ?? (single ? null : []), error: configured?.error ?? null };
         }
-        if (call.op === "select" && Array.isArray(result.data) && limitCount !== undefined) {
+        // Без явного limit PostgREST теж віддає не більше 1000 рядків (max-rows): мок повторює це, щоб читання «одним запитом» не
+        // здавалося повним у тестах.
+        const effectiveLimit = limitCount ?? (call.op === "select" ? MAX_ROWS : undefined);
+        if (call.op === "select" && Array.isArray(result.data) && effectiveLimit !== undefined) {
           const key = cursor?.column ?? "id";
+          // Без курсора й з явним order(...) — порядок із викликів order (як у PostgREST), інакше за id.
+          const orders = !cursor && call.orders?.length ? call.orders : ([[key, true]] as Array<[string, boolean]>);
+          const compare = (a: Record<string, unknown>, b: Record<string, unknown>) => {
+            for (const [column, ascending] of orders) {
+              const order = String(a[column] ?? "").localeCompare(String(b[column] ?? ""));
+              if (order !== 0) return ascending ? order : -order;
+            }
+            return 0;
+          };
           const rows = (result.data as Array<Record<string, unknown>>)
             .filter((row) => !cursor || String(row[key] ?? "") > cursor.value)
-            .sort((a, b) => String(a[key] ?? "").localeCompare(String(b[key] ?? "")));
-          result = { data: rows.slice(0, limitCount), error: result.error };
+            .sort(compare);
+          result = { data: rows.slice(0, effectiveLimit), error: result.error };
         }
         return Promise.resolve(result).then(resolve, reject);
       },

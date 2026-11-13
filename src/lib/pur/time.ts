@@ -58,7 +58,7 @@ export function formatHistoryTime(value: string | Date | null | undefined): stri
   return `${part("day")}.${part("month")}.${part("year")}, ${part("hour")}:${part("minute")}`;
 }
 
-// «Oct 21, 2026» для моменту в переліку: рядок списку не потребує хвилин, повний запис — у підказці.
+// «Oct 21, 2026» для моменту в переліку: рядок списку не потребує хвилин; повний момент — formatDateTime на сторінці заявки.
 export function formatDay(value: string | Date | null | undefined): string {
   if (value === null || value === undefined) return "—";
   const date = value instanceof Date ? value : new Date(value);
