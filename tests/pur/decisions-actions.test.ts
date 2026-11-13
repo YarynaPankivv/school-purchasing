@@ -218,6 +218,16 @@ describe("дії адміністратора (відділ закупівель
   });
 });
 
+describe("AC-DEC-06: повернення без причини", () => {
+  it("AC-DEC-06: відмова бази pur:reason_required стає повідомленням «Provide a reason» (текст «Вкажіть причину» з таблиці PM)", async () => {
+    mockRpc(approver, "decide_purchase", { error: { code: "P0001", message: "pur:reason_required" } });
+    const url = await redirectedTo(() => decide(form([["id", REQ], ["decision", "return"]])));
+    expect(url).toBe(`${path}?error=reason_required`);
+    const { PUR_ERROR_MESSAGES } = await import("@/lib/pur/errors");
+    expect(PUR_ERROR_MESSAGES.reason_required).toBe("Provide a reason");
+  });
+});
+
 describe("довжина причини", () => {
   it("AC-DEC-06: причина понад 2000 символів не доходить до decide_purchase — помилка сторінки з відомим повідомленням", async () => {
     const mock = mockRpc(approver, "decide_purchase", { data: "returned" });

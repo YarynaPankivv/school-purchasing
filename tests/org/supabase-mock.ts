@@ -58,6 +58,8 @@ export function createSupabaseMock(options: {
       upsert: (payload: unknown) => ((call.op = "upsert"), (call.payload = payload), builder),
       delete: () => ((call.op = "delete"), builder),
       eq: (column: string, value: unknown) => (call.filters.push([column, value]), builder),
+      // in(): фільтр за списком значень; мок його лише записує (дані віддає results).
+      in: (column: string, values: unknown[]) => (call.filters.push([`${column} in`, values]), builder),
       order: () => builder,
       // Курсорне читання сторінками (src/lib/pur/paging.ts): gt("id", …) і limit(n) діють на відповідь за id, як у PostgREST.
       gt: (column: string, value: unknown) => ((cursor = { column, value: String(value) }), builder),
