@@ -15,18 +15,20 @@ const REASON = "supabase/migrations/20261110075942_reason_whitespace.sql";
 const SUBMIT = "supabase/migrations/20261103140000_submit_without_auto_approval.sql";
 const FRM_APR_DB = "tests/db/frm-apr.test.ts";
 const DEC_HIST_DB = "tests/db/dec-hist.test.ts";
+const WRITE_GUARDS_DB = "tests/db/write-guards.test.ts";
+const MIGRATION_LENGTH = "supabase/migrations/20261113170440_reason_purpose_length.sql";
 
 export const mutants = [
   // ── Ваші мутанти: по одному на правило в SQL за кожним із ваших 3 AC ──────────────────────────────────────────
   // AC-APR-03 (і AC-FRM-08): схвалювач бачить і вирішує лише заявки відділів, які схвалює. Усі тести — tests/db/frm-apr.test.ts.
   {
-    id: "A1", kind: "sql", ac: "AC-APR-03", file: PUR, tests: [FRM_APR_DB],
+    id: "A1", kind: "sql", ac: "AC-APR-03", file: PUR, tests: [FRM_APR_DB, DEC_HIST_DB],
     what: "requests_select: схвалювач бачить подані заявки будь-якого відділу",
     find: "      or (status <> 'draft' and department_id is not null and private.is_department_approver(department_id))",
     replace: "      or (status <> 'draft')",
   },
   {
-    id: "A2", kind: "sql", ac: "AC-APR-03", file: PUR, tests: [FRM_APR_DB],
+    id: "A2", kind: "sql", ac: "AC-APR-03", file: PUR, tests: [FRM_APR_DB, DEC_HIST_DB],
     what: "can_view_request: рядки й історія чужої заявки видимі схвалювачу будь-якого відділу",
     find: "or (r.status <> 'draft' and r.department_id is not null and private.is_department_approver(r.department_id))",
     replace: "or (r.status <> 'draft')",
@@ -102,6 +104,33 @@ export const mutants = [
     find: " || chr(11) || chr(160)",
     replace: " || E'\\v' || chr(160)",
   },
+  // AC-DEC-04: повернення на доопрацювання дає статус «returned», а не «rejected».
+  {
+    id: "D6", kind: "sql", ac: "AC-DEC-04", file: REASON, tests: [DEC_HIST_DB],
+    what: "decide_purchase: повернення на доопрацювання з причиною дає статус «Відхилено», а не «Повернено на доопрацювання»",
+    find: "new_status := case when decision = 'reject' then 'rejected' else 'returned' end;",
+    replace: "new_status := 'rejected';",
+  },
+  // Межі довжини причини й мети (рев'ю PM до WS9, п. 11): без CHECK база приймає текст будь-якої довжини.
+  {
+    id: "L1", kind: "sql", ac: "AC-DEC-06", file: MIGRATION_LENGTH, tests: [WRITE_GUARDS_DB],
+    what: "requests_decision_reason_length: межу причини знято (2000 → 2000000)",
+    find: "check (char_length(decision_reason) <= 2000)",
+    replace: "check (char_length(decision_reason) <= 2000000)",
+  },
+  {
+    id: "L2", kind: "sql", ac: "AC-DEC-06", file: MIGRATION_LENGTH, tests: [WRITE_GUARDS_DB],
+    what: "request_lines_purpose_length: межу мети рядка знято (500 → 500000)",
+    find: "check (char_length(purpose) <= 500)",
+    replace: "check (char_length(purpose) <= 500000)",
+  },
+  // Пряме записування службових колонок (п. 12): column grant на requests.status відкрито автору.
+  {
+    id: "G1", kind: "sql", ac: "AC-DEC-01", file: PUR, tests: [WRITE_GUARDS_DB],
+    what: "requests: колонковий update дозволено й для status (автор міг би сам схвалити свою заявку)",
+    find: "grant update (department_id, purchase_type, note, delivery_date, on_behalf_of_id, updated_at)",
+    replace: "grant update (department_id, purchase_type, note, delivery_date, on_behalf_of_id, updated_at, status)",
+  },
   // AC-HIST-10: історію чужого відділу не видно — політика читання історії спирається на can_view_request.
   {
     id: "H1", kind: "sql", ac: "AC-HIST-10", file: PUR, tests: [DEC_HIST_DB],
@@ -122,6 +151,19 @@ export const mutants = [
     what: "purchase_number_seq: початкове значення послідовності зсунуто на 1 (перша закупівля — PUR-2)",
     find: "coalesce((select max(number) from public.requests where type = 'PUR'), 0) + 1,",
     replace: "coalesce((select max(number) from public.requests where type = 'PUR'), 0) + 2,",
+  },
+  // TS-мутанти зрізу 3 (п. 6 рев'ю PM): правила HIST-02 і LANG-09 живуть у TypeScript, тож звіт Stryker замінює цей вердикт.
+  {
+    id: "T1", kind: "ts", ac: "AC-HIST-02", file: "src/lib/pur/totals.ts", tests: ["tests/pur/lines.test.ts", "tests/pur/pages.test.tsx"],
+    what: "requestTotalCents: до суми заявки зайве додано 1 цент",
+    find: "(sum, line) => sum + lineTotalCents(line), 0)",
+    replace: "(sum, line) => sum + lineTotalCents(line) + 1, 0)",
+  },
+  {
+    id: "T2", kind: "ts", ac: "AC-LANG-09", file: "src/lib/pur/statuses.ts", tests: ["tests/pur/pages.test.tsx", "tests/ui/interface-language.test.ts"],
+    what: "PURCHASE_STATUS_LABELS: підпис «Partially approved» замінено на «Approved»",
+    find: 'partially_approved: "Partially approved",',
+    replace: 'partially_approved: "Approved",',
   },
 ];
 

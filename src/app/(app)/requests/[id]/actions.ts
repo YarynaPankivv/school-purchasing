@@ -10,7 +10,7 @@ import { requireActiveUser } from "@/lib/auth/session";
 import { isUuid } from "@/lib/org/departments";
 import { isPurchaseType } from "@/lib/org/requests";
 import { mapPurDbError, type PurErrorCode } from "@/lib/pur/errors";
-import { DELIVERY_DATE_INVALID, parseLineFields, parseNote } from "@/lib/pur/lines";
+import { DELIVERY_DATE_INVALID, REASON_TOO_LONG, parseLineFields, parseNote, reasonTooLong } from "@/lib/pur/lines";
 import { canEditFields, canEditLines } from "@/lib/pur/visibility";
 import { isPurchaseStatus } from "@/lib/pur/statuses";
 import type { DbError } from "@/lib/org/errors";
@@ -229,10 +229,12 @@ export async function decidePurchase(decision: string, formData: FormData) {
   if (decision !== "approve" && decision !== "reject" && decision !== "return") fail(path, "invalid_input");
   const rejected = formData.getAll("rejected_line_id").map(String);
   if (!rejected.every(isUuid)) fail(path, "invalid_input");
+  const reason = field(formData, "reason");
+  if (reasonTooLong(reason)) fail(path, "invalid_input", REASON_TOO_LONG);
   const { data, error } = await ctx.supabase.rpc("decide_purchase", {
     target_request: id,
     decision,
-    reason_text: field(formData, "reason") || undefined,
+    reason_text: reason || undefined,
     rejected_line_ids: rejected.length ? rejected : undefined,
   });
   if (error) failDb(path, error);
@@ -250,7 +252,9 @@ export async function reopenPurchase(formData: FormData) {
 // AC-PUR-28, 50, 52: admin відхиляє вже схвалену заявку з причиною.
 export async function adminRejectPurchase(formData: FormData) {
   const { ctx, path, id } = await authorRequest(formData);
-  const { error } = await ctx.supabase.rpc("admin_reject_purchase", { target_request: id, reason_text: field(formData, "reason") });
+  const reason = field(formData, "reason");
+  if (reasonTooLong(reason)) fail(path, "invalid_input", REASON_TOO_LONG);
+  const { error } = await ctx.supabase.rpc("admin_reject_purchase", { target_request: id, reason_text: reason });
   if (error) failDb(path, error);
   done(path, "admin_rejected");
 }

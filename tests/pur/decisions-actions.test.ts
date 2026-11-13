@@ -217,3 +217,27 @@ describe("дії адміністратора (відділ закупівель
     );
   });
 });
+
+describe("довжина причини", () => {
+  it("AC-DEC-06: причина понад 2000 символів не доходить до decide_purchase — помилка сторінки з відомим повідомленням", async () => {
+    const mock = mockRpc(approver, "decide_purchase", { data: "returned" });
+    const url = await redirectedTo(() => decide(form([["id", REQ], ["decision", "return"], ["reason", "x".repeat(2001)]])));
+    expect(url).toContain("error=invalid_input");
+    expect(new URL(url, "http://x").searchParams.get("detail")).toBe("Reason must be at most 2000 characters.");
+    expect(call(mock, "decide_purchase")).toBeUndefined();
+  });
+
+  it("причина рівно 2000 символів іде у decide_purchase", async () => {
+    const mock = mockRpc(approver, "decide_purchase", { data: "returned" });
+    await redirectedTo(() => decide(form([["id", REQ], ["decision", "return"], ["reason", "x".repeat(2000)]])));
+    expect(call(mock, "decide_purchase")?.payload).toMatchObject({ reason_text: "x".repeat(2000) });
+  });
+
+  it("причина відхилення схваленої заявки понад 2000 символів не доходить до admin_reject_purchase", async () => {
+    const mock = mockRpc(admin, "admin_reject_purchase", {});
+    const { adminRejectPurchase } = await purActions();
+    const url = await redirectedTo(() => adminRejectPurchase(form([["id", REQ], ["reason", "x".repeat(2001)]])));
+    expect(url).toContain("error=invalid_input");
+    expect(call(mock, "admin_reject_purchase")).toBeUndefined();
+  });
+});

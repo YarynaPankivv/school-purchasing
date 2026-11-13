@@ -39,6 +39,7 @@ export async function HomeContent() {
   const drafts = countMine("draft");
   const pending = countMine("pending");
   const approved = countMine("approved");
+  const returned = countMine("returned");
 
   // Підсумок говорить лише те, що підтверджують дані: «caught up» — коли немає ні рішень, ні власних чернеток.
   const plural = (n: number) => (n === 1 ? "request is" : "requests are");
@@ -46,6 +47,8 @@ export async function HomeContent() {
   let summary = overview === null ? "Your request summary is unavailable." : "You are all caught up.";
   if (toDecide > 0) summary = `${toDecide} ${plural(toDecide)} waiting for your decision.`;
   else if (awaiting > 0) summary = `${awaiting} ${plural(awaiting)} waiting because the department has no approver who can decide.`;
+  // Повернена на доопрацювання заявка чекає на автора — це не «все гаразд».
+  else if (returned > 0) summary = `${returned} of your ${returned === 1 ? "request was" : "requests were"} returned for revision.`;
   else if (drafts > 0) summary = `You have ${drafts} ${drafts === 1 ? "draft" : "drafts"} to submit.`;
 
   const showDecisions = isAdmin || user.role === "approver" || toDecide > 0;

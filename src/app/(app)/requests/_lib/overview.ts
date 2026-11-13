@@ -88,3 +88,35 @@ export async function loadOverview(supabase: Supabase, user: CurrentUser): Promi
     all: isAdmin ? purchases.map(item) : [],
   };
 }
+
+// Найновіші заявки (за оновленням), які людині видно, для підказок пошуку: ліміт ставить база, а не пам'ять сервера.
+// Рядки читаємо лише для цих заявок. Те, що людина бачить (RLS), — ті самі правила, що й у loadOverview.
+export async function loadRecentRequests(supabase: Supabase, user: CurrentUser, limit: number): Promise<RequestListItem[]> {
+  const requests = await supabase.from("requests").select("*").eq("type", "PUR").order("updated_at", { ascending: false }).order("id").limit(limit);
+  if (requests.error) throw new Error(`Failed to read requests: ${requests.error.message}`);
+  const purchases = (requests.data ?? []).map(toPurchaseRow).filter((r): r is PurchaseRow => r !== null);
+  const ids = purchases.map((r) => r.id);
+  const [lines, departments, personList, authorLabels] = await Promise.all([
+    ids.length > 0 ? supabase.from("request_lines").select("*").in("request_id", ids) : Promise.resolve({ data: [], error: null }),
+    supabase.from("departments").select("id, name"),
+    loadPeople(supabase, user.role),
+    loadAuthorLabels(supabase),
+  ]);
+  for (const result of [lines, departments]) {
+    if (result.error) throw new Error(`Failed to read requests: ${result.error.message}`);
+  }
+  const linesByRequest = new Map<string, LineRow[]>();
+  for (const row of lines.data ?? []) {
+    const line = toLineRow(row);
+    if (line) linesByRequest.set(line.request_id, [...(linesByRequest.get(line.request_id) ?? []), line]);
+  }
+  const departmentNames = new Map((departments.data ?? []).map((d) => [d.id, d.name]));
+  const names = new Map([...personList.map((p): [string, string] => [p.id, personLabel(p)]), ...authorLabels]);
+  return purchases.map((request) => ({
+    request,
+    total: requestTotal(linesByRequest.get(request.id) ?? []),
+    departmentName: request.department_id ? (departmentNames.get(request.department_id) ?? "—") : null,
+    authorName: names.get(request.author_id) ?? "—",
+    items: itemsSummary(linesByRequest.get(request.id) ?? []),
+  }));
+}

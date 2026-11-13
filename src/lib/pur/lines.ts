@@ -5,6 +5,8 @@ import type { LineRow } from "./types";
 
 export const LINE_NAME_MAX = 500; // AC-PUR-10
 export const NOTE_MAX = 2000; // AC-PUR-10
+export const PURPOSE_MAX = 500; // межа request_lines.purpose (міграція 20261113170440_reason_purpose_length.sql)
+export const REASON_MAX = 2000; // межа причини рішення: requests.decision_reason, request_history.reason
 // Межі колонок: quantity integer, unit_price numeric(12,2). Поза ними Postgres віддає 22003, тож відсікаємо раніше.
 export const QUANTITY_MAX = 2_147_483_647;
 export const UNIT_PRICE_MAX_CENTS = 999_999_999_999; // 9 999 999 999.99
@@ -62,12 +64,20 @@ export function parseLineName(raw: unknown): ParseResult<string | null> {
   return { ok: true, value: text };
 }
 
-// Мета рядка: ліміту в специфікації немає, лише текст; порожнє → null.
+// Мета рядка: у специфікації ліміту немає, тож межу ставить лише база (≤ 500, як назва); порожнє → null.
 export function parseLinePurpose(raw: unknown): ParseResult<string | null> {
   if (isBlank(raw)) return { ok: true, value: null };
   if (typeof raw !== "string") return { ok: false, error: "Purpose must be text." };
-  return { ok: true, value: raw.trim() };
+  const text = raw.trim();
+  if (charLength(text) > PURPOSE_MAX) return { ok: false, error: `Purpose must be at most ${PURPOSE_MAX} characters.` };
+  return { ok: true, value: text };
 }
+
+// Причина рішення (відхилення, повернення): порожня — це «Provide a reason» (перевіряє база), довга — відмова до запиту.
+export function reasonTooLong(raw: string): boolean {
+  return charLength(raw.trim()) > REASON_MAX;
+}
+export const REASON_TOO_LONG = `Reason must be at most ${REASON_MAX} characters.`;
 
 // Нотатка заявки ≤ 2000 символів (AC-PUR-10).
 export function parseNote(raw: unknown): ParseResult<string | null> {
@@ -114,6 +124,8 @@ export function isKnownInvalidDetail(detail: string): boolean {
     "Unit price must be 0 or more, with at most 2 decimal places.",
     `Name must be at most ${LINE_NAME_MAX} characters.`,
     "Purpose must be text.",
+    `Purpose must be at most ${PURPOSE_MAX} characters.`,
+    REASON_TOO_LONG,
     `Note must be at most ${NOTE_MAX} characters.`,
     DELIVERY_DATE_INVALID,
   ]);
