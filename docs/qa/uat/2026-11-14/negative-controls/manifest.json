@@ -1,0 +1,114 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-14T19:01:34.442Z",
+  "baseURL": "https://school-purchasing.vercel.app",
+  "deployedSha": "82446dfed92a5f92f8503fbd8bff1e36236210f4",
+  "testsCommit": "82446dfed92a5f92f8503fbd8bff1e36236210f4",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [],
+  "negativeControls": [
+    {
+      "id": "NC-1",
+      "proof": "AC-FRM-14",
+      "title": "NC-1 (AC-FRM-14, навмисно хибне очікування в тесті: інший текст порожнього стану)",
+      "screenshot": "docs/qa/uat/2026-11-14/negative-controls/frames/NC-1-then-1.png",
+      "video": "test-results/artifacts/negative-controls-NC-1-пра-a2ae8-ший-текст-порожнього-стану--negative-controls/video.webm",
+      "trace": "test-results/artifacts/negative-controls-NC-1-пра-a2ae8-ший-текст-порожнього-стану--negative-controls/trace.zip",
+      "asserted": false,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "На кадрі сторінки «Requests» розділ «My requests» містить рядок «You have not submitted any requests yet», а лічильники «All 0», «Drafts 0», «Awaiting approval 0», «Approved 0» і під ними немає жодного запису, тобто списку заявок не видно. Видима частина з ac.md збігається посимвольно, але текст критерію українською не збігається з написом на екрані, тому не можна однозначно сказати PASS або FAIL."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "My requests",
+          "onPage": true
+        },
+        {
+          "quote": "You have not submitted any requests yet",
+          "onPage": true
+        }
+      ],
+      "verdict": "FAIL",
+      "factoryGate": "FAIL",
+      "rule": "R1: перевірка впала — FAIL завжди, агент не перекриває",
+      "playwrightMs": 8594,
+      "reviewCostUsd": 0.00213,
+      "reviewWallMs": 10667
+    },
+    {
+      "id": "NC-2",
+      "proof": "AC-FRM-09",
+      "title": "NC-2 (AC-FRM-09, текст «Тоді» у вимозі уточнено, тест і застосунок — ні)",
+      "screenshot": "docs/qa/uat/2026-11-14/negative-controls/frames/NC-2-then-1.png",
+      "video": "test-results/artifacts/negative-controls-NC-2-гіс-3802a-ено-тест-і-застосунок-—-ні--negative-controls/video.webm",
+      "trace": "test-results/artifacts/negative-controls-NC-2-гіс-3802a-ено-тест-і-застосунок-—-ні--negative-controls/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": true,
+        "notes": "На кадрі видно сторінку входу School Purchasing із заголовком «Sign in», полями Email і Password та кнопкою «Sign in». Форми закупівлі не видно. Дослівний критерій вимагає «Welcome back», тому такого тексту на кадрі немає, і частину позначено not-met."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "FAIL",
+        "claude-sonnet-5-5": "FAIL"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 1900,
+      "reviewCostUsd": 0.03627,
+      "reviewWallMs": 24558
+    },
+    {
+      "id": "NC-3",
+      "proof": "AC-DEC-06",
+      "title": "NC-3 (AC-DEC-06, навмисно хибне очікування в тесті: інший текст повідомлення про причину)",
+      "screenshot": "docs/qa/uat/2026-11-14/negative-controls/frames/NC-3-then-1.png",
+      "video": "test-results/artifacts/negative-controls-NC-3-схв-8aad5-т-повідомлення-про-причину--negative-controls/video.webm",
+      "trace": "test-results/artifacts/negative-controls-NC-3-схв-8aad5-т-повідомлення-про-причину--negative-controls/trace.zip",
+      "asserted": false,
+      "vision": {
+        "met": false,
+        "readable": true,
+        "notes": "На кадрі видно червоний банер із написом «Provide a reason» над карткою заявки PUR-113, а статус показано як «Awaiting approval». Обидва написи англійські, тож за правилом посимвольного звірення обидві видимі частини «Тоді» не виконано. Кадр чіткий, обрізання немає, тому рішення FAIL, а не NEEDS-HUMAN."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "FAIL",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [],
+      "verdict": "FAIL",
+      "factoryGate": "FAIL",
+      "rule": "R1: перевірка впала — FAIL завжди, агент не перекриває",
+      "playwrightMs": 15632,
+      "reviewCostUsd": 0.00187,
+      "reviewWallMs": 8399
+    }
+  ],
+  "cleanup": {
+    "at": "2026-11-14T19:01:08.495Z",
+    "deleted": [
+      "uat-261114190028-nc3-maria@example.test",
+      "uat-261114190028-nc3-author@example.test"
+    ],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}
