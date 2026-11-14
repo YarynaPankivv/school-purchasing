@@ -495,7 +495,89 @@
       "reviewWallMs": 7400
     }
   ],
-  "negativeControls": [],
+  "negativeControls": [
+    {
+      "id": "NC-1",
+      "proof": "AC-FRM-14",
+      "title": "NC-1 (AC-FRM-14, навмисно хибне очікування в тесті: інший текст порожнього стану)",
+      "screenshot": "docs/qa/uat/2026-11-13/negative-controls/frames/NC-1-then-1.png",
+      "video": "test-results/artifacts/negative-controls-NC-1-пра-a2ae8-ший-текст-порожнього-стану--negative-controls/video.webm",
+      "trace": "test-results/artifacts/negative-controls-NC-1-пра-a2ae8-ший-текст-порожнього-стану--negative-controls/trace.zip",
+      "asserted": false,
+      "vision": {
+        "met": false,
+        "readable": true,
+        "notes": "Сторінка «Requests» (/requests) відкрита для користувача PM Empty, фільтри показують 0 у всіх вкладках, а під заголовком «My requests» немає жодного рядка заявки, тобто список порожній. Однак повідомлення на кадрі англійське, тому відповідність критерію не підтверджена. Рішення FAIL за посимвольним правилом; якщо PM підтвердить англійський текст як очікуваний, перевірку варто повторити з оновленим критерієм."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "FAIL",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [],
+      "verdict": "FAIL",
+      "factoryGate": "FAIL",
+      "rule": "R1: перевірка впала — FAIL завжди, агент не перекриває",
+      "playwrightMs": 8862,
+      "reviewCostUsd": 0.00202,
+      "reviewWallMs": 9213
+    },
+    {
+      "id": "NC-2",
+      "proof": "AC-FRM-09",
+      "title": "NC-2 (AC-FRM-09, текст «Тоді» у вимозі уточнено, тест і застосунок — ні)",
+      "screenshot": "docs/qa/uat/2026-11-13/negative-controls/frames/NC-2-then-1.png",
+      "video": "test-results/artifacts/negative-controls-NC-2-гіс-3802a-ено-тест-і-застосунок-—-ні--negative-controls/video.webm",
+      "trace": "test-results/artifacts/negative-controls-NC-2-гіс-3802a-ено-тест-і-застосунок-—-ні--negative-controls/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "На кадрі сторінка входу із заголовком «Sign in», полями Email і Password та кнопкою «Sign in»; форми закупівлі немає. Напису «Welcome back» ніде немає, а критерій PM вимагає саме його. Потрібне рішення людини: чий текст еталонний, критерій чи перелік частин."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 1661,
+      "reviewCostUsd": 0.03479,
+      "reviewWallMs": 19778
+    },
+    {
+      "id": "NC-3",
+      "proof": "AC-DEC-06",
+      "title": "NC-3 (AC-DEC-06, навмисно хибне очікування в тесті: інший текст повідомлення про причину)",
+      "screenshot": "docs/qa/uat/2026-11-13/negative-controls/frames/NC-3-then-1.png",
+      "video": "test-results/artifacts/negative-controls-NC-3-схв-8aad5-т-повідомлення-про-причину--negative-controls/video.webm",
+      "trace": "test-results/artifacts/negative-controls-NC-3-схв-8aad5-т-повідомлення-про-причину--negative-controls/trace.zip",
+      "asserted": false,
+      "vision": {
+        "met": false,
+        "readable": true,
+        "notes": "На кадрі видно червону плашку «Provide a reason» над карткою заявки PUR-99 і статус «Awaiting approval» у блоці Status. Обидва написи збігаються з переліком видимих частин у ac.md, але не з текстом критерію від PM українською, тому вердикт FAIL за буквальною звіркою. PM має вирішити, чи це очікувана англійська локалізація (тоді критерій або перелік треба узгодити), чи справжня невідповідність."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "FAIL",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [],
+      "verdict": "FAIL",
+      "factoryGate": "FAIL",
+      "rule": "R1: перевірка впала — FAIL завжди, агент не перекриває",
+      "playwrightMs": 18859,
+      "reviewCostUsd": 0.00261,
+      "reviewWallMs": 14069
+    }
+  ],
   "cleanup": {
     "at": "2026-11-13T19:05:02.578Z",
     "deleted": [
