@@ -94,6 +94,11 @@
 - Q4. Назва «Папір А4» дослівно (AC-AI-01) чи достатньо «містить „папір"» (golden case № 1) —
   ValiaBihun/2026-quitcode-dream-team#80 (https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/80).
 
+- Q5. Чий «денний ліміт запитів до AI» в AC-AI-05 (ліміт постачальника моделі, спільний чи на кожного працівника; скільки
+  запитів і коли скидається) — ValiaBihun/2026-quitcode-dream-team#81 (https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/81).
+- Q6. Куди потрапляє пропонований рядок у AC-AI-01, якщо форма нової закупівлі вже має один порожній рядок (AC-PUR-01):
+  заповнюється порожній чи додається новий — ValiaBihun/2026-quitcode-dream-team#82 (https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/82).
+
 Станом на 2026-11-14 ці issues без відповіді PM; після відповіді — нова зміна специфікації з MODIFIED, якщо текст AC
 уточниться.
 
