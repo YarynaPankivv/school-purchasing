@@ -14,6 +14,7 @@ export function AiHelperView({
   pending,
   notice,
   proposal = null,
+  accepting = false,
   onDescription,
   onAsk,
   onAccept,
@@ -23,6 +24,7 @@ export function AiHelperView({
   pending: boolean;
   notice: Notice;
   proposal?: Proposal | null;
+  accepting?: boolean;
   onDescription?: (value: string) => void;
   onAsk?: () => void;
   onAccept?: () => void;
@@ -66,7 +68,7 @@ export function AiHelperView({
             <dd>{proposal.unitPrice.toFixed(2)}</dd>
           </dl>
           <div>
-            <Button type="button" onClick={onAccept} data-testid="ai-accept">
+            <Button type="button" disabled={accepting} aria-busy={accepting} onClick={onAccept} data-testid="ai-accept">
               {AI_UI.accept}
             </Button>
           </div>

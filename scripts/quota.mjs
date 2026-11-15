@@ -13,8 +13,9 @@ if (!key) {
 let res;
 try {
   res = await fetch("https://openrouter.ai/api/v1/key", { headers: { Authorization: `Bearer ${key}` } });
-} catch (error) {
-  console.error(`ai:quota — немає з'єднання з OpenRouter: ${error instanceof Error ? error.message : String(error)}`);
+} catch {
+  // Текст помилки fetch може містити заголовок Authorization, тобто ключ: друкуємо лише фіксоване повідомлення.
+  console.error("ai:quota — не вдалося виконати запит до OpenRouter. Перевірте з'єднання та формат ключа.");
   process.exit(1);
 }
 if (res.status === 401) {
@@ -29,8 +30,8 @@ if (!res.ok) {
 const body = await res.json();
 const q = body?.data?.free_model_daily_requests;
 if (!q || typeof q.remaining !== "number") {
-  console.log("ai:quota — у відповіді немає free_model_daily_requests (формат змінився?).");
-  process.exit(0);
+  console.error("ai:quota — відповідь OpenRouter не містить коректної квоти (формат змінився?).");
+  process.exit(1);
 }
 console.log(`Безкоштовні запити сьогодні (UTC): використано ${q.used} із ${q.limit}, лишилось ${q.remaining}.`);
 // Живий прогін golden cases: 10 викликів моделі + до 10 викликів судді.

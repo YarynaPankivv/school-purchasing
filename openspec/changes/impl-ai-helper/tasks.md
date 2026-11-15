@@ -54,8 +54,8 @@ Done when: AC-AI-01, AC-AI-02, AC-AI-06 (golden cases PM) і поріг прий
 
 ## 5. Живий eval і UAT на проді (`task/ai-eval`)
 
-- [x] 5.1 `evals/golden.live.eval.ts` + `vitest.eval.config.mts` (`npm run eval`): живий прогін із записом (`RECORD=1`), звіт
-  `evals/reports/<дата й час>.md` (модель на кожен кейс, частка успіху, версія промпту), пояснені FAIL. Перевірка: `npm run eval`. Done when: AC-AI-01, AC-AI-02, AC-AI-06 (golden на живій моделі), поріг PM у звіті
+- [x] 5.1 `evals/golden.live.eval.ts` + `vitest.eval.config.mts` (`npm run eval`): живий прогін із записом (`RECORD=1`), офіційний повний звіт
+  `evals/reports/2026-11-15T09-30-54-457Z.md` (10 з 10, модель на кожен кейс, версія промпту), історія прогонів і пояснені FAIL — `evals/reports/README.md`. Перевірка: `npm run eval`. Done when: AC-AI-01, AC-AI-02, AC-AI-06 (golden на живій моделі), поріг PM у звіті
 - [ ] 5.2 `tests/e2e/slice4.spec.ts` і прогін `npm run uat` на проді (AC-AI-01 «людина підтверджує», AC-AI-02, AC-AI-06); звіт у
   `docs/qa/uat/<дата>/`. Перевірка: `npm run uat`. Done when: AC-AI-01 (людина підтверджує: чернетка не подана), AC-AI-02, AC-AI-06 на проді
 - [ ] 5.3 Повідомлення PM у чаті: «eval готовий: прод <URL>, звіт <посилання>, дата живого прогону <дата>»; proof pack зрізу 4

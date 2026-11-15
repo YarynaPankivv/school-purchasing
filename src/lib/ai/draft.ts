@@ -83,10 +83,13 @@ export function toSuggestResult(draft: Draft): SuggestResult {
   if (draft.quantity !== null && !parseQuantity(draft.quantity).ok) return { kind: "invalid_field", message: AI_MESSAGES.invalidQuantity };
   if (draft.unitPrice !== null && !parseUnitPrice(draft.unitPrice).ok) return { kind: "invalid_field", message: AI_MESSAGES.invalidPrice };
   // Чого бракує в описі, AI не вигадує: неповний рядок у форму не потрапляє (питання AI — наступна версія).
-  if (draft.status !== "ok" || draft.name === null || draft.purpose === null || draft.quantity === null || draft.unitPrice === null) {
+  const name = draft.name?.trim();
+  const purpose = draft.purpose?.trim();
+  // Пробільні назва чи мета — не заповнене поле (спільний парсер зробив би їх null при збереженні).
+  if (draft.status !== "ok" || !name || !purpose || draft.quantity === null || draft.unitPrice === null) {
     return unavailable("error");
   }
-  return { kind: "line", line: { name: draft.name, purpose: draft.purpose, quantity: draft.quantity, unitPrice: draft.unitPrice } };
+  return { kind: "line", line: { name, purpose, quantity: draft.quantity, unitPrice: draft.unitPrice } };
 }
 
 // Збій виклику → стан із AC PM: ліміт — AC-AI-05; таймаут і решта збоїв — AC-AI-04 (форма лишається доступною для ручного введення).

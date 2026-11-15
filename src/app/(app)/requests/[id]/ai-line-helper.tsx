@@ -5,7 +5,7 @@
 // Пропозиція лише заповнює поля форми (перший порожній рядок; немає порожнього — картка з кнопкою «Додати рядок», яка викликає addLineWithValues);
 // закупівлю не подаємо й автоматично не зберігаємо. Потік очікування й 15 секунд — src/lib/ai/flow.ts.
 import { useEffect, useRef, useState } from "react";
-import { AI_UI } from "@/lib/ai/messages";
+import { AI_MESSAGES, AI_UI } from "@/lib/ai/messages";
 import { createSuggestFlow } from "@/lib/ai/flow";
 import type { SuggestResult } from "@/lib/ai/draft";
 import { addLineWithValues, suggestLine } from "./ai-actions";
@@ -44,6 +44,8 @@ export function AiLineHelper({ requestId }: { requestId: string }) {
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [accepting, setAccepting] = useState(false);
+  const acceptingRef = useRef(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const flowRef = useRef<ReturnType<typeof createSuggestFlow> | null>(null);
@@ -79,9 +81,25 @@ export function AiLineHelper({ requestId }: { requestId: string }) {
 
   // Запис нового рядка в БД — лише після натискання «Додати рядок» (підтвердження людини).
   async function accept() {
-    if (!proposal) return;
-    const { ok } = await addLineWithValues(requestId, proposal);
-    if (ok) setProposal(null);
+    // Синхронний захист: другий клік до відповіді сервера не створює другий рядок (інакше кількість і сума подвоїлись би).
+    if (!proposal || acceptingRef.current) return;
+    acceptingRef.current = true;
+    setAccepting(true);
+    try {
+      const { ok } = await addLineWithValues(requestId, proposal);
+      if (ok) {
+        setProposal(null);
+        setNotice(null);
+      } else {
+        setNotice({ tone: "warn", message: AI_MESSAGES.addFailed });
+      }
+    } catch {
+      // Пропозиція лишається для повторної спроби; форма працює вручну.
+      setNotice({ tone: "warn", message: AI_MESSAGES.addFailed });
+    } finally {
+      acceptingRef.current = false;
+      setAccepting(false);
+    }
   }
 
   function ask() {
@@ -100,6 +118,7 @@ export function AiLineHelper({ requestId }: { requestId: string }) {
       pending={pending}
       notice={notice}
       proposal={proposal}
+      accepting={accepting}
       onDescription={setDescription}
       onAsk={ask}
       onAccept={() => void accept()}

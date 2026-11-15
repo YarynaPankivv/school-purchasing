@@ -17,7 +17,8 @@ function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
     if (statSync(path).isDirectory()) return sourceFiles(path);
-    // Тексти помічника «Запропонувати рядки» — дослівно з AC PM українською (питання PM: ValiaBihun/2026-quitcode-dream-team#77).
+    // Тексти помічника «Запропонувати рядки» — дослівно з AC PM українською: AC-AI-02, 04, 05, 06 (openspec/specs/ai-line-suggestion,
+    // «Тоді» без перекладу). Питання PM про англійську версію — ValiaBihun/2026-quitcode-dream-team#77; відповідь змінить лише цей файл.
     if (relative(ROOT, path).replaceAll("\\", "/") === "lib/ai/messages.ts") return [];
     return /\.(ts|tsx)$/.test(name) && name !== "database.types.ts" ? [path] : [];
   });

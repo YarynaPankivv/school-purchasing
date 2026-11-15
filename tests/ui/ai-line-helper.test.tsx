@@ -53,6 +53,11 @@ describe("пропозиція, коли порожнього рядка нем�
     expect(html).not.toMatch(/<input[^>]*name=/);
   });
 
+  it("AC-AI-01: поки рядок додається, кнопка «Додати рядок» неактивна — повторний клік не створить другий рядок", () => {
+    const html = renderToStaticMarkup(<AiHelperView description="" pending={false} notice={null} proposal={proposal} accepting />);
+    expect(html).toMatch(/<button[^>]*\sdisabled=""[^>]*data-testid="ai-accept"/);
+  });
+
   it("AC-AI-01: без пропозиції картки й кнопки «Додати рядок» немає", () => {
     const html = renderToStaticMarkup(<AiHelperView description="" pending={false} notice={null} />);
     expect(html).not.toContain("ai-proposal");

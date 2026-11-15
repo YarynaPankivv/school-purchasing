@@ -201,6 +201,17 @@ describe("запобіжники й збої", () => {
     expect((await suggest("x", draft(1, 0))).suggestion).toMatchObject({ kind: "line" });
   });
 
+  it("AC-AI-01: пробільні назва чи мета — це не заповнене поле, рядок у форму не потрапляє", async () => {
+    const blank = (name: string | null, purpose: string | null) =>
+      replay(JSON.stringify({ status: "ok", refusal: null, name, purpose, quantity: 3, unitPrice: 20 }));
+    expect((await suggest("x", blank("  ", "Для друку"))).suggestion).toMatchObject({ kind: "unavailable" });
+    expect((await suggest("x", blank("Папір А4", "	"))).suggestion).toMatchObject({ kind: "unavailable" });
+    expect((await suggest("x", blank(" Папір А4 ", " Для друку "))).suggestion).toEqual({
+      kind: "line",
+      line: { name: "Папір А4", purpose: "Для друку", quantity: 3, unitPrice: 20 },
+    });
+  });
+
   it("AC-AI-01: чого бракує в описі, помічник не вигадує — неповний рядок і needs_info не потрапляють у форму", async () => {
     const missing = replay('{"status":"ok","refusal":null,"name":"Папка","purpose":null,"quantity":4,"unitPrice":5}');
     expect((await suggest("x", missing)).suggestion).toMatchObject({ kind: "unavailable" });
