@@ -54,13 +54,7 @@ async function clientOf(user: UatUser): Promise<SupabaseClient> {
 /** Чернетка → заповнені рядки → submit_purchase від імені автора. Повертає id закупівлі (статус «Awaiting approval»). */
 export async function submitPurchaseAs(author: UatUser, department: string, lines: readonly UatLine[]): Promise<string> {
   const client = await clientOf(author);
-  const draft = await client
-    .from("requests")
-    .insert({ type: "PUR", purchase_type: "procurement", department_id: await departmentId(department), author_id: author.id, status: "draft" })
-    .select("id")
-    .single();
-  if (draft.error) throw draft.error;
-  const id = draft.data.id as string;
+  const id = await createDraftAs(author, department);
   // Перший рядок створює база разом із чернеткою; решту додаємо.
   const [first, ...rest] = lines;
   const update = await client
@@ -113,4 +107,23 @@ export async function requestInfo(requestId: string): Promise<{ number: number; 
   if (error) throw error;
   const department = (data.departments as unknown as { name: string } | null)?.name ?? "";
   return { number: Number(data.number), status: data.status as string, department };
+}
+
+/** Нова чернетка закупівлі автора (як після «New request»): база сама створює порожній рядок 1; закупівлю не подано. */
+export async function createDraftAs(author: UatUser, department: string): Promise<string> {
+  const client = await clientOf(author);
+  const draft = await client
+    .from("requests")
+    .insert({ type: "PUR", purchase_type: "procurement", department_id: await departmentId(department), author_id: author.id, status: "draft" })
+    .select("id")
+    .single();
+  if (draft.error) throw draft.error;
+  return draft.data.id as string;
+}
+
+/** Скільки заявок має автор (за секретним ключем): невидима частина «нової заявки у «Мої заявки» немає» (AC-AI-06). */
+export async function requestCountOf(author: UatUser): Promise<number> {
+  const { count, error } = await adminClient().from("requests").select("id", { count: "exact", head: true }).eq("author_id", author.id);
+  if (error) throw error;
+  return count ?? 0;
 }

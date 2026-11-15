@@ -24,6 +24,8 @@ vi.mock("next/navigation", async () => {
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
+// Сторінка заявки тягне помічника (ai-actions → openrouter.ts з `import "server-only"`): поза сервером цей пакет кидає помилку.
+vi.mock("server-only", () => ({}));
 
 // Перехоплюємо кнопки сторінки й server actions: перевіряємо не лише HTML, а й те, які аргументи кнопки передають у
 // actions через bind() (кнопка з функцією в formAction не передає свого name/value у FormData).

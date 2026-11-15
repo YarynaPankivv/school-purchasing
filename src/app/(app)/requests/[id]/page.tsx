@@ -30,6 +30,7 @@ import { canAdminReject, canDecide, canReopen, decisionBlockReason, forwardedLin
 import { PUR_ERROR_MESSAGES, purErrorMessage } from "@/lib/pur/errors";
 import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail, LINE_NAME_MAX, NOTE_MAX, PURPOSE_MAX, REASON_MAX } from "@/lib/pur/lines";
 import { loadDepartmentApprovers } from "../_lib/approvers";
+import { AiLineHelper } from "./ai-line-helper";
 import { LinesTable } from "./lines-table";
 import { purchaseNumberLabel } from "@/lib/pur/numbers";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
@@ -322,6 +323,9 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
               </SubmitButton>
             }
           >
+            <div className="mb-4">
+              <AiLineHelper requestId={request.id} />
+            </div>
             <LinesTable
               lastHeader={
                 <th className="pb-2">

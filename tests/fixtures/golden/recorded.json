@@ -1,0 +1,62 @@
+{
+  "1": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:05:57.867Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Папір А4\",\"purpose\":\"Для друку\",\"quantity\":3,\"unitPrice\":20}"
+  },
+  "5": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:06:06.127Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Степлерна скоба\",\"purpose\":null,\"quantity\":2.5,\"unitPrice\":4}"
+  },
+  "6": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:06:13.380Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Папір\",\"purpose\":null,\"quantity\":0,\"unitPrice\":20}"
+  },
+  "7": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:06:20.111Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Папка\",\"purpose\":null,\"quantity\":4,\"unitPrice\":-5}"
+  },
+  "8": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:06:25.789Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"refused\",\"refusal\":\"not_purchase\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
+  },
+  "9": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:06:32.410Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"refused\",\"refusal\":\"not_purchase\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
+  },
+  "11": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:06:40.061Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"refused\",\"refusal\":\"instruction\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
+  },
+  "12": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:07:17.473Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"refused\",\"refusal\":\"instruction\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
+  },
+  "13": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:07:23.921Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Крейда\",\"purpose\":\"Для уроків\",\"quantity\":2,\"unitPrice\":5}"
+  },
+  "14": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-14T21:07:32.289Z",
+    "promptVersion": "suggest-v1",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Маркер\",\"purpose\":\"Для дошки\",\"quantity\":4,\"unitPrice\":1.5}"
+  }
+}
