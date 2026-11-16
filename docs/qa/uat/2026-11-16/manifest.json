@@ -1,0 +1,71 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-16T18:12:02.533Z",
+  "baseURL": "https://school-purchasing.vercel.app",
+  "deployedSha": "1b0d6f2b6953e241afb84ba0eb40fc4744544db0",
+  "testsCommit": "1b0d6f2b6953e241afb84ba0eb40fc4744544db0",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [
+    {
+      "id": "AC-AI-01",
+      "proof": "AC-AI-01",
+      "title": "AC-AI-01: працівник вставляє опис про A4 paper — бачить один рядок «A4 paper», «For printing», 3, 20.00, закупівлю ще не подано",
+      "screenshot": "docs/qa/uat/2026-11-16/frames/AC-AI-01-then-1.png",
+      "video": "test-results/artifacts/slice4-AI-помічник-пропози-6b199-0-00-закупівлю-ще-не-подано-chromium/video.webm",
+      "trace": "test-results/artifacts/slice4-AI-помічник-пропози-6b199-0-00-закупівлю-ще-не-подано-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі в таблиці «Lines» видно один рядок (№ 1) з назвою «A4 paper», метою «For printing», Qty 3 і Unit price 20.00, а статус заявки — «Draft». Опис «Need 3 packs of A4 paper for printing, 20 dollars each» також видно в полі Purchase description. Заголовок сторінки «PUR-124» обрізаний зверху, але це не впливає на перевірку."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "A4 paper",
+          "onPage": true
+        },
+        {
+          "quote": "For printing",
+          "onPage": true
+        },
+        {
+          "quote": "3",
+          "onPage": true
+        },
+        {
+          "quote": "20.00",
+          "onPage": true
+        },
+        {
+          "quote": "Draft",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 19824,
+      "reviewCostUsd": 0.00248,
+      "reviewWallMs": 7763
+    }
+  ],
+  "negativeControls": [],
+  "cleanup": {
+    "at": "2026-11-16T18:11:40.822Z",
+    "deleted": [
+      "uat-261116181102-ai01-author@example.test"
+    ],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}
