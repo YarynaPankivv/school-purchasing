@@ -99,7 +99,7 @@ describe("запобіжники й збої", () => {
   it("AC-AI-04: відповідь не за схемою → invalid_output, у форму нічого не потрапляє, повідомлення «Не вдалося отримати пропозицію…»", async () => {
     const { result, suggestion } = await suggest("x", replay('{"status":"ok","refusal":"dragons"}'));
     expect(result).toMatchObject({ ok: false, reason: "invalid_output" });
-    expect(suggestion).toEqual({ kind: "unavailable", reason: "error", message: "Не вдалося отримати пропозицію. Заповніть рядки вручну" });
+    expect(suggestion).toEqual({ kind: "unavailable", reason: "error", message: "Could not get a suggestion. Fill in the lines manually" });
   });
 
   it("AC-AI-05: 429 → rate_limited, повтор рівно maxRetries разів, повідомлення «Помічник сьогодні недоступний…»", async () => {
@@ -116,7 +116,7 @@ describe("запобіжники й збої", () => {
     const { result, suggestion } = await suggest("x", model, { maxRetries: 1 });
     expect(result).toMatchObject({ ok: false, reason: "rate_limited" });
     expect(model.doGenerateCalls).toHaveLength(2);
-    expect(suggestion).toEqual({ kind: "unavailable", reason: "limit", message: "Помічник сьогодні недоступний. Заповніть рядки вручну" });
+    expect(suggestion).toEqual({ kind: "unavailable", reason: "limit", message: "The assistant is unavailable today. Fill in the lines manually" });
   });
 
   it("AC-AI-05: HTTP 200 з тілом помилки code 429 теж ліміт (так відповідає OpenRouter), без повтору", async () => {
@@ -156,7 +156,7 @@ describe("запобіжники й збої", () => {
     });
     const { result, suggestion } = await suggest("x", model, { timeoutMs: 50, maxRetries: 0 });
     expect(result).toMatchObject({ ok: false, reason: "timeout" });
-    expect(suggestion).toEqual({ kind: "unavailable", reason: "timeout", message: "Не вдалося отримати пропозицію. Заповніть рядки вручну" });
+    expect(suggestion).toEqual({ kind: "unavailable", reason: "timeout", message: "Could not get a suggestion. Fill in the lines manually" });
   });
 
   it("AC-AI-04: збій постачальника (не 429 і не таймаут) — той самий стан, а не помилка сторінки", () => {
@@ -181,42 +181,53 @@ describe("запобіжники й збої", () => {
       "x",
       replay('{"status":"refused","refusal":"instruction","name":"Заявка","purpose":null,"quantity":1,"unitPrice":1000}'),
     );
-    expect(suggestion).toEqual({ kind: "instruction", message: "Я не виконую вказівок з опису. Опишіть покупку" });
+    expect(suggestion).toEqual({ kind: "instruction", message: "I don't follow instructions from the description. Describe the purchase" });
   });
 
-  it("AC-AI-02: status refused з refusal not_purchase — «Я допомагаю лише із закупівлями», рядка немає", async () => {
+  it("AC-AI-02: status refused з refusal not_purchase — «I can only help with purchases», рядка немає", async () => {
     const { suggestion } = await suggest(
       "x",
       replay('{"status":"refused","refusal":"not_purchase","name":null,"purpose":null,"quantity":null,"unitPrice":null}'),
     );
-    expect(suggestion).toEqual({ kind: "not_purchase", message: "Я допомагаю лише із закупівлями" });
+    expect(suggestion).toEqual({ kind: "not_purchase", message: "I can only help with purchases" });
   });
 
   it("AC-AI-01: межі кількості й ціни перевіряє код, а не лише промпт — 2.5, 0 і -5 відхиляються, ціна 0 дозволена", async () => {
     const draft = (quantity: number, unitPrice: number) =>
       replay(JSON.stringify({ status: "ok", refusal: null, name: "Скоби", purpose: "Для степлера", quantity, unitPrice }));
-    expect((await suggest("x", draft(2.5, 4))).suggestion).toMatchObject({ kind: "invalid_field", message: "Кількість має бути цілим числом від 1" });
+    expect((await suggest("x", draft(2.5, 4))).suggestion).toMatchObject({ kind: "invalid_field", message: "Quantity: a whole number from 1" });
     expect((await suggest("x", draft(0, 4))).suggestion).toMatchObject({ kind: "invalid_field" });
-    expect((await suggest("x", draft(2, -5))).suggestion).toMatchObject({ kind: "invalid_field", message: "Ціна має бути числом від 0, не більше двох знаків після коми" });
+    expect((await suggest("x", draft(2, -5))).suggestion).toMatchObject({ kind: "invalid_field", message: "Price: a number from 0" });
     expect((await suggest("x", draft(1, 0))).suggestion).toMatchObject({ kind: "line" });
   });
 
-  it("AC-AI-01: пробільні назва чи мета — це не заповнене поле, рядок у форму не потрапляє", async () => {
+  it("AC-AI-01: пробільні назва чи мета — це не заповнене поле: повний рядок лише з обома полями", async () => {
     const blank = (name: string | null, purpose: string | null) =>
       replay(JSON.stringify({ status: "ok", refusal: null, name, purpose, quantity: 3, unitPrice: 20 }));
-    expect((await suggest("x", blank("  ", "Для друку"))).suggestion).toMatchObject({ kind: "unavailable" });
-    expect((await suggest("x", blank("Папір А4", "	"))).suggestion).toMatchObject({ kind: "unavailable" });
+    expect((await suggest("x", blank("  ", "Для друку"))).suggestion).toMatchObject({ kind: "partial", line: { name: null, purpose: "Для друку" } });
+    expect((await suggest("x", blank("Папір А4", "	"))).suggestion).toMatchObject({ kind: "partial", line: { name: "Папір А4", purpose: null } });
     expect((await suggest("x", blank(" Папір А4 ", " Для друку "))).suggestion).toEqual({
       kind: "line",
       line: { name: "Папір А4", purpose: "Для друку", quantity: 3, unitPrice: 20 },
     });
   });
 
-  it("AC-AI-01: чого бракує в описі, помічник не вигадує — неповний рядок і needs_info не потрапляють у форму", async () => {
-    const missing = replay('{"status":"ok","refusal":null,"name":"Папка","purpose":null,"quantity":4,"unitPrice":5}');
-    expect((await suggest("x", missing)).suggestion).toMatchObject({ kind: "unavailable" });
-    const needsInfo = replay('{"status":"needs_info","refusal":null,"name":null,"purpose":null,"quantity":null,"unitPrice":null}');
-    expect((await suggest("x", needsInfo)).suggestion).toMatchObject({ kind: "unavailable" });
+  it("AC-AI-01: немає мети чи ціни — відомі поля заповнено, відсутнє лишається порожнім (null), нічого не вигадано", async () => {
+    const noPurpose = replay('{"status":"ok","refusal":null,"name":"Папка","purpose":null,"quantity":4,"unitPrice":5}');
+    expect((await suggest("x", noPurpose)).suggestion).toEqual({
+      kind: "partial",
+      line: { name: "Папка", purpose: null, quantity: 4, unitPrice: 5 },
+    });
+    const noPrice = replay('{"status":"needs_info","refusal":null,"name":"Олівець","purpose":"Для уроку малювання","quantity":10,"unitPrice":null}');
+    expect((await suggest("x", noPrice)).suggestion).toEqual({
+      kind: "partial",
+      line: { name: "Олівець", purpose: "Для уроку малювання", quantity: 10, unitPrice: null },
+    });
+  });
+
+  it("AC-AI-01: у описі немає жодного відомого поля — пропонувати нічого, стан «не вдалося», форма працює вручну", async () => {
+    const nothing = replay('{"status":"needs_info","refusal":null,"name":null,"purpose":null,"quantity":null,"unitPrice":null}');
+    expect((await suggest("x", nothing)).suggestion).toMatchObject({ kind: "unavailable", message: "Could not get a suggestion. Fill in the lines manually" });
   });
 });
 
@@ -228,12 +239,12 @@ describe("оцінювач golden cases", () => {
     expect(scoreCase(expectedLine, line).pass).toBe(true);
     expect(scoreCase(expectedLine, { ...line, line: { ...line.line, quantity: 30, unitPrice: 2 } }).mismatches).toHaveLength(2);
     expect(scoreCase(expectedLine, { ...line, line: { ...line.line, name: "Зошит", purpose: "Для письма" } }).mismatches).toHaveLength(2);
-    expect(scoreCase(expectedLine, { kind: "not_purchase", message: "Я допомагаю лише із закупівлями" }).mismatches[0]).toContain("kind");
+    expect(scoreCase(expectedLine, { kind: "not_purchase", message: "I can only help with purchases" }).mismatches[0]).toContain("kind");
     const refusal = cases.find((c) => c.id === 8)!.expected;
     expect(scoreCase(refusal, { kind: "not_purchase", message: "інше повідомлення" }).pass).toBe(false);
-    expect(scoreCase(refusal, { kind: "not_purchase", message: "Я допомагаю лише із закупівлями" }).pass).toBe(true);
+    expect(scoreCase(refusal, { kind: "not_purchase", message: "I can only help with purchases" }).pass).toBe(true);
     const boundary = cases.find((c) => c.id === 6)!.expected;
     expect(scoreCase(boundary, { kind: "invalid_field", message: "Щось пішло не так" }).pass).toBe(false);
-    expect(scoreCase(boundary, { kind: "invalid_field", message: "Кількість має бути цілим числом від 1" }).pass).toBe(true);
+    expect(scoreCase(boundary, { kind: "invalid_field", message: "Quantity: a whole number from 1" }).pass).toBe(true);
   });
 });

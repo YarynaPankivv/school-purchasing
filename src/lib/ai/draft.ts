@@ -57,9 +57,13 @@ export function classifyError(error: unknown): Extract<DraftResult, { ok: false 
   return { ok: false, reason: "provider_error", message: cause instanceof Error ? cause.message : String(cause) };
 }
 
-// Результат для інтерфейсу: тексти — дослівно з AC PM (src/lib/ai/messages.ts).
+// Рядок, у якому відомі не всі поля (ValiaBihun/2026-quitcode-dream-team#79): відсутнє — null, AI нічого не вигадує.
+export type PartialLine = { name: string | null; purpose: string | null; quantity: number | null; unitPrice: number | null };
+
+// Результат для інтерфейсу: тексти — англійською за таблицею PM (src/lib/ai/messages.ts).
 export type SuggestResult =
   | { kind: "line"; line: { name: string; purpose: string; quantity: number; unitPrice: number } }
+  | { kind: "partial"; line: PartialLine }
   | { kind: "not_purchase"; message: string }
   | { kind: "instruction"; message: string }
   | { kind: "invalid_field"; message: string }
@@ -82,14 +86,18 @@ export function toSuggestResult(draft: Draft): SuggestResult {
   // Межі перевіряємо й для needs_info: модель могла назвати кількість, а мети в описі немає (golden 5, 6, 7).
   if (draft.quantity !== null && !parseQuantity(draft.quantity).ok) return { kind: "invalid_field", message: AI_MESSAGES.invalidQuantity };
   if (draft.unitPrice !== null && !parseUnitPrice(draft.unitPrice).ok) return { kind: "invalid_field", message: AI_MESSAGES.invalidPrice };
-  // Чого бракує в описі, AI не вигадує: неповний рядок у форму не потрапляє (питання AI — наступна версія).
-  const name = draft.name?.trim();
-  const purpose = draft.purpose?.trim();
+  // Чого бракує в описі, AI не вигадує (ValiaBihun/2026-quitcode-dream-team#79): відомі поля заповнюємо, відсутнє лишається
+  // порожнім і позначеним, людина доповнює його й сама подає. Питання AI до працівника — наступна версія.
   // Пробільні назва чи мета — не заповнене поле (спільний парсер зробив би їх null при збереженні).
-  if (draft.status !== "ok" || !name || !purpose || draft.quantity === null || draft.unitPrice === null) {
-    return unavailable("error");
+  const name = draft.name?.trim() || null;
+  const purpose = draft.purpose?.trim() || null;
+  const { quantity, unitPrice } = draft;
+  if (draft.status === "ok" && name && purpose && quantity !== null && unitPrice !== null) {
+    return { kind: "line", line: { name, purpose, quantity, unitPrice } };
   }
-  return { kind: "line", line: { name, purpose, quantity: draft.quantity, unitPrice: draft.unitPrice } };
+  // Жодного відомого поля — пропонувати нічого: стан «не вдалося», форма працює вручну.
+  if (name === null && purpose === null && quantity === null && unitPrice === null) return unavailable("error");
+  return { kind: "partial", line: { name, purpose, quantity, unitPrice } };
 }
 
 // Збій виклику → стан із AC PM: ліміт — AC-AI-05; таймаут і решта збоїв — AC-AI-04 (форма лишається доступною для ручного введення).
