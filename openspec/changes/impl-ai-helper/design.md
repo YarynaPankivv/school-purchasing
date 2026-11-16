@@ -46,6 +46,8 @@ fake timers). Під час очікування кнопка `disabled`, пор
 Тексти, яких немає в таблиці PM (placeholder, «Paste a purchase description», підписи картки, «Could not add the line…»), —
 власні англійські формулювання розробника.
 
+Опис покупки, назва й мета рядка (AC-AI-01, AC-AI-02, AC-AI-06; PM 2026-11-16, архів `openspec/changes/archive/2026-11-16-clarify-ai-english-input/`, ADR 0008): вхід — англійський опис, модель повертає англійські назву («A4 paper») і мету («For printing»); промпт і опис полів схеми переписано, `DRAFT_PROMPT_VERSION` = `suggest-v2`.
+
 ## Дані й RLS
 
 ### D5. Нових таблиць і міграцій немає
@@ -92,7 +94,7 @@ null`, поля рядка, «невідоме» = `null`. Відповідь н
 `models.ts` ключа з `process.env` не бере. Ланцюжок (лише `:free`): `google/gemma-4-31b-it:free` → `google/gemma-4-26b-a4b-it:free` →
 `nvidia/nemotron-3.5-super-vl:free`; `maxRetries: 0` (повтор витрачає той самий денний ліміт). Немає ключа → `productModel()` = `null`,
 дія повертає «недоступний», форма працює вручну. Промпт — `src/lib/ai/prompts/draft.ts` з `DRAFT_PROMPT_VERSION`: опис іде
-**між `<document>…</document>`**, теги з вводу вирізано, довжину обмежено 1000 символів, інструкція каже, що текст між тегами — дані,
+**між `<document>…</document>`** (англійська інструкція; `name`/`purpose` — англійською, версія `suggest-v2`), теги з вводу вирізано, довжину обмежено 1000 символів, інструкція каже, що текст між тегами — дані,
 а не команди. У моделі немає інструментів і доступу до БД, тож «створи заявку» фізично нічого не створить (AC-AI-06).
 
 ### D9. Денний ліміт (AC-AI-05, питання Q5 — ValiaBihun/2026-quitcode-dream-team#81)
@@ -103,7 +105,7 @@ eval розробника, UAT і приймання PM, тож прогони �
 
 ### D10. Golden cases й оцінювання
 
-`tests/fixtures/golden/cases.json` — 10 кейсів PM (№ 1, 5, 6, 7, 8, 9, 11, 12, 13, 14): `expected` (кількість і ціна точно, `nameIncludes`,
+`tests/fixtures/golden/cases.json` — 10 кейсів PM (англійська редакція 2026-11-16) (№ 1, 5, 6, 7, 8, 9, 11, 12, 13, 14): `expected` (кількість і ціна точно, `nameIncludes`,
 `purposeIncludes`, текст повідомлення) і `rubric` (слова PM). Суддя-LLM не потрібен: у результаті немає вільного тексту, усе
 перевіряє код (`evals/scorer.ts`). Офлайн — `tests/golden.test.ts` у `npm test`: реплей **справжніх** записаних відповідей
 (`recorded.json` із `modelId`, датою й `promptVersion`) через `MockLanguageModelV4` → `proposeDraft` → `toSuggestResult` → `scoreCase`,

@@ -6,7 +6,7 @@ import { AiHelperView } from "@/app/(app)/requests/[id]/ai-helper-view";
 import { createSuggestFlow } from "@/lib/ai/flow";
 import type { SuggestResult } from "@/lib/ai/draft";
 
-const DESCRIPTION = "Треба 3 пачки паперу А4 для друку, по 20 доларів";
+const DESCRIPTION = "Need 3 packs of A4 paper for printing, 20 dollars each";
 
 describe("розмітка помічника", () => {
   it("AC-AI-03: поки відповіді немає — «Looking for lines…», кнопка «Suggest lines» неактивна, опис лишається в полі", () => {
@@ -43,12 +43,12 @@ describe("розмітка помічника", () => {
 });
 
 describe("пропозиція, коли порожнього рядка немає", () => {
-  const proposal = { name: "Папір А4", purpose: "Для друку", quantity: 3, unitPrice: 20 };
+  const proposal = { name: "A4 paper", purpose: "For printing", quantity: 3, unitPrice: 20 };
 
-  it("AC-AI-01: картка показує один рядок «Папір А4», «Для друку», 3, 20.00 і кнопку «Add suggested line» — запис лише після натискання", () => {
+  it("AC-AI-01: картка показує один рядок «A4 paper», «For printing», 3, 20.00 і кнопку «Add suggested line» — запис лише після натискання", () => {
     const html = renderToStaticMarkup(<AiHelperView description={DESCRIPTION} pending={false} notice={null} proposal={proposal} />);
     expect(html).toContain("Suggested line");
-    for (const text of ["Папір А4", "Для друку", ">3<", ">20.00<"]) expect(html).toContain(text);
+    for (const text of ["A4 paper", "For printing", ">3<", ">20.00<"]) expect(html).toContain(text);
     expect(html).toMatch(/<button[^>]*data-testid="ai-accept"[^>]*>Add suggested line<\/button>/);
     // Картка не є частиною збереження чернетки: у ній немає полів форми з name.
     expect(html).not.toMatch(/<input[^>]*name=/);
@@ -109,7 +109,7 @@ describe("потік очікування й 15 секунд", () => {
     const { flow, results } = setup(() => new Promise<SuggestResult>((resolve) => (resolveLate = resolve)));
     flow.start(DESCRIPTION);
     await vi.advanceTimersByTimeAsync(15_000);
-    resolveLate({ kind: "line", line: { name: "Папір А4", purpose: "Для друку", quantity: 3, unitPrice: 20 } });
+    resolveLate({ kind: "line", line: { name: "A4 paper", purpose: "For printing", quantity: 3, unitPrice: 20 } });
     await vi.advanceTimersByTimeAsync(0);
     expect(results).toHaveLength(1);
     expect(results[0]).toMatchObject({ kind: "unavailable" });
@@ -119,7 +119,7 @@ describe("потік очікування й 15 секунд", () => {
   });
 
   it("AC-AI-01: відповідь до 15 секунд передається як є, а таймер скасовується", async () => {
-    const line: SuggestResult = { kind: "line", line: { name: "Папір А4", purpose: "Для друку", quantity: 3, unitPrice: 20 } };
+    const line: SuggestResult = { kind: "line", line: { name: "A4 paper", purpose: "For printing", quantity: 3, unitPrice: 20 } };
     const { flow, events, results } = setup(() => Promise.resolve(line));
     flow.start(DESCRIPTION);
     await vi.advanceTimersByTimeAsync(0);

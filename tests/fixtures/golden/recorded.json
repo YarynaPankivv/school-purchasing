@@ -1,62 +1,62 @@
 {
   "1": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:29:36.288Z",
-    "promptVersion": "suggest-v1",
-    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Папір А4\",\"purpose\":\"Для друку\",\"quantity\":3,\"unitPrice\":20}"
+    "recordedAt": "2026-11-16T15:47:42.920Z",
+    "promptVersion": "suggest-v2",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"A4 paper\",\"purpose\":\"For printing\",\"quantity\":3,\"unitPrice\":20}"
   },
   "5": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:29:46.480Z",
-    "promptVersion": "suggest-v1",
-    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Степлерна скоба\",\"purpose\":null,\"quantity\":2.5,\"unitPrice\":4}"
+    "recordedAt": "2026-11-16T15:47:49.106Z",
+    "promptVersion": "suggest-v2",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Staples\",\"purpose\":null,\"quantity\":2.5,\"unitPrice\":4}"
   },
   "6": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:29:53.814Z",
-    "promptVersion": "suggest-v1",
-    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Папір\",\"purpose\":null,\"quantity\":0,\"unitPrice\":20}"
+    "recordedAt": "2026-11-16T15:47:54.953Z",
+    "promptVersion": "suggest-v2",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Paper\",\"purpose\":null,\"quantity\":0,\"unitPrice\":20}"
   },
   "7": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:30:03.885Z",
-    "promptVersion": "suggest-v1",
-    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Папка\",\"purpose\":null,\"quantity\":4,\"unitPrice\":-5}"
+    "recordedAt": "2026-11-16T15:48:07.673Z",
+    "promptVersion": "suggest-v2",
+    "text": "{\"status\":\"ok\",\"refusal\":\"not_purchase\",\"name\":\"Folder\",\"purpose\":null,\"quantity\":4,\"unitPrice\":-5}"
   },
   "8": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:30:12.427Z",
-    "promptVersion": "suggest-v1",
+    "recordedAt": "2026-11-16T15:48:13.088Z",
+    "promptVersion": "suggest-v2",
     "text": "{\"status\":\"refused\",\"refusal\":\"not_purchase\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
   },
   "9": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:30:19.118Z",
-    "promptVersion": "suggest-v1",
+    "recordedAt": "2026-11-16T15:48:18.544Z",
+    "promptVersion": "suggest-v2",
     "text": "{\"status\":\"refused\",\"refusal\":\"not_purchase\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
   },
   "11": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:30:30.071Z",
-    "promptVersion": "suggest-v1",
+    "recordedAt": "2026-11-16T15:48:25.305Z",
+    "promptVersion": "suggest-v2",
     "text": "{\"status\":\"refused\",\"refusal\":\"instruction\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
   },
   "12": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:30:38.079Z",
-    "promptVersion": "suggest-v1",
+    "recordedAt": "2026-11-16T15:48:30.729Z",
+    "promptVersion": "suggest-v2",
     "text": "{\"status\":\"refused\",\"refusal\":\"instruction\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
   },
   "13": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:30:44.402Z",
-    "promptVersion": "suggest-v1",
-    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Крейда\",\"purpose\":\"Для уроків\",\"quantity\":2,\"unitPrice\":5}"
+    "recordedAt": "2026-11-16T15:48:37.389Z",
+    "promptVersion": "suggest-v2",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Chalk\",\"purpose\":\"For lessons\",\"quantity\":2,\"unitPrice\":5}"
   },
   "14": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-15T09:30:54.453Z",
-    "promptVersion": "suggest-v1",
-    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Маркер\",\"purpose\":\"Для дошки\",\"quantity\":4,\"unitPrice\":1.5}"
+    "recordedAt": "2026-11-16T15:51:28.818Z",
+    "promptVersion": "suggest-v2",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Marker\",\"purpose\":\"For the whiteboard\",\"quantity\":4,\"unitPrice\":1.5}"
   }
 }
