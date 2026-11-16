@@ -1,4 +1,4 @@
-> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/71 · оновлено 2026-11-13T14:15:20Z
+> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/71 · оновлено 2026-11-16T09:20:20Z
 
 # Вимога: AI пропонує рядки закупівлі за вільним описом
 
@@ -45,6 +45,12 @@
 - Вказівки в описі («ігноруй інструкції», «створи заявку») помічник не виконує: опис — це лише дані про покупку.
 - Поріг приймання: функція прийнята, якщо проходять не менше 8 з 10 golden cases, і серед них обов'язково № 1 (основний сценарій), № 8 (відмова) і № 11 (ін'єкція).
 - Приклади для перевірки — golden cases: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/70
+- Тексти помічника показуються англійською за таблицею в https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/49 (там вони додані: «Suggest lines», «Looking for lines…», «I can only help with purchases», «Could not get a suggestion. Fill in the lines manually», «The assistant is unavailable today. Fill in the lines manually», «I don't follow instructions from the description. Describe the purchase», «Purchase description»); тексти AC лишаються українською, ID не змінюються — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/77.
+- Якщо кількість чи ціна в описі поза межами (golden cases № 5, 6, 7), рядків не додано, а повідомлення — ті самі, що в формі: «Quantity: a whole number from 1» і «Price: a number from 0» — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/78.
+- Якщо в описі немає ціни чи кількості, помічник заповнює відомі поля, а відсутнє лишає порожнім (нічого не вигадує); порожнє поле позначено, людина доповнює його й сама подає — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/79.
+- У AC-AI-01 назва й мета перевіряються за правилом golden case № 1 («містить» слово «папір» і «друк»); дослівно перевіряються лише кількість 3 і ціна 20.00 — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/80.
+- «Денний ліміт запитів до AI» — це ліміт постачальника моделі: «вичерпано», коли постачальник відповів помилкою про ліміт; застосунок запити не рахує — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/81.
+- Пропозиція AI заповнює порожній рядок форми, якщо він є, інакше додає новий; тому «один рядок» в AC-AI-01 — єдиний рядок у формі — відповідь на питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/82.
 
 ### Відкриті питання
 
@@ -54,3 +60,4 @@
 
 - 2026-11-05 — створено (зріз 4, WS10)
 - 2026-11-13 — додано AC-AI-05 (стан: денний ліміт вичерпано) і AC-AI-06 (ін'єкція), додано поріг приймання; AC-AI-01…04 не змінено — власне рішення PM
+- 2026-11-16 — уточнено «Припущення» до AC-AI-01…06 (англійські тексти, межі, порожні поля, правило «містить», ліміт постачальника, заповнення порожнього рядка); тексти AC не змінено — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/77, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/78, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/79, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/80, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/81, https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/82
