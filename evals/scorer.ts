@@ -20,7 +20,7 @@ export type GoldenCase = {
 type LineData = Extract<SuggestResult, { kind: "line" }>["line"];
 type Expected<K extends GoldenExpected["kind"]> = Extract<GoldenExpected, { kind: K }>;
 
-const includes = (value: string, part: string) => value.toLowerCase().includes(part);
+const includes = (value: string, part: string) => value.toLowerCase().includes(part.toLowerCase());
 
 function scoreLine(expected: Expected<"line">, line: LineData): string[] {
   const mismatches: string[] = [];
