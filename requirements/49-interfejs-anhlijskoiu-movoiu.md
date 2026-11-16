@@ -1,4 +1,4 @@
-> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/49 · оновлено 2026-11-06T10:36:14Z
+> Джерело: https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/49 · оновлено 2026-11-16T09:21:57Z
 
 # Вимога: інтерфейс застосунку англійською мовою
 
@@ -94,6 +94,13 @@
 | Редагувати | Edit |
 | Рядок | Line |
 | Ви ще не подали жодної заявки | You have not submitted any requests yet |
+| Запропонувати рядки | Suggest lines |
+| Шукаю рядки… | Looking for lines… |
+| Я допомагаю лише із закупівлями | I can only help with purchases |
+| Не вдалося отримати пропозицію. Заповніть рядки вручну | Could not get a suggestion. Fill in the lines manually |
+| Помічник сьогодні недоступний. Заповніть рядки вручну | The assistant is unavailable today. Fill in the lines manually |
+| Я не виконую вказівок з опису. Опишіть покупку | I don't follow instructions from the description. Describe the purchase |
+| Опис покупки | Purchase description |
 
 ### Відкриті питання
 
@@ -109,3 +116,4 @@
 - 2026-10-26 — у таблицю додано підпис «Автор» / «Author» для імені автора заявки (AC-APR-08 у вимозі https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/48) — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/62
 - 2026-10-29 — додано AC-LANG-09 і англійські тексти зрізу 3 (статуси «Partially approved», «Returned for revision», повідомлення про рядки й межі кількості та ціни, підписи історії) — власне рішення PM (зріз 3, WS9)
 - 2026-11-06 — уточнено припущення до AC-LANG-09: у WS9 статус підписано в списку й на сторінці заявки, «в історії» — пізніше; текст AC не змінено — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/75
+- 2026-11-16 — у таблицю додано англійські тексти помічника зрізу 4 (AC-AI-01…06 у вимозі https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/71): «Suggest lines», «Looking for lines…», три повідомлення, «Purchase description»; тексти AC не змінено — питання https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/77
