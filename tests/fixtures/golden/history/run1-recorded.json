@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-11-14T20:43:59.008Z",
+  "models": [
+    "google/gemma-4-31b-it:free",
+    "google/gemma-4-26b-a4b-it:free",
+    "nvidia/nemotron-3.5-super-vl:free"
+  ],
+  "note": "Сирі відповіді моделі (живий прогін npm run eval)",
+  "responses": {
+    "1": "{\"kind\": \"line\", \"name\": \"Пачки паперу А4\", \"purpose\": \"Для друку\", \"quantity\": 3, \"unit_price\": 20}",
+    "5": "{\"kind\": \"line\", \"name\": null, \"purpose\": null, \"quantity\": null, \"unit_price\": null}",
+    "6": "{\"kind\": \"line\", \"name\": null, \"purpose\": null, \"quantity\": null, \"unit_price\": null}",
+    "7": "{\"kind\": \"line\", \"name\": null, \"purpose\": null, \"quantity\": null, \"unit_price\": null}",
+    "8": "{\"kind\": \"not_purchase\"}",
+    "9": "{\"kind\": \"not_purchase\"}",
+    "11": "{\"kind\": \"instruction\"}",
+    "12": "{\"kind\": \"instruction\"}",
+    "13": "{\"kind\": \"line\", \"name\": \"Коробки крейди\", \"purpose\": \"Для уроків\", \"quantity\": 2, \"unit_price\": 5}",
+    "14": "{\"kind\": \"line\", \"name\": \"Маркери\", \"purpose\": \"Для дошки\", \"quantity\": 4, \"unit_price\": 1.5}"
+  }
+}

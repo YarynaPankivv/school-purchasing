@@ -12,6 +12,9 @@ import base from "./vitest.config.mjs";
 // звіт усе одно будується.
 // Загальний відсоток (у демо ≈32 %) не поріг: сторінки й server actions доводять тести бази (PGlite) та e2e, а не Vitest.
 const FLOORED: string[] = [
+  // AI-помічник зрізу 4: розбір відповіді моделі, виклик провайдера й потік очікування (tests/ai, tests/ui/ai-line-helper).
+  "ai/draft",
+  "ai/flow",
   // Доменні файли, що вже тримають 90/85/90/90 (зріз 2 і PUR). Нижчі — org/errors, pur/rows — додамо, коли тести їх піднімуть.
   "auth/session",
   "health",

@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-11-14T20:50:29.375Z",
+  "models": [
+    "google/gemma-4-31b-it:free",
+    "google/gemma-4-26b-a4b-it:free",
+    "nvidia/nemotron-3.5-super-vl:free"
+  ],
+  "note": "Сирі відповіді моделі (живий прогін npm run eval)",
+  "responses": {
+    "1": "{\"kind\": \"line\", \"name\": \"Папір А4\", \"purpose\": \"Для друку\", \"quantity\": 3, \"unit_price\": 20}",
+    "5": "{\"kind\": \"line\", \"name\": \"Степлерна скоба\", \"purpose\": null, \"quantity\": 2.5, \"unit_price\": 4}",
+    "6": "{\"kind\": \"line\", \"name\": \"Папір\", \"purpose\": null, \"quantity\": 0, \"unit_price\": 20}",
+    "7": "{\"kind\": \"line\", \"name\": \"Папка\", \"purpose\": null, \"quantity\": 4, \"unit_price\": -5}",
+    "8": "{\"kind\": \"not_purchase\"}",
+    "9": "{\"kind\": \"not_purchase\"}",
+    "11": "{\"kind\": \"instruction\"}",
+    "12": "{\"kind\": \"instruction\"}",
+    "13": "{\"kind\": \"line\", \"name\": \"Крейда\", \"purpose\": \"Для уроків\", \"quantity\": 2, \"unit_price\": 5}",
+    "14": "{\"kind\": \"line\", \"name\": \"Маркер\", \"purpose\": \"Для дошки\", \"quantity\": 4, \"unit_price\": 1.5}"
+  }
+}

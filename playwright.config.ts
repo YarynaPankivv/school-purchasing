@@ -54,7 +54,8 @@ export default defineConfig({
     { name: "setup", testMatch: /auth\.setup\.ts$/, teardown: "cleanup", use: noRecording },
     // Прибирання після всіх тестів: видаляє синтетичних uat-*@example.test і перевіряє, що нічого не лишилось.
     { name: "cleanup", testMatch: /cleanup\.teardown\.ts$/, use: noRecording },
-    { name: "chromium", dependencies: ["setup"], grepInvert: /@negative-control/ },
+    // @live-ai — тести з живим викликом моделі (slice4.spec.ts): лише на розгорнутому застосунку з ключем, ніколи в CI.
+    { name: "chromium", dependencies: ["setup"], grepInvert: deployed ? /@negative-control/ : /@negative-control|@live-ai/ },
     ...(withNegativeControls
       ? [{ name: "negative-controls", dependencies: ["setup"], grep: /@negative-control/ }]
       : []),

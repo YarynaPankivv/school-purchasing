@@ -21,6 +21,8 @@ vi.mock("next/navigation", async () => {
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const createClient = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
+// Сторінка заявки тягне помічника (ai-actions → openrouter.ts з `import "server-only"`): поза сервером цей пакет кидає помилку.
+vi.mock("server-only", () => ({}));
 
 // Форма заявки — клієнтський компонент зі своїм станом: беремо її пропси, тобто те, що сторінка вирішила показати.
 type FormProps = {
