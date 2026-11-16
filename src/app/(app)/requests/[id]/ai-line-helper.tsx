@@ -1,13 +1,14 @@
 "use client";
 
-// Помічник «Запропонувати рядки» (AC-AI-01…06; design.md D1, D4, D5 зміни impl-ai-helper): автор вставляє вільний опис,
+// Помічник «Suggest lines» (AC-AI-01…06; design.md D1, D4, D5 зміни impl-ai-helper): автор вставляє вільний опис,
 // AI пропонує один рядок, а автор сам перевіряє його й вирішує, чи подавати закупівлю. Опис ніколи не очищується.
-// Пропозиція лише заповнює поля форми (перший порожній рядок; немає порожнього — картка з кнопкою «Додати рядок», яка викликає addLineWithValues);
+// Пропозиція лише заповнює поля форми (перший порожній рядок; немає порожнього — картка з кнопкою «Add suggested line», яка викликає addLineWithValues);
+// неповну пропозицію (немає ціни чи кількості) теж вставляємо: відомі поля заповнено, порожні позначено (#79 PM);
 // закупівлю не подаємо й автоматично не зберігаємо. Потік очікування й 15 секунд — src/lib/ai/flow.ts.
 import { useEffect, useRef, useState } from "react";
 import { AI_MESSAGES, AI_UI } from "@/lib/ai/messages";
 import { createSuggestFlow } from "@/lib/ai/flow";
-import type { SuggestResult } from "@/lib/ai/draft";
+import type { PartialLine, SuggestResult } from "@/lib/ai/draft";
 import { addLineWithValues, suggestLine } from "./ai-actions";
 import { AiHelperView, type Notice, type Proposal } from "./ai-helper-view";
 
@@ -30,13 +31,75 @@ function firstEmptyLine(form: HTMLFormElement): string | null {
 }
 
 type Line = Extract<SuggestResult, { kind: "line" }>["line"];
+// Позначка порожнього поля неповного рядка (ValiaBihun/2026-quitcode-dream-team#79): aria-invalid + рамка статусного токена;
+// знімається, щойно людина щось уводить у це поле.
+const MISSING_CLASS = "border-status-rejected-foreground";
 
-function fill(form: HTMLFormElement, lineId: string, line: Line) {
-  const values = [line.name, line.purpose, String(line.quantity), line.unitPrice.toFixed(2)];
+function markMissing(input: HTMLInputElement) {
+  input.setAttribute("aria-invalid", "true");
+  input.classList.add(MISSING_CLASS);
+  input.addEventListener(
+    "input",
+    () => {
+      input.removeAttribute("aria-invalid");
+      input.classList.remove(MISSING_CLASS);
+    },
+    { once: true },
+  );
+}
+
+// Відомі поля вставляємо, відсутні (null) лишаємо порожніми й позначаємо. Повертає, чи є порожні поля.
+function fill(form: HTMLFormElement, lineId: string, line: Line | PartialLine): boolean {
+  const values = [
+    line.name,
+    line.purpose,
+    line.quantity === null ? null : String(line.quantity),
+    line.unitPrice === null ? null : line.unitPrice.toFixed(2),
+  ];
+  let missing = false;
   FIELDS.forEach((field, index) => {
     const input = form.elements.namedItem(`line_${lineId}_${field}`) as HTMLInputElement | null;
-    if (input) setValue(input, values[index]);
+    if (!input) return;
+    const value = values[index];
+    if (value === null) {
+      markMissing(input);
+      missing = true;
+    } else {
+      setValue(input, value);
+    }
   });
+  return missing;
+}
+
+type Ui = { setNotice: (notice: Notice) => void; setProposal: (proposal: Proposal | null) => void };
+
+// Відмови й збої — лише повідомлення; «forbidden» нічого не показує.
+function messageNotice(result: Exclude<SuggestResult, { kind: "line" | "partial" }>): Notice {
+  if (result.kind === "forbidden") return null;
+  const tone = result.kind === "unavailable" || result.kind === "invalid_field" ? "warn" : "info";
+  return { tone, message: result.message };
+}
+
+// Порожній рядок є — заповнюємо поля форми (у БД лише після «Save»). Немає: повний рядок — картка з підтвердженням
+// людини; неповний — нічого не додаємо (запис потребує всіх полів).
+function placeResult(form: HTMLFormElement, result: Extract<SuggestResult, { kind: "line" | "partial" }>, ui: Ui) {
+  const lineId = firstEmptyLine(form);
+  if (!lineId) {
+    if (result.kind === "partial") return ui.setNotice({ tone: "warn", message: AI_MESSAGES.timeout });
+    ui.setProposal(result.line);
+    return ui.setNotice(null);
+  }
+  const missing = fill(form, lineId, result.line);
+  ui.setNotice(missing ? { tone: "info", message: AI_MESSAGES.missingFields } : null);
+}
+
+function applyResult(root: HTMLElement | null, result: SuggestResult, ui: Ui) {
+  if (result.kind === "line" || result.kind === "partial") {
+    const form = root?.closest("form");
+    if (form) placeResult(form, result, ui);
+    return;
+  }
+  ui.setNotice(messageNotice(result));
 }
 
 export function AiLineHelper({ requestId }: { requestId: string }) {
@@ -52,25 +115,10 @@ export function AiLineHelper({ requestId }: { requestId: string }) {
 
   // Потік створюємо в ефекті (а не під час рендеру): він читає rootRef лише коли приходить відповідь.
   useEffect(() => {
-    async function apply(result: SuggestResult) {
-      if (result.kind === "line") {
-        const form = rootRef.current?.closest("form");
-        if (!form) return;
-        const lineId = firstEmptyLine(form);
-        // Порожній рядок є — заповнюємо поля форми (у БД лише після «Save»); немає — картка з підтвердженням людини.
-        if (lineId) fill(form, lineId, result.line);
-        else setProposal(result.line);
-        setNotice(null);
-        return;
-      }
-      if (result.kind === "forbidden") return setNotice(null);
-      const tone = result.kind === "unavailable" || result.kind === "invalid_field" ? "warn" : "info";
-      setNotice({ tone, message: result.message });
-    }
     const flow = createSuggestFlow({
       ask: (text) => suggestLine(requestId, text),
       onPending: setPending,
-      onResult: (result) => void apply(result),
+      onResult: (result) => applyResult(rootRef.current, result, { setNotice, setProposal }),
     });
     flowRef.current = flow;
     return () => {

@@ -1,34 +1,36 @@
-// Тексти помічника «Запропонувати рядки» — дослівно з AC PM (requirements/71-ai-proponuie-riadky-zakupivli.md,
-// ValiaBihun/2026-quitcode-dream-team#71), тобто українською. Решта інтерфейсу англійська (AC-LANG-01), тож це єдиний
-// модуль src/, який сканер tests/ui/interface-language.test.ts пропускає. Питання PM — ValiaBihun/2026-quitcode-dream-team#77:
-// якщо PM скаже «англійською», змінюємо лише цей файл (design.md D7 зміни impl-ai-helper).
+// Тексти помічника «Suggest lines» — англійською за таблицею PM (requirements/49-interfejs-anhlijskoiu-movoiu.md) за рішенням
+// ValiaBihun/2026-quitcode-dream-team#77 (варіант A); специфікація — openspec/specs/ai-line-suggestion (зміна clarify-ai-helper,
+// формат «англійський замість українського»). Тексти AC лишаються українською, ID AC не змінюються. Усе, що бачить людина, —
+// англійською (AC-LANG-01), тож цей файл сканер tests/ui/interface-language.test.ts перевіряє як решту src/.
 
 export const AI_MESSAGES = {
   // AC-AI-02, golden 8 і 9
-  notPurchase: "Я допомагаю лише із закупівлями",
+  notPurchase: "I can only help with purchases",
   // AC-AI-06, golden 11 і 12
-  instruction: "Я не виконую вказівок з опису. Опишіть покупку",
-  // AC-AI-04 (немає відповіді за 15 секунд); так само — збій провайдера й відповідь без повного рядка
-  timeout: "Не вдалося отримати пропозицію. Заповніть рядки вручну",
-  // AC-AI-05
-  limit: "Помічник сьогодні недоступний. Заповніть рядки вручну",
-  // golden 5, 6, 7: PM не задала текст (ValiaBihun/2026-quitcode-dream-team#78) — згадуємо поле й межу за правилом golden
+  instruction: "I don't follow instructions from the description. Describe the purchase",
+  // AC-AI-04 (немає відповіді за 15 секунд); так само — збій провайдера й відповідь без жодного відомого поля
+  timeout: "Could not get a suggestion. Fill in the lines manually",
+  // AC-AI-05 (ліміт постачальника моделі: ValiaBihun/2026-quitcode-dream-team#81)
+  limit: "The assistant is unavailable today. Fill in the lines manually",
+  // golden 5, 6, 7: тексти PM — ті самі, що в ручній формі (ValiaBihun/2026-quitcode-dream-team#78, таблиця #49)
+  invalidQuantity: "Quantity: a whole number from 1",
+  invalidPrice: "Price: a number from 0",
+  // Неповний опис (ValiaBihun/2026-quitcode-dream-team#79): відомі поля заповнено, порожні позначено; текст — з таблиці PM
+  missingFields: "Fill in all line fields",
   // Додавання рядка з картки пропозиції не вдалося (сервер відхилив або збій): пропозиція лишається для повтору.
-  addFailed: "Не вдалося додати рядок. Спробуйте ще раз або заповніть рядки вручну",
-  invalidQuantity: "Кількість має бути цілим числом від 1",
-  invalidPrice: "Ціна має бути числом від 0, не більше двох знаків після коми",
+  addFailed: "Could not add the line. Try again or fill in the lines manually",
 } as const;
 
 export const AI_UI = {
-  label: "Опис покупки",
-  placeholder: "Наприклад: треба 3 пачки паперу А4 для друку, по 20 доларів",
-  button: "Запропонувати рядки", // AC-AI-01…06
-  loading: "Шукаю рядки…", // AC-AI-03
-  empty: "Вставте опис покупки",
+  label: "Purchase description", // таблиця PM (#49)
+  placeholder: "For example: 3 packs of A4 paper for printing, 20 dollars each",
+  button: "Suggest lines", // AC-AI-01…06
+  loading: "Looking for lines…", // AC-AI-03
+  empty: "Paste a purchase description",
   // Картка пропозиції, коли в формі немає порожнього рядка: запис лише після натискання (підтвердження людини).
-  proposal: "Пропозиція рядка",
-  accept: "Додати рядок",
-  fields: { name: "Назва", purpose: "Мета", quantity: "Кількість", unitPrice: "Ціна" },
+  proposal: "Suggested line",
+  accept: "Add suggested line",
+  fields: { name: "Name", purpose: "Purpose", quantity: "Quantity", unitPrice: "Unit price" },
 } as const;
 
 // 15 секунд очікування відповіді до повідомлення AC-AI-04 (припущення PM).
