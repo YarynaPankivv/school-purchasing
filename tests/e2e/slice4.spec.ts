@@ -1,6 +1,6 @@
 // UAT зрізу 4: AI-помічник «Suggest lines» — AC-AI-01 (пропозиція рядка), AC-AI-02 (не про закупівлі), AC-AI-06
-// (вказівка в описі). Тексти «Тоді» — дослівно з requirements/71-ai-proponuie-riadky-zakupivli.md; тексти помічника
-// українські за AC (решта інтерфейсу англійська, питання PM — ValiaBihun/2026-quitcode-dream-team#77).
+// (вказівка в описі). Тексти «Тоді» — з requirements/71-ai-proponuie-riadky-zakupivli.md; тексти помічника англійські
+// за таблицею requirements/49-… (відповідь PM ValiaBihun/2026-quitcode-dream-team#77, ADR 0007).
 // AC-AI-03 (очікування) і AC-AI-04, 05 (15 секунд, ліміт) на проді не відтворити: відповідь надто швидка, а ліміт чи збій
 // провайдера не викликати — їх доводять tests/ui/ai-line-helper.test.tsx, tests/ai/suggest.test.ts (proof pack, «Не перевірено»).
 // Кожен тест робить один запит до живої моделі (ліміт безкоштовного плану спільний з PM) і пише дані, тож працює з
@@ -9,6 +9,11 @@
 import { expect, test, type Page } from "@playwright/test";
 import { attachRuntimeErrors, given, signIn, thenStep, when } from "./support/uat";
 import { addToDepartment, createDraftAs, createUatUser, requestCountOf, requestInfo, type UatUser } from "./support/slice3";
+
+// Інтерфейс англійською, тож і браузер англійський: інакше поле числа показує ціну «20,00» (кома), а AC-AI-01 вимагає
+// «20.00» — значення в полі те саме, відображення залежить від мови браузера. Самої `locale` контексту замало:
+// поле <input type="number"> бере мову інтерфейсу Chromium, тому потрібен ще прапорець --lang.
+test.use({ locale: "en-US", launchOptions: { args: ["--lang=en-US"] } });
 
 test.afterEach(async ({ page }) => attachRuntimeErrors(page));
 
