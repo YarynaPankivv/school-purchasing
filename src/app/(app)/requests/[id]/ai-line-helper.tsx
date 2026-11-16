@@ -71,6 +71,37 @@ function fill(form: HTMLFormElement, lineId: string, line: Line | PartialLine): 
   return missing;
 }
 
+type Ui = { setNotice: (notice: Notice) => void; setProposal: (proposal: Proposal | null) => void };
+
+// Відмови й збої — лише повідомлення; «forbidden» нічого не показує.
+function messageNotice(result: Exclude<SuggestResult, { kind: "line" | "partial" }>): Notice {
+  if (result.kind === "forbidden") return null;
+  const tone = result.kind === "unavailable" || result.kind === "invalid_field" ? "warn" : "info";
+  return { tone, message: result.message };
+}
+
+// Порожній рядок є — заповнюємо поля форми (у БД лише після «Save»). Немає: повний рядок — картка з підтвердженням
+// людини; неповний — нічого не додаємо (запис потребує всіх полів).
+function placeResult(form: HTMLFormElement, result: Extract<SuggestResult, { kind: "line" | "partial" }>, ui: Ui) {
+  const lineId = firstEmptyLine(form);
+  if (!lineId) {
+    if (result.kind === "partial") return ui.setNotice({ tone: "warn", message: AI_MESSAGES.timeout });
+    ui.setProposal(result.line);
+    return ui.setNotice(null);
+  }
+  const missing = fill(form, lineId, result.line);
+  ui.setNotice(missing ? { tone: "info", message: AI_MESSAGES.missingFields } : null);
+}
+
+function applyResult(root: HTMLElement | null, result: SuggestResult, ui: Ui) {
+  if (result.kind === "line" || result.kind === "partial") {
+    const form = root?.closest("form");
+    if (form) placeResult(form, result, ui);
+    return;
+  }
+  ui.setNotice(messageNotice(result));
+}
+
 export function AiLineHelper({ requestId }: { requestId: string }) {
   const [description, setDescription] = useState("");
   const [pending, setPending] = useState(false);
@@ -84,34 +115,10 @@ export function AiLineHelper({ requestId }: { requestId: string }) {
 
   // Потік створюємо в ефекті (а не під час рендеру): він читає rootRef лише коли приходить відповідь.
   useEffect(() => {
-    async function apply(result: SuggestResult) {
-      if (result.kind === "partial") {
-        const form = rootRef.current?.closest("form");
-        if (!form) return;
-        const lineId = firstEmptyLine(form);
-        // Неповний рядок лише заповнює порожній рядок форми; немає порожнього — нічого не додаємо (запис потребує всіх полів).
-        if (lineId && fill(form, lineId, result.line)) return setNotice({ tone: "info", message: AI_MESSAGES.missingFields });
-        if (lineId) return setNotice(null);
-        return setNotice({ tone: "warn", message: AI_MESSAGES.timeout });
-      }
-      if (result.kind === "line") {
-        const form = rootRef.current?.closest("form");
-        if (!form) return;
-        const lineId = firstEmptyLine(form);
-        // Порожній рядок є — заповнюємо поля форми (у БД лише після «Save»); немає — картка з підтвердженням людини.
-        if (lineId) fill(form, lineId, result.line);
-        else setProposal(result.line);
-        setNotice(null);
-        return;
-      }
-      if (result.kind === "forbidden") return setNotice(null);
-      const tone = result.kind === "unavailable" || result.kind === "invalid_field" ? "warn" : "info";
-      setNotice({ tone, message: result.message });
-    }
     const flow = createSuggestFlow({
       ask: (text) => suggestLine(requestId, text),
       onPending: setPending,
-      onResult: (result) => void apply(result),
+      onResult: (result) => applyResult(rootRef.current, result, { setNotice, setProposal }),
     });
     flowRef.current = flow;
     return () => {
