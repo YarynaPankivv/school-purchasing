@@ -46,7 +46,7 @@ fake timers). Під час очікування кнопка `disabled`, пор
 Тексти, яких немає в таблиці PM (placeholder, «Paste a purchase description», підписи картки, «Could not add the line…»), —
 власні англійські формулювання розробника.
 
-Опис покупки, назва й мета рядка (PM 2026-11-16, зміна специфікації `clarify-ai-english-input`, ADR 0008): вхід — англійський опис, модель повертає англійські назву («A4 paper») і мету («For printing»); промпт і опис полів схеми переписано, `DRAFT_PROMPT_VERSION` = `suggest-v2`.
+Опис покупки, назва й мета рядка (AC-AI-01, AC-AI-02, AC-AI-06; PM 2026-11-16, архів `openspec/changes/archive/2026-11-16-clarify-ai-english-input/`, ADR 0008): вхід — англійський опис, модель повертає англійські назву («A4 paper») і мету («For printing»); промпт і опис полів схеми переписано, `DRAFT_PROMPT_VERSION` = `suggest-v2`.
 
 ## Дані й RLS
 
