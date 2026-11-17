@@ -171,6 +171,23 @@ export function incompleteLines(lines: readonly (LineFields & { position?: numbe
   return result;
 }
 
+// Номери з DETAIL бази — це position, а після видалення рядка в position лишаються «дірки» (1, 3). Автор бачить у формі
+// порядкові номери від 1 (index + 1 у списку, відсортованому за position), тож і повідомлення називає саме їх.
+export function withDisplayNumbers(list: readonly IncompleteLine[], lines: readonly { position: number }[]): IncompleteLine[] {
+  const positions = lines.map((l) => l.position).sort((a, b) => a - b);
+  return list.map((item) => {
+    const index = positions.indexOf(item.position);
+    return index < 0 ? item : { ...item, number: index + 1 };
+  });
+}
+
+// Ціна в полі форми: завжди два знаки після крапки («1.50», а не «1.5»), як у картці пропозиції й суми.
+export function unitPriceInputValue(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "";
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(2) : "";
+}
+
 // DETAIL винятку pur:lines_incomplete — «позиція:поле,поле;позиція:поле» (submit_purchase). Невідомі поля відкидаємо.
 export function incompleteLinesFromDetail(detail: string | null | undefined): IncompleteLine[] {
   if (!detail) return [];
