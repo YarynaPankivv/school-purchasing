@@ -28,7 +28,7 @@ import { PURCHASE_TYPE_LABELS } from "@/lib/org/requests";
 import { isAppRole } from "@/lib/org/roles";
 import { canAdminReject, canDecide, canReopen, decisionBlockReason, forwardedLines } from "@/lib/pur/decisions";
 import { PUR_ERROR_MESSAGES, purErrorMessage } from "@/lib/pur/errors";
-import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail, LINE_NAME_MAX, NOTE_MAX, PURPOSE_MAX, REASON_MAX } from "@/lib/pur/lines";
+import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail, LINE_NAME_MAX, NOTE_MAX, PURPOSE_MAX, REASON_MAX, unitPriceInputValue, withDisplayNumbers } from "@/lib/pur/lines";
 import { loadDepartmentApprovers } from "../_lib/approvers";
 import { AiLineHelper } from "./ai-line-helper";
 import { LinesTable } from "./lines-table";
@@ -162,7 +162,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
     .join(" · ");
 
   const savedMessage = typeof saved === "string" && Object.hasOwn(SAVED, saved) ? SAVED[saved] : undefined;
-  const incomplete = error === "lines_incomplete" && typeof detail === "string" ? incompleteLinesFromDetail(detail) : [];
+  const incomplete = error === "lines_incomplete" && typeof detail === "string" ? withDisplayNumbers(incompleteLinesFromDetail(detail), lines) : [];
   const errorMessage =
     incomplete.length > 0
       ? incompleteLinesMessage(incomplete)
@@ -333,11 +333,11 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                 </th>
               }
             >
-                  {lines.map((line) => (
+                  {lines.map((line, index) => (
                     <tr key={line.id} data-testid="line-row" className="max-md:grid max-md:grid-cols-2 max-md:items-center max-md:gap-x-3 max-md:gap-y-3 max-md:py-4 max-md:first:pt-0 max-md:last:pb-0">
                       <td className="py-2 pr-2 text-muted-foreground max-md:order-1 max-md:p-0 max-md:text-sm max-md:font-medium max-md:text-foreground">
                         <span className="md:hidden">Line </span>
-                        {line.position}
+                        {index + 1}
                       </td>
                       <td className="py-2 pr-2 max-md:order-3 max-md:col-span-2 max-md:p-0">
                         <span className="mb-1 block text-xs text-muted-foreground md:hidden">Name</span>
@@ -347,7 +347,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                           defaultValue={line.name ?? ""}
                           maxLength={LINE_NAME_MAX}
                           autoComplete="off"
-                          aria-label={`Line ${line.position} name`}
+                          aria-label={`Line ${index + 1} name`}
                           disabled={!editLines}
                         />
                       </td>
@@ -358,7 +358,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                           defaultValue={line.purpose ?? ""}
                           maxLength={PURPOSE_MAX}
                           autoComplete="off"
-                          aria-label={`Line ${line.position} purpose`}
+                          aria-label={`Line ${index + 1} purpose`}
                           disabled={!editLines}
                         />
                       </td>
@@ -370,7 +370,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                           min={1}
                           step={1}
                           defaultValue={line.quantity ?? ""}
-                          aria-label={`Line ${line.position} quantity`}
+                          aria-label={`Line ${index + 1} quantity`}
                           disabled={!editLines}
                         />
                       </td>
@@ -381,8 +381,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                           type="number"
                           min={0}
                           step="0.01"
-                          defaultValue={line.unit_price ?? ""}
-                          aria-label={`Line ${line.position} unit price`}
+                          defaultValue={unitPriceInputValue(line.unit_price)}
+                          aria-label={`Line ${index + 1} unit price`}
                           disabled={!editLines}
                         />
                       </td>
@@ -395,8 +395,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                           <SubmitButton
                             variant="destructive-ghost"
                             className="px-3 py-1.5"
-                            ariaLabel={`Remove line ${line.position}`}
-                            confirm={`Remove line ${line.position}?`}
+                            ariaLabel={`Remove line ${index + 1}`}
+                            confirm={`Remove line ${index + 1}?`}
                             formAction={removeLine.bind(null, line.id)}
                             formNoValidate
                           >
@@ -446,11 +446,11 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
 
           <Card title="Lines" action={<Badge>{lines.length}</Badge>}>
             <LinesTable lastHeader={<th className="pb-2 font-medium md:pl-4">Status</th>}>
-                  {lines.map((line) => (
+                  {lines.map((line, index) => (
                     <tr key={line.id} data-testid="line-row" className="max-md:grid max-md:grid-cols-2 max-md:items-center max-md:gap-x-3 max-md:gap-y-2 max-md:py-4 max-md:first:pt-0 max-md:last:pb-0">
                       <td className="py-2 pr-2 text-muted-foreground max-md:order-1 max-md:p-0 max-md:text-sm max-md:font-medium max-md:text-foreground">
                         <span className="md:hidden">Line </span>
-                        {line.position}
+                        {index + 1}
                       </td>
                       <td className="py-2 pr-2 text-foreground max-md:order-3 max-md:col-span-2 max-md:p-0">{line.name ?? "—"}</td>
                       <td className="py-2 pr-2 text-muted-foreground max-md:order-4 max-md:col-span-2 max-md:p-0">{line.purpose ?? "—"}</td>
@@ -486,10 +486,10 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                 <p id="reject-lines-hint" className="mb-1 text-xs text-muted-foreground">
                   Leave all unchecked to approve the whole request. Checked lines are rejected, and the request is then partially approved.
                 </p>
-                {lines.map((line) => (
+                {lines.map((line, index) => (
                   <label key={line.id} className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                     <Checkbox name="rejected_line_id" value={line.id} />
-                    {line.position}. {line.name ?? "Unnamed line"}
+                    {index + 1}. {line.name ?? "Unnamed line"}
                   </label>
                 ))}
               </fieldset>
