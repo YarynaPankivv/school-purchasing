@@ -57,7 +57,7 @@ Done when: AC-AI-01, AC-AI-02, AC-AI-06 (golden cases PM) і поріг прий
 - [x] 5.1 `evals/golden.live.eval.ts` + `vitest.eval.config.mts` (`npm run eval`): живий прогін із записом (`RECORD=1`), офіційний повний звіт
   `evals/reports/2026-11-15T09-30-54-457Z.md` (10 з 10, модель на кожен кейс, версія промпту), історія прогонів і пояснені FAIL — `evals/reports/README.md`. Перевірка: `npm run eval`. Done when: AC-AI-01, AC-AI-02, AC-AI-06 (golden на живій моделі), поріг PM у звіті
 - [x] 5.2 `tests/e2e/slice4.spec.ts` і прогін `npm run uat` на проді (AC-AI-01 «людина підтверджує», AC-AI-02, AC-AI-06); звіт у
-  `docs/qa/uat/2026-11-16/` (AC-AI-01 на `1b0d6f2`) і `docs/qa/uat/2026-11-16-58fe065/` (AC-AI-01, 02, 06 на `58fe065`); актуальний повтор усіх трьох на проді `d43406e` — `docs/qa/uat/2026-11-17/` (PASS, 17.11). Перевірка: `npm run uat` на проді. Done when: AC-AI-01 (людина підтверджує: чернетка не подана), AC-AI-02, AC-AI-06
+  `docs/qa/uat/2026-11-16/` (AC-AI-01 на `1b0d6f2`) і `docs/qa/uat/2026-11-16-58fe065/` (AC-AI-01, 02, 06 на `58fe065`); актуальний повтор усіх трьох на проді `d43406e` — `docs/qa/uat/2026-11-17/` (PASS, 17.11). Перевірка: `npm run uat` на проді. Done when: AC-AI-01 (людина підтверджує: чернетка не подана — приймання PM 17.11: AC-AI-01 ✅ у браузері на проді, чернетка PUR-125, [коментар у #95](https://github.com/YarynaPankivv/school-purchasing/pull/95#issuecomment-6944010257)), AC-AI-02, AC-AI-06
 - [ ] 5.3 Повідомлення PM у чаті: «eval готовий: прод <URL>, звіт <посилання>, дата живого прогону <дата>»; proof pack зрізу 4
   (за шаблоном WS9). Archive `impl-ai-helper` — в останньому PR зрізу. Done when: AC-AI-01…06 мають чесний статус у `docs/conformance.md`
 
