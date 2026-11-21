@@ -22,3 +22,12 @@ export function classifyDbProbe({ status, error }: DbProbe): DbHealth {
   // 0 — мережа (Supabase недоступний або хибний URL), 5xx, PGRST000–003.
   return { db: "down", reason: `status-${status}${code ? `-${code}` : ""}` };
 }
+
+/**
+ * ref проєкту Supabase з NEXT_PUBLIC_SUPABASE_URL (`https://<ref>.supabase.co`). Ref не секрет: він і так у браузері.
+ * Показуємо лише його (не URL і не ключі), щоб smoke відрізнив базу staging від бази проду. Не Supabase-хост — "".
+ */
+export function supabaseRefFromUrl(url: string | undefined): string {
+  const m = /^https:\/\/([a-z0-9]+)\.supabase\.co(?:\/|$)/.exec(url ?? "");
+  return m ? m[1] : "";
+}
