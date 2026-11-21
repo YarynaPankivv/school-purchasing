@@ -4,24 +4,25 @@
 // як працівника й схвалювача цього відділу (саме так PM пройде кроки 2–7 сценарію: подати, схвалити частково, повернути).
 // Ідемпотентно (upsert). Заявок не створює: сценарій починається з подання заявки працівником, а лічильник «Awaiting approval»
 // не має бути засмічений. Лише синтетичні дані, прод-дані не копіюємо.
-// Запуск (значення не друкуються): npm run staging:demo -- <ref-staging> <ref-проду>
-// Запобіжник: ref у NEXT_PUBLIC_SUPABASE_URL має збігатися з першим аргументом (staging) і відрізнятися від другого (проду),
-// інакше скрипт нічого не робить: цей скрипт ніколи не пише в прод.
+// Запуск (значення не друкуються): npm run staging:demo
+// Запобіжник: ref у NEXT_PUBLIC_SUPABASE_URL має бути в зашитому списку staging-проєктів і не в списку проду, інакше скрипт
+// нічого не робить: цей скрипт ніколи не пише в прод.
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const secret = process.env.SUPABASE_SECRET_KEY;
-const expected = process.argv[2] ?? "";
-// Ref ПРОДУ — обов'язковий другий аргумент (рев'ю CodeRabbit, PR 104): у .env.local змінної SUPABASE_PROD_REF немає, і без неї
-// запобіжник «це не прод» нічого б не порівнював. Тепер скрипт не запуститься, поки ви явно не назвали обидва ref.
-const prod = process.argv[3] ?? "";
+// Довірені ref зашито в скрипт, а не передаємо аргументами (друге рев'ю CodeRabbit, PR 104): аргументи, подані у зворотному
+// порядку, пропустили б запуск проти проду. Ref — не секрет (він і так у адресі проєкту й у журналах CI). Новий staging-проєкт
+// додайте сюди разом із PR; ref проду тут лише для явної заборони.
+const STAGING_REFS = ["nrapwkzhqplxvwgittly"];
+const PROD_REFS = ["rgpngqhjkawryldpyxzl"];
 const ref = /^https:\/\/([a-z0-9]+)\.supabase\.co/.exec(url)?.[1] ?? "";
 
-if (!ref || !secret || !expected || !prod) {
-  console.error("Потрібні NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY (node --env-file=.env.local …), ref staging і ref проду аргументами.");
+if (!ref || !secret) {
+  console.error("Потрібні NEXT_PUBLIC_SUPABASE_URL і SUPABASE_SECRET_KEY (node --env-file=.env.local …).");
   process.exitCode = 2;
-} else if (expected === prod || ref !== expected || ref === prod) {
-  console.error("Зупинено: ref у .env.local має збігатися з ref staging (перший аргумент) і відрізнятися від ref проду (другий аргумент).");
+} else if (PROD_REFS.includes(ref) || !STAGING_REFS.includes(ref)) {
+  console.error(`Зупинено: проєкт ${ref} не входить до довірених staging-проєктів цього скрипта (або це прод).`);
   process.exitCode = 2;
 } else {
   const db = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
