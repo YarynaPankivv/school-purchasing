@@ -31,7 +31,7 @@ Ref проєкту Supabase не секрет, а ключі, рядки під�
 6. **Прод червоний після злиття в `main`:** спершу відкат (розділ 4), потім розбір.
 7. Після розв'язання: коротка нотатка в issue/postmortem (час поломки, час алерту, причина) і повідомлення PM, якщо це SEV1/SEV2 ([`docs/incident-message.md`](https://github.com/ValiaBihun/2026-quitcode-dream-team) у репо PM).
 
-**Розбір агентом** (необов'язковий, але так робили в дрілі): окрема сесія `claude --settings .claude/settings.incident.json --mcp-config .mcp.incident.json --strict-mcp-config --permission-mode plan`; у `/mcp` входите у Vercel і **обираєте команду `ypankiv-7566s-projects`** (без цього 403). Профіль забороняє запис і читання значень змінних; значення змінних агентові не показуємо, лише назви. Журнали Vercel на Hobby живуть **1 годину**, тож розбір треба починати протягом години після алерту.
+**Розбір агентом** (необов'язковий, але так робили в дрілі): окрема сесія `claude --settings .claude/settings.incident.json --mcp-config .mcp.incident.json --strict-mcp-config --permission-mode plan`; у `/mcp` входите у Vercel і **обираєте команду `ypankiv-7566s-projects`** (без цього 403). Обидва файли лежать у репозиторії (додані в [PR 108](https://github.com/YarynaPankivv/school-purchasing/pull/108); токенів і значень змінних у них немає): `.claude/settings.incident.json` забороняє запис (Edit/Write, git-команди запису, MCP-інструменти запису Vercel і Supabase) і читання `.env*`, `.mcp.incident.json` підключає Vercel і Supabase лише staging у режимі `read_only`. Гарантії профілю тримаються на цих файлах, тож не змінюйте їх під час інциденту. Значення змінних агентові не показуємо, лише назви. Журнали Vercel на Hobby живуть **1 годину**, тож розбір треба починати протягом години після алерту.
 
 ## 3. Де журнали і скільки вони живуть
 
@@ -77,7 +77,7 @@ Ref проєкту Supabase не секрет, а ключі, рядки під�
 | `SUPABASE_DB_URL` (прод) і (staging) | GitHub: секрети environment `production` і `staging` | Dashboard → Database → Reset database password → оновіть секрет у відповідному environment (рядок Session pooler, порт 5432, пароль закодований відсотками) |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | GitHub Secrets і Vercel (Production і Preview) | `/revoke` у `@BotFather` → новий токен → `gh secret set TELEGRAM_BOT_TOKEN` і змінна у Vercel → Redeploy |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | GitHub Secrets | Vercel → Deployment Protection → Protection Bypass for Automation: перегенеруйте → `gh secret set VERCEL_AUTOMATION_BYPASS_SECRET` → Redeploy |
-| `OPENROUTER_API_KEY` | Vercel (Production і Preview), `.env.local` | openrouter.ai → Keys → новий ключ, старий відкличте |
+| `OPENROUTER_API_KEY` | Vercel (Production і Preview), `.env.local` | openrouter.ai → Keys → **новий** ключ → замініть його у Vercel (Production і Preview) і `.env.local` → Redeploy (зміна змінних діє лише на нові деплої) → перевірте, що «Suggest lines» відповідає → **лише потім** відкличте старий ключ |
 
 Витік значення (у журналі, знімку, чаті): спершу ротація, потім чистка файлу (значення → `[ВИДАЛЕНО]`).
 
@@ -93,7 +93,7 @@ Staging закритий захистом Vercel (Standard Protection: preview �
 
 ## 8. Серйозність і хто реагує
 
-За [матрицею PM](https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/83): **SEV1** (прод не працює для всіх або дані бачить той, кому не можна) — розробник, протягом 2 годин у робочий час, PM пише клієнту; **SEV2** (ключовий сценарій ламається для частини людей, є обхід; AI-помічник недоступний через ліміт) — того ж робочого дня; **SEV3** — у плановій роботі. Сумніваєтесь між двома рівнями — беріть вищий. RTO — 4 години в робочий час; RPO — 1 доба, але автоматичних резервних копій на Free немає (дані навчальні, синтетичні).
+За [матрицею PM](https://github.com/ValiaBihun/2026-quitcode-dream-team/issues/83): **SEV1** (прод не працює для всіх або дані бачить той, кому не можна) — розробник, протягом 2 годин у робочий час, PM пише клієнту; **SEV2** (ключовий сценарій ламається для частини людей, є обхід; AI-помічник недоступний через ліміт) — того ж робочого дня; **SEV3** — у плановій роботі. Сумніваєтесь між двома рівнями — беріть вищий. RTO — 4 години в робочий час. **RPO не гарантується:** автоматичних резервних копій на Free немає, а регулярного копіювання бази в проєкті не налаштовано. Дані навчальні й синтетичні, тож їх відновлюють із міграцій і сидів (`supabase/seed.sql`, `npm run users:demo`, `npm run staging:demo`), а не з копії. Для реальних даних знадобиться платний план із резервними копіями або регулярний `supabase db dump` із зберіганням поза проєктом.
 
 AI-помічник недоступний (ліміт безкоштовних моделей, 50 запитів на добу, спільний для проду, staging, eval і приймання): це SEV2 зі штатним станом «The assistant is unavailable today»; форма працює вручну. У день показу eval не запускаємо.
 
