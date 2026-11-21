@@ -74,7 +74,8 @@ test.describe("AI-помічник: пропозиція рядків за оп�
           // із запропонованими значеннями (фідбек WS10, пропозиція 5: раніше перевірявся лише статус заявки).
           const before = await requestLinesOf(id);
           expect(before).toHaveLength(1);
-          expect(before[0].name ?? "").toBe("");
+          // Усі поля порожнього рядка, а не лише назва: частковий запис (кількість чи ціна) до «Save» теж означав би запис без людини.
+          expect(before[0]).toMatchObject({ name: null, purpose: null, quantity: null, unit_price: null });
           await page.getByTestId("save-draft").click();
           await expect.poll(async () => ((await requestLinesOf(id))[0]?.name ?? "")).toMatch(/paper/i);
           const after = await requestLinesOf(id);

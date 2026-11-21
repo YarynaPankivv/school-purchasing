@@ -5,7 +5,8 @@
 const PATTERNS: readonly RegExp[] = [
   /\b(ignore|forget|disregard)\b.{0,40}\b(instructions?|rules?|prompts?)\b/i,
   /\b(reveal|show)\b.{0,40}\b(prompt|passwords?|accounts?)\b/i,
-  /\byou are now\b/i,
+  // Лише явне призначення ролі: напис на товарі («табличка "You are now in the library"») не вказівка (рев'ю CodeRabbit, PR 107).
+  /\byou are now\s+(?:an?\s+|the\s+)?(?:assistant|system|developer|admin(?:istrator)?)\b/i,
 ];
 
 export function looksLikeInstruction(text: string): boolean {
