@@ -1,39 +1,62 @@
-# D0 smoke проду: після кожного деплою main і щодня. Лише GET, без секретів: "/", "/login", "/api/health"
-# (коміт збірки = main, база відповідає). Скрипт — scripts/smoke.mjs; локально: npm run smoke -- <прод-URL>.
-# Налаштування: змінна репозиторію PROD_URL (Settings → Secrets and variables → Actions → Variables), напр.
-# https://<проєкт>.vercel.app. Не секрет. Без неї прогін червоний з підказкою: адресу за замовчуванням не беремо,
-# щоб smoke ніколи не перевіряв чужий прод.
-# Джерело: демо-репо курсу, тег ws8-03-uat (там був запасний URL демо — тут його прибрано).
-# Це НЕ обов'язкова перевірка ruleset-у: прод перевіряється після merge, а не в PR. Назви jobs у ci.yml не чіпаємо.
-# Smoke preview-деплоїв PR — у WS11. Події status, repository_dispatch і schedule GitHub запускає лише з файлу
-# на гілці за замовчуванням: до merge цей workflow можна перевірити тільки локально (npm run smoke).
+# Smoke v2 (WS11): прод після кожного деплою main і щодня (як у D0) + НОВЕ: кожен НЕпродовий деплой Vercel (preview
+# і гілка staging) за адресою саме цього деплою, з обходом захисту Vercel. Обидва jobs при збої надсилають алерт
+# людині в Telegram.
+# Куди: .github/workflows/smoke.yml у вашому репо (замінює файл з WS8; назва workflow і job "prod" — ті самі).
+# Завдання README: A (smoke кожного деплою з обходом захисту), B (алерт людині при червоному smoke), D (дії за SHA).
+# Секрети (Settings → Secrets and variables → Actions → Secrets; лише назви, значення — ніде в git):
+#   VERCEL_AUTOMATION_BYPASS_SECRET — секрет обходу захисту з Vercel (Settings → Deployment Protection →
+#                                     Protection Bypass for Automation; назву розділу звірте в інтерфейсі);
+#   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID — бот і чат, куди дивиться людина з команди. Без них алерт пропускається
+#                                     з попередженням, smoke не ламається.
+# Змінна репозиторію (не секрет): PROD_URL = https://<проєкт>.vercel.app — як у D0.
+# Джерело: 2026-quitcode-08-quality-hw/materials/d0/.github/workflows/smoke.yml + документація Vercel
+# (repository_dispatch, Protection Bypass for Automation) і Telegram Bot API sendMessage, станом на 09.11.2026.
+#
+# Важливо:
+# - repository_dispatch, status і schedule GitHub запускає ЛИШЕ з файлу на гілці за замовчуванням (main). До merge
+#   перевіряйте ручним запуском: Actions → smoke → Run workflow (поле url порожнє → прод; заповнене → job "deploy").
+# - Захист Vercel: залиште Vercel Authentication у режимі Standard Protection — preview і staging закриті, прод
+#   відкритий (курс читає прод /api/health без входу). Режим All Deployments закрив би й прод.
+# - Після перегенерації секрету обходу: оновіть секрет у GitHub і зробіть Redeploy — старі деплої можуть не прийняти
+#   новий секрет (як саме, перевірте в документації Vercel «Protection Bypass for Automation»).
+# - Дії закріплені за повним SHA з коментарем версії (завдання D). Dependabot оновлює і SHA, і коментар.
 name: smoke
 
 on:
-  # Прод після деплою: commit status «Vercel» = success на коміті main. Цей статус Vercel ставить у кожному репо курсу.
-  # Кожен інший commit status (CodeRabbit тощо) створює в Actions пропущений (skipped) прогін — це шум, не збій.
+  # Прод після деплою: commit status «Vercel» = success на коміті main. Кожен інший commit status (CodeRabbit тощо)
+  # створює в Actions пропущений (skipped) прогін — це шум, не збій.
   status:
-  # Vercel шле repository_dispatch після кожного деплою (vercel.com/docs/git/vercel-for-github); беремо лише production.
+  # Vercel шле repository_dispatch після кожного деплою: production → job "prod", усе інше (preview, staging) → "deploy".
   repository_dispatch:
     types: [vercel.deployment.success]
   schedule:
-    - cron: "23 5 * * *" # щодня ≈ 07:23 за Києвом (зимовий час): прод живий, база не «заснула»
+    - cron: "23 5 * * *" # щодня ≈ 07:23 за Києвом (зимовий час); GitHub може запустити на години пізніше
   workflow_dispatch:
+    inputs:
+      url:
+        description: "Адреса деплою для job deploy (порожньо = прод з PROD_URL). Навмисно червоний прогін: https://example.invalid"
+        required: false
+        default: ""
+      sha:
+        description: "Очікуваний коміт на цій адресі (необов'язково)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
 
-# Група враховує context статусу: статус іншого сервісу на тому ж коміті не скасує прогін «Vercel».
-# Без cancel-in-progress: прогін може чекати перемикання прод-домену (до 6 × 20 с).
+# Ключ групи містить id деплою: staging після fast-forward має той самий коміт, що й прод, і без id їхні прогони
+# потрапили б в одну групу. Без cancel-in-progress: прогін може чекати перемикання прод-домену (до 6 × 20 с).
 concurrency:
-  group: smoke-${{ github.event_name }}-${{ github.event.context || 'na' }}-${{ github.event.client_payload.git.sha || github.event.sha || github.run_id }}
+  group: smoke-${{ github.event_name }}-${{ github.event.context || 'na' }}-${{ github.event.client_payload.id || github.event.client_payload.git.sha || github.event.sha || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   prod:
+    # Поведінка — як у D0: розклад, ручний запуск без url, статус Vercel на main, production-подія Vercel.
     if: >-
       github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && github.ref_name == github.event.repository.default_branch) ||
+      (github.event_name == 'workflow_dispatch' && inputs.url == '') ||
       (github.event_name == 'status' && github.event.context == 'Vercel' && github.event.state == 'success' &&
        contains(github.event.branches.*.name, github.event.repository.default_branch)) ||
       (github.event_name == 'repository_dispatch' && github.event.client_payload.environment == 'production')
@@ -41,12 +64,16 @@ jobs:
     timeout-minutes: 6
     env:
       PROD_URL: ${{ vars.PROD_URL }}
-      # Очікуваний коміт: щойно розгорнутий (status / repository_dispatch) або HEAD main (schedule, ручний запуск з main).
-      EXPECT_SHA: ${{ github.event.client_payload.git.sha || github.event.sha || github.sha }}
+      # Очікуваний коміт: щойно розгорнутий (status / repository_dispatch), введений вручну (inputs.sha) або HEAD main
+      # (schedule і ручний запуск з main). Ручний запуск із іншої гілки без inputs.sha SHA не звіряє (github.sha тоді —
+      # коміт тієї гілки, а не проду). Секрет обходу захисту тут навмисно НЕ задано: прод має бути відкритий для всіх,
+      # і з заголовком обходу smoke не помітив би випадково ввімкнений захист проду (відповідь CodeRabbit на PR 99).
+      EXPECT_SHA: ${{ github.event.client_payload.git.sha || github.event.sha || inputs.sha || (github.ref_name == github.event.repository.default_branch && github.sha) || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: scripts
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
@@ -58,3 +85,119 @@ jobs:
           fi
       - name: Прод = main, сторінка входу відкривається, база відповідає
         run: node scripts/smoke.mjs "$PROD_URL" "$EXPECT_SHA"
+      - name: Алерт людині в Telegram (лише якщо щось червоне)
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ALERT_ENV: production
+          ALERT_URL: ${{ env.PROD_URL }}
+          ALERT_WORKFLOW: ${{ github.workflow }}
+          ALERT_JOB: ${{ github.job }}
+          ALERT_SHA: ${{ github.event.client_payload.git.sha || github.event.sha || github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        # Без set -x і без curl -v: токен бота стоїть в адресі запиту. Значення секретів не друкуємо ніде.
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::warning title=alert::Немає секретів TELEGRAM_BOT_TOKEN і/або TELEGRAM_CHAT_ID — алерт пропущено (smoke однаково червоний)."
+            exit 0
+          fi
+          host=$(printf '%s' "$ALERT_URL" | sed -E 's#^[A-Za-z]+://##; s#/.*$##')
+          text=$(printf 'ЧЕРВОНИЙ SMOKE\nРепо: %s\nWorkflow: %s, job: %s\nСередовище: %s\nАдреса: %s\nКоміт: %s\nПрогін: %s' \
+            "$GITHUB_REPOSITORY" "$ALERT_WORKFLOW" "$ALERT_JOB" "$ALERT_ENV" "${host:-не задано}" "${ALERT_SHA:0:7}" "$RUN_URL")
+          if curl -sS --fail --max-time 15 -o /dev/null "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${text}" 2>/dev/null; then
+            echo "Алерт надіслано в Telegram."
+          else
+            echo "::warning title=alert::Telegram не прийняв повідомлення — перевірте токен бота, chat id і чи бот доданий у чат."
+          fi
+
+  deploy:
+    # НОВЕ у WS11: кожен НЕпродовий деплой (preview з PR і гілка staging) — за адресою саме цього деплою
+    # (client_payload.url), а не за фіксованою адресою проду. Ручний запуск з полем url — теж сюди.
+    if: >-
+      (github.event_name == 'repository_dispatch' && github.event.client_payload.environment != 'production') ||
+      (github.event_name == 'workflow_dispatch' && inputs.url != '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      DEPLOY_URL: ${{ github.event.client_payload.url || inputs.url }}
+      EXPECT_SHA: ${{ github.event.client_payload.git.sha || inputs.sha }}
+      DEPLOY_ENV: ${{ github.event.client_payload.environment || 'manual' }}
+      DEPLOY_BRANCH: ${{ github.event.client_payload.git.ref || '' }}
+      SMOKE_TARGET: deploy
+      # Значення — лише з GitHub Secrets; скрипт додає заголовок x-vercel-protection-bypass і не друкує секрет.
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+    steps:
+      # repository_dispatch завжди бере останній коміт main — нам звідти потрібен лише scripts/smoke.mjs.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      # Секрет обходу йде в заголовку лише на адресу, яка точно належить цьому Vercel-проєкту: не http://, не чужий хост і не
+      # будь-який *.vercel.app (відповідь CodeRabbit на PR 99). Шаблон: <проєкт>-<…>-<VERCEL_SCOPE>.vercel.app, де проєкт —
+      # перша частина PROD_URL, а VERCEL_SCOPE — змінна репо (slug команди Vercel, не секрет). Навмисно червоний прогін
+      # https://example.invalid ця перевірка теж не пропустить: червоним буде цей крок, і алерт однаково піде.
+      - name: Що перевіряємо
+        env:
+          PROD_URL: ${{ vars.PROD_URL }}
+          VERCEL_SCOPE: ${{ vars.VERCEL_SCOPE }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::error title=smoke::Немає адреси деплою (client_payload.url чи поле url ручного запуску)"
+            exit 1
+          fi
+          # Керівні символи (зокрема новий рядок): без цього grep, що перевіряє кожен рядок окремо, пропустив би «добрий» хост
+          # першим рядком, а Node звернувся б до іншого (друге рев'ю CodeRabbit, PR 99).
+          case "$DEPLOY_URL" in *[[:cntrl:]]*) echo "::error title=smoke::Адреса деплою містить керівні символи."; exit 1 ;; esac
+          case "$DEPLOY_URL" in http://*) echo "::error title=smoke::Адреса деплою не HTTPS: секрет обходу захисту не надсилаємо."; exit 1 ;; esac
+          host="${DEPLOY_URL#https://}"
+          host="${host%%/*}"
+          project="${PROD_URL#https://}"
+          project="${project%%.*}"
+          if [ -z "$VERCEL_SCOPE" ] || [ -z "$project" ]; then
+            echo "::error title=smoke::Задайте змінні репо PROD_URL і VERCEL_SCOPE (slug команди Vercel, напр. <команда>-projects): без них адресу деплою не перевірити."
+            exit 1
+          fi
+          # Усю адресу порівнюємо цілим рядком (bash =~), а не рядок за рядком, і лише з безпечних символів у змінних.
+          if [[ ! "$project" =~ ^[a-z0-9-]+$ ]] || [[ ! "$VERCEL_SCOPE" =~ ^[a-z0-9-]+$ ]]             || [[ ! "$host" =~ ^${project}-[a-z0-9-]+-${VERCEL_SCOPE}\.vercel\.app$ ]]; then
+            echo "::error title=smoke::Адреса деплою не належить цьому Vercel-проєкту (очікуємо ${project}-…-${VERCEL_SCOPE}.vercel.app). Запит не надсилаємо."
+            exit 1
+          fi
+          if [ -z "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
+            echo "::warning title=smoke::Немає секрету VERCEL_AUTOMATION_BYPASS_SECRET — захищений деплой відповість стіною входу Vercel."
+          fi
+          echo "Середовище: $DEPLOY_ENV; гілка: ${DEPLOY_BRANCH:-?}; коміт: ${EXPECT_SHA:0:7}"
+      - name: Деплой відкривається з обходом захисту, база відповідає, коміт той самий
+        run: node scripts/smoke.mjs "$DEPLOY_URL" "$EXPECT_SHA"
+      - name: Алерт людині в Telegram (лише якщо щось червоне)
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ALERT_ENV: ${{ github.event.client_payload.environment || 'manual' }}
+          ALERT_BRANCH: ${{ github.event.client_payload.git.ref || '' }}
+          ALERT_URL: ${{ github.event.client_payload.url || inputs.url }}
+          ALERT_WORKFLOW: ${{ github.workflow }}
+          ALERT_JOB: ${{ github.job }}
+          ALERT_SHA: ${{ github.event.client_payload.git.sha || inputs.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        # Без set -x і без curl -v: токен бота стоїть в адресі запиту. Значення секретів не друкуємо ніде.
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::warning title=alert::Немає секретів TELEGRAM_BOT_TOKEN і/або TELEGRAM_CHAT_ID — алерт пропущено (smoke однаково червоний)."
+            exit 0
+          fi
+          host=$(printf '%s' "$ALERT_URL" | sed -E 's#^[A-Za-z]+://##; s#/.*$##')
+          text=$(printf 'ЧЕРВОНИЙ SMOKE\nРепо: %s\nWorkflow: %s, job: %s\nСередовище: %s%s\nАдреса: %s\nКоміт: %s\nПрогін: %s' \
+            "$GITHUB_REPOSITORY" "$ALERT_WORKFLOW" "$ALERT_JOB" "$ALERT_ENV" "${ALERT_BRANCH:+ (гілка $ALERT_BRANCH)}" \
+            "${host:-не задано}" "${ALERT_SHA:0:7}" "$RUN_URL")
+          if curl -sS --fail --max-time 15 -o /dev/null "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${text}" 2>/dev/null; then
+            echo "Алерт надіслано в Telegram."
+          else
+            echo "::warning title=alert::Telegram не прийняв повідомлення — перевірте токен бота, chat id і чи бот доданий у чат."
+          fi

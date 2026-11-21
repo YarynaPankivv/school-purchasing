@@ -6,7 +6,9 @@
 #                 (AC вимог PM, ще не перекладені в openspec/specs, — лише попередження);
 #   db-check    — без секретів: усі міграції (і сид) на одноразовій базі в раннері (supabase db start, Docker
 #                 є на ubuntu-latest); у PR ще й порядок міграцій відносно main (scripts/check-migration-order.mjs);
-#   db-deploy   — лише main (push або ручний запуск): міграції у вашу базу через environment production.
+#   db-deploy-staging — лише main (push або ручний запуск): міграції спершу в базу STAGING (environment staging, WS11);
+#   db-deploy   — лише main (push або ручний запуск): після db-deploy-staging — міграції у вашу базу через environment
+#                 production. Обидва jobs перед міграцією звіряють ref проєкту з рядка підключення зі змінною репо.
 # Вимоги PM (requirements/) — знімок, який приносить команда агента /requirements-sync; специфікація (openspec/) — ваш
 # переклад цих вимог. Обов'язкові перевірки ruleset-у solo-main: spec, app, conformance, db-check.
 # Назви jobs не змінюйте.
@@ -22,6 +24,10 @@ on:
     inputs:
       include_seed:
         description: "db-deploy: застосувати й supabase/seed.sql (--include-seed) — перший запуск у день 0"
+        type: boolean
+        default: false
+      include_seed_staging:
+        description: "db-deploy-staging: застосувати й supabase/seed.sql у базу staging (--include-seed)"
         type: boolean
         default: false
 
@@ -118,10 +124,72 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  db-deploy-staging:
+    # Лише main: спершу база staging, потім прод (db-deploy чекає на цей job).
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [spec, app, conformance, db-check]
+    runs-on: ubuntu-latest
+    # Секрет environment staging (Deployment branches = main) бачить лише job, що посилається на це середовище.
+    environment: staging
+    concurrency:
+      group: supabase-staging
+      cancel-in-progress: false
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }} # рядок Session pooler проєкту staging
+      STAGING_REF: ${{ vars.SUPABASE_STAGING_REF }}
+      PROD_REF: ${{ vars.SUPABASE_PROD_REF }}
+      SEED_FLAG: ${{ github.event_name == 'workflow_dispatch' && inputs.include_seed_staging && '--include-seed' || '' }}
+    steps:
+      # Без запасного шляху через link і без пропуску: немає секрету чи він веде не туди — job червоний,
+      # і прод (db-deploy) не мігрує.
+      - name: Guard - staging database ref
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error title=db-deploy-staging::Секрет SUPABASE_DB_URL в environment staging не задано."
+            exit 1
+          fi
+          ref=$(printf '%s' "$SUPABASE_DB_URL" | sed -n -E 's#^postgres(ql)?://postgres\.([a-z0-9]+):.*$#\2#p')
+          if [ -z "$ref" ]; then
+            echo "::error title=db-deploy-staging::SUPABASE_DB_URL не схожий на рядок Session pooler (postgres.<ref>:…@…:5432). Скопіюйте його з Connect у проєкті staging."
+            exit 1
+          fi
+          # Ціль підключення — лише userinfo й хост: query-параметри (user, host, hostaddr, port, service, зокрема в закодованому
+          # вигляді, напр. ?%75ser=) змінили б користувача чи хост уже після перевірки ref (рев'ю CodeRabbit, PR 99).
+          # Дозволено тільки порожній query або sslmode=<режим>.
+          query=""
+          case "$SUPABASE_DB_URL" in *\?*) query="${SUPABASE_DB_URL#*\?}" ;; esac
+          if [ -n "$query" ] && ! printf '%s' "$query" | grep -Eq '^sslmode=[a-z-]+$'; then
+            echo "::error title=db-deploy-staging::SUPABASE_DB_URL містить параметри після «?», окрім sslmode. Скопіюйте рядок Session pooler із Connect без параметрів."
+            exit 1
+          fi
+          host=$(printf '%s' "$SUPABASE_DB_URL" | sed -n -E 's#^postgres(ql)?://[^@]*@([^:/?]+).*$#\2#p')
+          case "$host" in
+            *.pooler.supabase.com) ;;
+            *)
+              echo "::error title=db-deploy-staging::Хост у SUPABASE_DB_URL не з *.pooler.supabase.com (Session pooler). Міграцію зупинено."
+              exit 1
+              ;;
+          esac
+          if [ -z "$STAGING_REF" ] || [ -z "$PROD_REF" ] || [ "$STAGING_REF" = "$PROD_REF" ]; then
+            echo "::error title=db-deploy-staging::Задайте змінні репо SUPABASE_STAGING_REF і SUPABASE_PROD_REF (різні)."
+            exit 1
+          fi
+          if [ "$ref" != "$STAGING_REF" ]; then
+            echo "::error title=db-deploy-staging::Рядок підключення веде не в проєкт staging. Міграцію зупинено."
+            exit 1
+          fi
+          echo "Ціль міграцій: проєкт $ref (staging)"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0 — та сама закріплена версія, що в db-deploy
+      - name: Dry run (list of migrations to apply)
+        run: supabase db push --yes --dry-run --db-url "$SUPABASE_DB_URL" $SEED_FLAG
+      - name: Apply migrations
+        run: supabase db push --yes --db-url "$SUPABASE_DB_URL" $SEED_FLAG
+
   db-deploy:
     # Лише main: push після merge або ручний запуск (Actions → CI → Run workflow, гілка main).
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    needs: [spec, app, conformance, db-check]
+    needs: [spec, app, conformance, db-check, db-deploy-staging]
     runs-on: ubuntu-latest
     # Секрети environment production (Settings → Environments; Deployment branches = main) бачить лише цей job.
     environment: production
@@ -136,6 +204,8 @@ jobs:
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
       SEED_FLAG: ${{ github.event_name == 'workflow_dispatch' && inputs.include_seed && '--include-seed' || '' }}
+      STAGING_REF: ${{ vars.SUPABASE_STAGING_REF }}
+      PROD_REF: ${{ vars.SUPABASE_PROD_REF }}
     steps:
       # secrets.* не можна використати в if на рівні job, тому перевіряємо їх кроком.
       - name: Check Supabase secrets
@@ -148,6 +218,48 @@ jobs:
           else
             echo "mode=skip" >> "$GITHUB_OUTPUT"
             echo "::notice title=db-deploy::Секрет SUPABASE_DB_URL в environment production не задано — міграції не застосовано (db push пропущено)."
+          fi
+      - name: Guard - production database ref
+        if: steps.mode.outputs.mode != 'skip'
+        run: |
+          if [ -z "$PROD_REF" ] || [ -z "$STAGING_REF" ] || [ "$PROD_REF" = "$STAGING_REF" ]; then
+            echo "::error title=db-deploy::Задайте змінні репо SUPABASE_PROD_REF і SUPABASE_STAGING_REF (різні)."
+            exit 1
+          fi
+          if [ "${{ steps.mode.outputs.mode }}" = "link" ]; then
+            if [ "$SUPABASE_PROJECT_ID" != "$PROD_REF" ]; then
+              echo "::error title=db-deploy::Секрет SUPABASE_PROJECT_ID в environment production не збігається з SUPABASE_PROD_REF. Міграцію зупинено."
+              exit 1
+            fi
+            echo "Ціль міграцій: ref збігається з SUPABASE_PROD_REF (production; значення секрету в журналі замасковане)"
+          else
+            ref=$(printf '%s' "$SUPABASE_DB_URL" | sed -n -E 's#^postgres(ql)?://postgres\.([a-z0-9]+):.*$#\2#p')
+            if [ -z "$ref" ]; then
+              echo "::error title=db-deploy::SUPABASE_DB_URL в environment production не схожий на рядок Session pooler (postgres.<ref>:…@…:5432). Скопіюйте його з Connect у прод-проєкті."
+              exit 1
+            fi
+            # Ціль підключення — лише userinfo й хост: query-параметри (user, host, hostaddr, port, service, зокрема в закодованому
+            # вигляді, напр. ?%75ser=) змінили б користувача чи хост уже після перевірки ref (рев'ю CodeRabbit, PR 99).
+            # Дозволено тільки порожній query або sslmode=<режим>.
+            query=""
+            case "$SUPABASE_DB_URL" in *\?*) query="${SUPABASE_DB_URL#*\?}" ;; esac
+            if [ -n "$query" ] && ! printf '%s' "$query" | grep -Eq '^sslmode=[a-z-]+$'; then
+              echo "::error title=db-deploy::SUPABASE_DB_URL містить параметри після «?», окрім sslmode. Скопіюйте рядок Session pooler із Connect без параметрів."
+              exit 1
+            fi
+            host=$(printf '%s' "$SUPABASE_DB_URL" | sed -n -E 's#^postgres(ql)?://[^@]*@([^:/?]+).*$#\2#p')
+            case "$host" in
+              *.pooler.supabase.com) ;;
+              *)
+                echo "::error title=db-deploy::Хост у SUPABASE_DB_URL не з *.pooler.supabase.com (Session pooler). Міграцію зупинено."
+                exit 1
+                ;;
+            esac
+            if [ "$ref" != "$PROD_REF" ]; then
+              echo "::error title=db-deploy::Рядок підключення production веде не в прод-проєкт. Міграцію зупинено."
+              exit 1
+            fi
+            echo "Ціль міграцій: проєкт $ref (production)"
           fi
       - if: steps.mode.outputs.mode != 'skip'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
