@@ -26,14 +26,14 @@ jobs:
     env:
       CI: "true"
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: npm
       - run: npm ci
       # Без `version:` setup-cli@v3 бере версію supabase з package-lock.json (2.120.0), як у db-check.
-      - uses: supabase/setup-cli@v3
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
       - name: Local Supabase (лише Postgres, Auth, REST і шлюз)
         # Міграції й supabase/seed.sql застосовуються при старті: свіжа база на кожен прогін.
         run: supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
@@ -74,7 +74,7 @@ jobs:
             require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
             if (s.skipped > 0) { console.error("::error::Пропущені e2e-тести: " + s.skipped); process.exitCode = 1; }
           '
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
           name: e2e-${{ github.run_id }}

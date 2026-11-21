@@ -41,8 +41,8 @@ jobs:
   spec:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: npm
@@ -59,8 +59,8 @@ jobs:
   app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: npm
@@ -73,8 +73,8 @@ jobs:
   conformance:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: npm
@@ -87,11 +87,11 @@ jobs:
   db-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Уся історія й гілки: скрипту порядку потрібна origin/<base> поруч із перевіреним кодом PR.
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
       - name: Migration order vs base branch (PR only)
@@ -100,7 +100,7 @@ jobs:
         env:
           MIGRATION_BASE: origin/${{ github.base_ref }}
       # Без `version:` setup-cli@v3 бере версію supabase з package-lock.json (2.120.0).
-      - uses: supabase/setup-cli@v3
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
       - name: Apply all migrations and seed to a throwaway database
         run: supabase db start
       - name: Generated types (summary, never fails)
@@ -150,9 +150,9 @@ jobs:
             echo "::notice title=db-deploy::Секрет SUPABASE_DB_URL в environment production не задано — міграції не застосовано (db push пропущено)."
           fi
       - if: steps.mode.outputs.mode != 'skip'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - if: steps.mode.outputs.mode != 'skip'
-        uses: supabase/setup-cli@v3
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
       - name: Link project (fallback path)
         if: steps.mode.outputs.mode == 'link'
         run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
