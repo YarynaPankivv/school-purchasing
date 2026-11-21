@@ -26,9 +26,19 @@ updates:
     groups:
       npm-minor-and-patch:
         update-types: [minor, patch]
+    # Версії стеку закріплені в AGENTS.md («не оновлювати без ADR»): мажорні оновлення цих пакетів Dependabot не пропонує.
+    # supabase (CLI) і @fission-ai/openspec ще й мають збігатися з глобальним CLI тієї ж версії; @supabase/supabase-js — 2.117.
     ignore:
       - dependency-name: supabase
+      - dependency-name: "@fission-ai/openspec"
+      - dependency-name: typescript
         update-types: ["version-update:semver-major"]
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@supabase/supabase-js"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
     open-pull-requests-limit: 5
 
   - package-ecosystem: github-actions
