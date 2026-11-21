@@ -16,7 +16,9 @@ const secret = process.env.SUPABASE_SECRET_KEY;
 // додайте сюди разом із PR; ref проду тут лише для явної заборони.
 const STAGING_REFS = ["nrapwkzhqplxvwgittly"];
 const PROD_REFS = ["rgpngqhjkawryldpyxzl"];
-const ref = /^https:\/\/([a-z0-9]+)\.supabase\.co/.exec(url)?.[1] ?? "";
+// Точна адреса проєкту (з кінцевим якорем): префікс-збіг пропустив би https://<ref>.supabase.co.чужий.хост, і клієнт Supabase
+// надіслав би чужому хосту секретний ключ (третє рев'ю CodeRabbit, PR 104).
+const ref = /^https:\/\/([a-z0-9]+)\.supabase\.co\/?$/.exec(url)?.[1] ?? "";
 
 if (!ref || !secret) {
   console.error("Потрібні NEXT_PUBLIC_SUPABASE_URL і SUPABASE_SECRET_KEY (node --env-file=.env.local …).");
