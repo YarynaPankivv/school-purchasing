@@ -20,6 +20,18 @@ const headers = { "user-agent": "smoke/2.0 (WS11)" };
 // x-vercel-set-bypass-cookie не шлемо: він потрібен браузеру й дає редірект із Set-Cookie, а тут redirect:"manual".
 if (bypass) headers["x-vercel-protection-bypass"] = bypass;
 
+// Друга лінія захисту поруч із перевіркою адреси в workflow: секрет обходу йде лише на https і хост *.vercel.app
+// (другий коментар CodeRabbit, PR 99); належність саме нашому проєкту перевіряє smoke.yml за VERCEL_SCOPE.
+function isTrustedBypassTarget(address) {
+  if (/[\u0000-\u001f\u007f]/.test(address)) return false;
+  try {
+    const u = new URL(address);
+    return u.protocol === "https:" && !u.username && !u.password && u.hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+}
+
 const get = async (path) => {
   try {
     const r = await fetch(base + path, {
@@ -113,10 +125,10 @@ async function main() {
 if (!base) {
   console.error("Використання: node scripts/smoke.mjs <base-url> [expected-sha]  (або змінна PROD_URL)");
   process.exitCode = 2;
-} else if (bypass && !base.startsWith("https://")) {
+} else if (bypass && !isTrustedBypassTarget(base)) {
   // Перший запит по HTTP віддав би секрет відкритим каналом, а редірект на HTTPS його вже не захистить (рев'ю CodeRabbit, PR 99).
   // Без секрету HTTP лишається можливим — для локальних перевірок (npm run smoke -- http://localhost:3000).
-  console.error("Секрет обходу Vercel можна передавати лише через HTTPS: адресу задано без https://.");
+  console.error("Секрет обходу Vercel можна передавати лише на https://<…>.vercel.app без логіна, пароля й керівних символів.");
   process.exitCode = 2;
 } else {
   process.exitCode = await main();

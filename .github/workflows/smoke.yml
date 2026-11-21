@@ -150,6 +150,9 @@ jobs:
             echo "::error title=smoke::Немає адреси деплою (client_payload.url чи поле url ручного запуску)"
             exit 1
           fi
+          # Керівні символи (зокрема новий рядок): без цього grep, що перевіряє кожен рядок окремо, пропустив би «добрий» хост
+          # першим рядком, а Node звернувся б до іншого (друге рев'ю CodeRabbit, PR 99).
+          case "$DEPLOY_URL" in *[[:cntrl:]]*) echo "::error title=smoke::Адреса деплою містить керівні символи."; exit 1 ;; esac
           case "$DEPLOY_URL" in http://*) echo "::error title=smoke::Адреса деплою не HTTPS: секрет обходу захисту не надсилаємо."; exit 1 ;; esac
           host="${DEPLOY_URL#https://}"
           host="${host%%/*}"
@@ -159,7 +162,8 @@ jobs:
             echo "::error title=smoke::Задайте змінні репо PROD_URL і VERCEL_SCOPE (slug команди Vercel, напр. <команда>-projects): без них адресу деплою не перевірити."
             exit 1
           fi
-          if ! printf '%s' "$host" | grep -Eq "^${project}-[a-z0-9-]+-${VERCEL_SCOPE}\.vercel\.app$"; then
+          # Усю адресу порівнюємо цілим рядком (bash =~), а не рядок за рядком, і лише з безпечних символів у змінних.
+          if [[ ! "$project" =~ ^[a-z0-9-]+$ ]] || [[ ! "$VERCEL_SCOPE" =~ ^[a-z0-9-]+$ ]]             || [[ ! "$host" =~ ^${project}-[a-z0-9-]+-${VERCEL_SCOPE}\.vercel\.app$ ]]; then
             echo "::error title=smoke::Адреса деплою не належить цьому Vercel-проєкту (очікуємо ${project}-…-${VERCEL_SCOPE}.vercel.app). Запит не надсилаємо."
             exit 1
           fi
