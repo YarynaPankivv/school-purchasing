@@ -201,3 +201,89 @@ jobs:
           else
             echo "::warning title=alert::Telegram не прийняв повідомлення — перевірте токен бота, chat id і чи бот доданий у чат."
           fi
+
+  branch:
+    # ЗАПАСНИЙ ШЛЯХ (WS11): Vercel для цього проєкту не надсилає repository_dispatch (за кілька деплоїв staging і PR жодної події,
+    # навіть після оновлення дозволів GitHub-застосунку Vercel), а commit status «Vercel» ставить. На кожен успішний статус
+    # перевіряємо адресу ГІЛКИ — <проєкт>-git-<гілка>-<VERCEL_SCOPE>.vercel.app — для кожної не-default гілки, що містить коміт
+    # (staging і гілка PR-preview). Адреса гілки вказує на останній деплой цієї гілки, а EXPECT_SHA (коміт зі статусу) змушує
+    # скрипт дочекатися саме цього деплою: інший коміт на адресі — збій. Прод-гілка тут пропускається: її перевіряє job prod.
+    if: github.event_name == 'status' && github.event.context == 'Vercel' && github.event.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PROD_URL: ${{ vars.PROD_URL }}
+      VERCEL_SCOPE: ${{ vars.VERCEL_SCOPE }}
+      EXPECT_SHA: ${{ github.event.sha }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      BRANCHES: ${{ join(github.event.branches.*.name, ' ') }}
+      SMOKE_TARGET: deploy
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Адреси гілок (лише з безпечних символів)
+        id: urls
+        run: |
+          project="${PROD_URL#https://}"
+          project="${project%%.*}"
+          if [ -z "$VERCEL_SCOPE" ] || [ -z "$project" ]; then
+            echo "::error title=smoke::Задайте змінні репо PROD_URL і VERCEL_SCOPE."
+            exit 1
+          fi
+          urls=""
+          for b in $BRANCHES; do
+            [ "$b" = "$DEFAULT_BRANCH" ] && continue
+            # Назва гілки — недовірений вхід: у домен потрапляють лише [a-z0-9-], як у Vercel (решта символів — дефіс).
+            slug=$(printf '%s' "$b" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9]/-/g')
+            host="${project}-git-${slug}-${VERCEL_SCOPE}"
+            if [ "${#host}" -gt 63 ]; then
+              echo "::notice title=smoke::Гілка ${slug}: адреса довша за 63 символи, Vercel скорочує її з хешем — пропускаємо."
+              continue
+            fi
+            urls="$urls https://${host}.vercel.app"
+          done
+          echo "urls=${urls# }" >> "$GITHUB_OUTPUT"
+          if [ -z "$urls" ]; then echo "::notice title=smoke::Немає адрес гілок для перевірки (коміт лише в ${DEFAULT_BRANCH}, його перевіряє job prod, або назви гілок задовгі)."; fi
+      - name: Деплой гілки відкривається з обходом захисту, база відповідає, коміт той самий
+        if: steps.urls.outputs.urls != ''
+        env:
+          URLS: ${{ steps.urls.outputs.urls }}
+        run: |
+          failed=0
+          for url in $URLS; do
+            echo "== $url"
+            node scripts/smoke.mjs "$url" "$EXPECT_SHA" || failed=1
+          done
+          exit $failed
+      - name: Алерт людині в Telegram (лише якщо щось червоне)
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ALERT_ENV: preview
+          ALERT_BRANCH: ${{ env.BRANCHES }}
+          ALERT_URL: ${{ steps.urls.outputs.urls }}
+          ALERT_WORKFLOW: ${{ github.workflow }}
+          ALERT_JOB: ${{ github.job }}
+          ALERT_SHA: ${{ github.event.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        # Без set -x і без curl -v: токен бота стоїть в адресі запиту. Значення секретів не друкуємо ніде.
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::warning title=alert::Немає секретів TELEGRAM_BOT_TOKEN і/або TELEGRAM_CHAT_ID — алерт пропущено (smoke однаково червоний)."
+            exit 0
+          fi
+          text=$(printf 'ЧЕРВОНИЙ SMOKE\nРепо: %s\nWorkflow: %s, job: %s\nСередовище: %s (гілки: %s)\nКоміт: %s\nПрогін: %s' \
+            "$GITHUB_REPOSITORY" "$ALERT_WORKFLOW" "$ALERT_JOB" "$ALERT_ENV" "$ALERT_BRANCH" "${ALERT_SHA:0:7}" "$RUN_URL")
+          if curl -sS --fail --max-time 15 -o /dev/null "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${text}" 2>/dev/null; then
+            echo "Алерт надіслано в Telegram."
+          else
+            echo "::warning title=alert::Telegram не прийняв повідомлення — перевірте токен бота, chat id і чи бот доданий у чат."
+          fi
