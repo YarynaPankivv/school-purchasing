@@ -64,10 +64,11 @@ jobs:
     timeout-minutes: 6
     env:
       PROD_URL: ${{ vars.PROD_URL }}
-      # Очікуваний коміт: щойно розгорнутий (status / repository_dispatch) або HEAD main (schedule, ручний запуск з main).
-      EXPECT_SHA: ${{ github.event.client_payload.git.sha || github.event.sha || github.sha }}
-      # Прод не за захистом (Standard Protection), але заголовок не шкодить, якщо колись увімкнуть All Deployments.
-      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      # Очікуваний коміт: щойно розгорнутий (status / repository_dispatch), введений вручну (inputs.sha) або HEAD main
+      # (schedule і ручний запуск з main). Ручний запуск із іншої гілки без inputs.sha SHA не звіряє (github.sha тоді —
+      # коміт тієї гілки, а не проду). Секрет обходу захисту тут навмисно НЕ задано: прод має бути відкритий для всіх,
+      # і з заголовком обходу smoke не помітив би випадково ввімкнений захист проду (відповідь CodeRabbit на PR 99).
+      EXPECT_SHA: ${{ github.event.client_payload.git.sha || github.event.sha || inputs.sha || (github.ref_name == github.event.repository.default_branch && github.sha) || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
