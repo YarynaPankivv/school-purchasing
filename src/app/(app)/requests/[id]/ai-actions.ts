@@ -7,9 +7,12 @@
 //                           додати рядок із запропонованими значеннями після повторної перевірки на сервері. Закупівлю не подаємо.
 // Авторизація й право редагувати — ДО виклику моделі: інакше будь-хто з інтернету витратить денний ліміт (50 запитів).
 import { revalidatePath } from "next/cache";
+import { recordAiCall } from "@/lib/ai/call-log";
 import { classifyError, failureToSuggestResult, proposeDraft, toSuggestResult, unavailable, type SuggestResult } from "@/lib/ai/draft";
 import { AI_DESCRIPTION_MAX, AI_MESSAGES } from "@/lib/ai/messages";
+import { PRODUCT_MODELS } from "@/lib/ai/models";
 import { productModel } from "@/lib/ai/openrouter";
+import { DRAFT_PROMPT_VERSION } from "@/lib/ai/prompts/draft";
 import { LineValuesSchema } from "@/lib/ai/schema";
 import { requireActiveUser } from "@/lib/auth/session";
 import { isUuid } from "@/lib/org/departments";
@@ -42,13 +45,43 @@ export async function suggestLine(requestId: unknown, description: unknown): Pro
 
   // Немає ключа → помічник «недоступний» (AC-AI-04), ручна форма працює далі.
   const model = productModel();
-  if (!model) return unavailable("error");
-  try {
-    const result = await proposeDraft({ text }, model);
-    return result.ok ? toSuggestResult(result.draft) : failureToSuggestResult(result);
-  } catch (error) {
-    return failureToSuggestResult(classifyError(error));
+  if (!model) {
+    // Запит помічника, що завершився «недоступний», входить у SLO-2, навіть якщо до моделі не дійшло (рев'ю CodeRabbit, PR 104):
+    // рядок у ai_call_log є, події llm.call немає (виклику моделі не було).
+    const result = unavailable("error");
+    await recordAiCall(ctx.supabase, {
+      requestId: crypto.randomUUID(),
+      route: "/requests/[id]",
+      model: PRODUCT_MODELS[0],
+      primaryModel: PRODUCT_MODELS[0],
+      result,
+      latencyMs: 0,
+      promptVersion: DRAFT_PROMPT_VERSION,
+      modelCalled: false,
+    });
+    return result;
   }
+  // WS11: кожен виклик моделі — рядок llm.call (журнал Vercel) і рядок ai_call_log (SLO-2); без тексту користувача.
+  const started = performance.now();
+  let answeredModel: string = PRODUCT_MODELS[0];
+  let result: SuggestResult;
+  try {
+    const draft = await proposeDraft({ text }, model);
+    if (draft.ok) answeredModel = draft.modelId;
+    result = draft.ok ? toSuggestResult(draft.draft) : failureToSuggestResult(draft);
+  } catch (error) {
+    result = failureToSuggestResult(classifyError(error));
+  }
+  await recordAiCall(ctx.supabase, {
+    requestId: crypto.randomUUID(),
+    route: "/requests/[id]",
+    model: answeredModel,
+    primaryModel: PRODUCT_MODELS[0],
+    result,
+    latencyMs: performance.now() - started,
+    promptVersion: DRAFT_PROMPT_VERSION,
+  });
+  return result;
 }
 
 // AC-AI-01 (Q6, варіант A): у формі немає порожнього рядка — додаємо рядок із запропонованими значеннями. Значення

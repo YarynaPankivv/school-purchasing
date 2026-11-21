@@ -15,6 +15,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_call_log: {
+        Row: {
+          id: number;
+          created_at: string;
+          user_id: string;
+          state: string;
+          error_kind: string | null;
+          model: string | null;
+          fallback_used: boolean;
+          latency_ms: number | null;
+          prompt_version: string;
+        };
+        Insert: {
+          id?: never;
+          created_at?: string;
+          user_id?: string;
+          state: string;
+          error_kind?: string | null;
+          model?: string | null;
+          fallback_used?: boolean;
+          latency_ms?: number | null;
+          prompt_version: string;
+        };
+        Update: {
+          id?: never;
+          created_at?: string;
+          user_id?: string;
+          state?: string;
+          error_kind?: string | null;
+          model?: string | null;
+          fallback_used?: boolean;
+          latency_ms?: number | null;
+          prompt_version?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_call_log_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       department_approvers: {
         Row: {
           department_id: string;
