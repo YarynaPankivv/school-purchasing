@@ -33,6 +33,8 @@ export type AiCallInfo = {
   result: SuggestResult;
   latencyMs: number;
   promptVersion: string;
+  /** До моделі не звертались (немає ключа): рядок у ai_call_log є — запит увійде в SLO-2, — а події llm.call немає. */
+  modelCalled?: boolean;
 };
 
 /** Журнал + рядок у базі. Ніколи не кидає: збій журналу не має ламати помічника. Повертає записаний стан чи null. */
@@ -42,16 +44,18 @@ export async function recordAiCall(supabase: SupabaseClient<Database>, call: AiC
   const errorKind = call.result.kind === "unavailable" ? call.result.reason : undefined;
   const fallbackUsed = isFallback(call.model, call.primaryModel);
   try {
-    logLlmCall({
-      requestId: call.requestId,
-      route: call.route,
-      model: call.model,
-      fallbackUsed,
-      state,
-      latencyMs: call.latencyMs,
-      promptVersion: call.promptVersion,
-      errorKind,
-    });
+    if (call.modelCalled !== false) {
+      logLlmCall({
+        requestId: call.requestId,
+        route: call.route,
+        model: call.model,
+        fallbackUsed,
+        state,
+        latencyMs: call.latencyMs,
+        promptVersion: call.promptVersion,
+        errorKind,
+      });
+    }
     await supabase.from("ai_call_log").insert({
       state,
       error_kind: errorKind ?? null,

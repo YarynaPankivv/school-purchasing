@@ -38,6 +38,21 @@ describe("onRequestError (трекер помилок)", () => {
     }
   });
 
+  it("стек: шлях із пробілами в абсолютному префіксі скорочується до відносного, а кадр без відомої теки відкидається", async () => {
+    const error = new Error("boom");
+    error.stack = [
+      "Error: boom",
+      "    at handler (/home/olena/School Purchases/src/app/page.tsx:12:3)",
+      "    at render (C:\\Users\\Olena Test\\Моя тека\\node_modules\\next\\dist\\server.js:5:9)",
+      "    at secret (/home/olena/other/place/file.ts:1:1)",
+    ].join("\n");
+    await onRequestError(error, request, context);
+    const { text } = JSON.parse((fetchMock.mock.calls[0] as [string, { body: string }])[1].body) as { text: string };
+    expect(text).toContain("at src/app/page.tsx:12:3");
+    expect(text).toContain("at node_modules/next/dist/server.js:5:9");
+    for (const marker of ["olena", "Olena", "School Purchases", "Моя тека", "/home", "C:", "other/place"]) expect(text).not.toContain(marker);
+  });
+
   it("без TELEGRAM_BOT_TOKEN чи TELEGRAM_CHAT_ID мовчки нічого не робить", async () => {
     vi.stubEnv("TELEGRAM_BOT_TOKEN", "");
     await onRequestError(new Error("boom"), request, context);

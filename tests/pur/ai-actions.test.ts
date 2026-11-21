@@ -114,7 +114,7 @@ describe("suggestLine", () => {
   });
 
   it("AC-AI-04: немає ключа моделі — помічник «недоступний» з текстом AC, до провайдера не ходимо, форма працює вручну", async () => {
-    mockSupabase(row("draft"));
+    const mock = mockSupabase(row("draft"));
     vi.stubEnv("OPENROUTER_API_KEY", "   ");
     const { suggestLine } = await aiActions();
     expect(await suggestLine(REQ, "Need 3 packs of A4 paper at 20 dollars each")).toEqual({
@@ -123,6 +123,10 @@ describe("suggestLine", () => {
       message: "Could not get a suggestion. Fill in the lines manually",
     });
     expect(fetchMock).not.toHaveBeenCalled();
+    // SLO-2: «недоступний» через відсутній ключ теж рахується — технічний рядок журналу є, хоч до моделі не дійшли.
+    const logRows = mock.calls.filter((c) => c.table === "ai_call_log");
+    expect(logRows).toHaveLength(1);
+    expect(JSON.stringify(logRows[0])).toContain('"state":"unavailable"');
   });
 
   it("AC-AI-05: ліміт провайдера (429) — «The assistant is unavailable today. Fill in the lines manually», рядка немає, без повтору", async () => {

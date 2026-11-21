@@ -69,6 +69,19 @@ describe("ai_call_log (SLO-2)", () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
+  it("без виклику моделі (немає ключа) рядок у ai_call_log є — запит входить у SLO-2, — а події llm.call немає", async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    const { client } = fakeSupabase(insert);
+    const info = vi.spyOn(console, "info");
+    const error = vi.spyOn(console, "error");
+    const state = await recordAiCall(client, { ...base({ kind: "unavailable", reason: "error", message: "x" }), latencyMs: 0, modelCalled: false });
+    expect(state).toBe("unavailable");
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(insert.mock.calls[0][0]).toMatchObject({ state: "unavailable", error_kind: "error", latency_ms: 0 });
+    expect(info).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
+  });
+
   it("збій запису в базу не кидає виняток: помічник відповідає далі", async () => {
     const insert = vi.fn().mockRejectedValue(new Error(`insert failed for ${USER_TEXT}`));
     const { client } = fakeSupabase(insert);

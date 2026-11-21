@@ -4,21 +4,24 @@
 // як працівника й схвалювача цього відділу (саме так PM пройде кроки 2–7 сценарію: подати, схвалити частково, повернути).
 // Ідемпотентно (upsert). Заявок не створює: сценарій починається з подання заявки працівником, а лічильник «Awaiting approval»
 // не має бути засмічений. Лише синтетичні дані, прод-дані не копіюємо.
-// Запуск (значення не друкуються): npm run staging:demo -- <ref-проєкту-staging>
-// Запобіжник: другий аргумент має збігатися з ref у NEXT_PUBLIC_SUPABASE_URL, інакше скрипт нічого не робить, а ref проду
-// (SUPABASE_PROD_REF, якщо задано) відхиляється завжди: цей скрипт ніколи не пише в прод.
+// Запуск (значення не друкуються): npm run staging:demo -- <ref-staging> <ref-проду>
+// Запобіжник: ref у NEXT_PUBLIC_SUPABASE_URL має збігатися з першим аргументом (staging) і відрізнятися від другого (проду),
+// інакше скрипт нічого не робить: цей скрипт ніколи не пише в прод.
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const secret = process.env.SUPABASE_SECRET_KEY;
 const expected = process.argv[2] ?? "";
+// Ref ПРОДУ — обов'язковий другий аргумент (рев'ю CodeRabbit, PR 104): у .env.local змінної SUPABASE_PROD_REF немає, і без неї
+// запобіжник «це не прод» нічого б не порівнював. Тепер скрипт не запуститься, поки ви явно не назвали обидва ref.
+const prod = process.argv[3] ?? "";
 const ref = /^https:\/\/([a-z0-9]+)\.supabase\.co/.exec(url)?.[1] ?? "";
 
-if (!ref || !secret || !expected) {
-  console.error("Потрібні NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY (node --env-file=.env.local …) і ref staging першим аргументом.");
+if (!ref || !secret || !expected || !prod) {
+  console.error("Потрібні NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY (node --env-file=.env.local …), ref staging і ref проду аргументами.");
   process.exitCode = 2;
-} else if (ref !== expected || (process.env.SUPABASE_PROD_REF && ref === process.env.SUPABASE_PROD_REF)) {
-  console.error(`Зупинено: ref у .env.local (${ref}) не збігається з очікуваним ref staging (${expected}) або це прод.`);
+} else if (expected === prod || ref !== expected || ref === prod) {
+  console.error("Зупинено: ref у .env.local має збігатися з ref staging (перший аргумент) і відрізнятися від ref проду (другий аргумент).");
   process.exitCode = 2;
 } else {
   const db = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -30,7 +33,11 @@ if (!ref || !secret || !expected) {
   if (dErr) fail("departments", dErr);
   const primary = departments.find((d) => d.name === "Primary School")?.id;
   if (!primary) fail("departments", new Error("немає відділу Primary School (спершу Run workflow CI з include_seed_staging)"));
-  const { data: profiles, error: pErr } = await db.from("profiles").select("id, email");
+  // Лише три потрібні синтетичні профілі: вибірка без фільтра обмежена 1000 рядками, і потрібного профілю могло б не бути в ній.
+  const { data: profiles, error: pErr } = await db
+    .from("profiles")
+    .select("id, email")
+    .in("email", ["pm-requester@example.test", "member1@example.test", "pm-approver@example.test"]);
   if (pErr) fail("profiles", pErr);
   const id = (email) => {
     const found = profiles.find((p) => p.email === email)?.id;

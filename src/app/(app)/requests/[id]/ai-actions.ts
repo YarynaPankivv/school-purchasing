@@ -45,7 +45,22 @@ export async function suggestLine(requestId: unknown, description: unknown): Pro
 
   // Немає ключа → помічник «недоступний» (AC-AI-04), ручна форма працює далі.
   const model = productModel();
-  if (!model) return unavailable("error");
+  if (!model) {
+    // Запит помічника, що завершився «недоступний», входить у SLO-2, навіть якщо до моделі не дійшло (рев'ю CodeRabbit, PR 104):
+    // рядок у ai_call_log є, події llm.call немає (виклику моделі не було).
+    const result = unavailable("error");
+    await recordAiCall(ctx.supabase, {
+      requestId: crypto.randomUUID(),
+      route: "/requests/[id]",
+      model: PRODUCT_MODELS[0],
+      primaryModel: PRODUCT_MODELS[0],
+      result,
+      latencyMs: 0,
+      promptVersion: DRAFT_PROMPT_VERSION,
+      modelCalled: false,
+    });
+    return result;
+  }
   // WS11: кожен виклик моделі — рядок llm.call (журнал Vercel) і рядок ai_call_log (SLO-2); без тексту користувача.
   const started = performance.now();
   let answeredModel: string = PRODUCT_MODELS[0];

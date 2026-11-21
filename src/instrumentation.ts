@@ -39,7 +39,12 @@ function stackFrames(error: unknown): string[] {
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.startsWith("at ") && /:\d+:\d+\)?$/.test(line))
-    .map((line) => line.replace(/(?:[A-Za-z]:)?[\\/][^\s()]*?[\\/](\.next|src|node_modules)[\\/]/g, "$1/"))
+    // Лишаємо лише відносну частину від .next/, src/ чи node_modules/ до :рядок:колонка; не вдалося визначити — кадр відкидаємо
+    // (абсолютний префікс із пробілами, напр. /home/<імʼя>/Моя тека/src/…, інакше потрапив би в повідомлення).
+    .flatMap((line) => {
+      const location = line.match(/[\\/]((?:\.next|src|node_modules)[\\/][^?\r\n]*:\d+:\d+)\)?$/)?.[1];
+      return location ? [`at ${location.replaceAll("\\", "/")}`] : []; // Windows-шлях показуємо зі скісною рискою
+    })
     .slice(0, STACK_FRAMES)
     .map((line) => line.slice(0, 160));
 }
