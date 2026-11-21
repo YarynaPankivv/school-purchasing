@@ -10,11 +10,14 @@
 //   3) "/api/health" → 200 {db:"ok"}; з expected-sha — sha збігається (до 6 спроб × 20 с: прод-домен перемикається
 //                      на новий деплой не миттєво).
 // Код виходу: 0 — усе гаразд, 1 — є збій (рядки ::error:: видно в GitHub Actions), 2 — не вказано адресу.
+import { checkSupabaseRef } from "./lib/supabase-ref.mjs";
 const [rawBase = process.env.PROD_URL ?? "", expectSha = ""] = process.argv.slice(2);
 // client_payload.url від Vercel може прийти хостом без схеми — додаємо https://.
 const base = (/^https?:\/\//.test(rawBase) ? rawBase : rawBase ? `https://${rawBase}` : "").replace(/\/+$/, "");
 
 const bypass = (process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? "").trim();
+const expectRef = (process.env.EXPECT_SUPABASE_REF ?? "").trim();
+const forbidRef = (process.env.FORBID_SUPABASE_REF ?? "").trim();
 const target = process.env.SMOKE_TARGET === "deploy" ? "deploy" : "prod";
 const headers = { "user-agent": "smoke/2.0 (WS11)" };
 // x-vercel-set-bypass-cookie не шлемо: він потрібен браузеру й дає редірект із Set-Cookie, а тут redirect:"manual".
@@ -106,6 +109,11 @@ async function main() {
     fail.push(
       `"/api/health": HTTP ${health.status}, db=${health.db ?? "?"}${health.reason ? ` (${health.reason})` : ""} — Supabase недоступний чи NEXT_PUBLIC_SUPABASE_URL у Vercel не той?`,
     );
+  }
+  // Дія з postmortem: у яку базу дивиться деплой (EXPECT/FORBID_SUPABASE_REF із змінних репо; без них перевірки немає).
+  // supabaseRef віддається і при «db: down»: саме так видно хибну адресу, яка давала status-0.
+  if (health && typeof health === "object" && health.status !== 404 && !(health.status >= 300 && health.status < 400)) {
+    fail.push(...checkSupabaseRef({ actual: health.supabaseRef, expect: expectRef, forbid: forbidRef }));
   }
   if (expectSha && health?.sha === "local") {
     fail.push(`"/api/health": sha=local — у Vercel увімкніть Settings → Environment Variables → «Automatically expose System Environment Variables» і зробіть Redeploy`);
