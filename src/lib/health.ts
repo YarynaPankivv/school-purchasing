@@ -28,6 +28,12 @@ export function classifyDbProbe({ status, error }: DbProbe): DbHealth {
  * Показуємо лише його (не URL і не ключі), щоб smoke відрізнив базу staging від бази проду. Не Supabase-хост — "".
  */
 export function supabaseRefFromUrl(url: string | undefined): string {
-  const m = /^https:\/\/([a-z0-9]+)\.supabase\.co(?:\/|$)/.exec(url ?? "");
-  return m ? m[1] : "";
+  try {
+    const parsed = new URL(url ?? "");
+    if (parsed.protocol !== "https:") return "";
+    // hostname приведено до нижнього регістру, порт у ньому не входить: ABC.supabase.co і abc.supabase.co:443 — той самий хост.
+    return /^([a-z0-9]+)\.supabase\.co$/.exec(parsed.hostname)?.[1] ?? "";
+  } catch {
+    return "";
+  }
 }

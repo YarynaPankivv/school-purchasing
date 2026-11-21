@@ -43,6 +43,14 @@ describe("supabaseRefFromUrl (/api/health, supabaseRef)", () => {
     expect(supabaseRefFromUrl("https://abcdefghijklmnop.supabase.co/")).toBe("abcdefghijklmnop");
   });
 
+  it("розбирає адресу як URL: регістр хоста й порт 443 не заважають, сторонні хости відхиляються", () => {
+    expect(supabaseRefFromUrl("https://ABCDEFGHIJKLMNOP.supabase.co")).toBe("abcdefghijklmnop");
+    expect(supabaseRefFromUrl("https://abcdefghijklmnop.supabase.co:443/rest/v1")).toBe("abcdefghijklmnop");
+    expect(supabaseRefFromUrl("http://abcdefghijklmnop.supabase.co")).toBe("");
+    expect(supabaseRefFromUrl("https://abcdefghijklmnop.supabase.co.evil.example.com")).toBe("");
+    expect(supabaseRefFromUrl("https://user@evil.example.com/abcdefghijklmnop.supabase.co")).toBe("");
+  });
+
   it("повертає порожній рядок, коли адреси немає чи вона не Supabase (локальна розробка)", () => {
     expect(supabaseRefFromUrl(undefined)).toBe("");
     expect(supabaseRefFromUrl("")).toBe("");

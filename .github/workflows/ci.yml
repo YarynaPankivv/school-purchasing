@@ -153,13 +153,16 @@ jobs:
             echo "::error title=db-deploy-staging::SUPABASE_DB_URL не схожий на рядок Session pooler (postgres.<ref>:…@…:5432). Скопіюйте його з Connect у проєкті staging."
             exit 1
           fi
-          # Ціль підключення тільки з userinfo й хоста: query-параметри user, host, hostaddr, port, service у libpq-URL
-          # змінили б користувача чи хост уже після перевірки ref (відповідь CodeRabbit на PR 99).
-          if printf '%s' "$SUPABASE_DB_URL" | grep -Eiq '[?&](user|host|hostaddr|port|service)='; then
-            echo "::error title=db-deploy-staging::SUPABASE_DB_URL містить параметр, що змінює ціль підключення (user, host, hostaddr, port, service). Скопіюйте рядок Session pooler із Connect без параметрів після «?»."
+          # Ціль підключення — лише userinfo й хост: query-параметри (user, host, hostaddr, port, service, зокрема в закодованому
+          # вигляді, напр. ?%75ser=) змінили б користувача чи хост уже після перевірки ref (рев'ю CodeRabbit, PR 99).
+          # Дозволено тільки порожній query або sslmode=<режим>.
+          query=""
+          case "$SUPABASE_DB_URL" in *\?*) query="${SUPABASE_DB_URL#*\?}" ;; esac
+          if [ -n "$query" ] && ! printf '%s' "$query" | grep -Eq '^sslmode=[a-z-]+$'; then
+            echo "::error title=db-deploy-staging::SUPABASE_DB_URL містить параметри після «?», окрім sslmode. Скопіюйте рядок Session pooler із Connect без параметрів."
             exit 1
           fi
-          host=$(printf '%s' "$SUPABASE_DB_URL" | sed -n -E 's#^postgres(ql)?://[^@]*@([^:/?]+).*$##p')
+          host=$(printf '%s' "$SUPABASE_DB_URL" | sed -n -E 's#^postgres(ql)?://[^@]*@([^:/?]+).*$#\2#p')
           case "$host" in
             *.pooler.supabase.com) ;;
             *)
@@ -235,13 +238,16 @@ jobs:
               echo "::error title=db-deploy::SUPABASE_DB_URL в environment production не схожий на рядок Session pooler (postgres.<ref>:…@…:5432). Скопіюйте його з Connect у прод-проєкті."
               exit 1
             fi
-            # Ціль підключення тільки з userinfo й хоста: query-параметри user, host, hostaddr, port, service у libpq-URL
-            # змінили б користувача чи хост уже після перевірки ref (відповідь CodeRabbit на PR 99).
-            if printf '%s' "$SUPABASE_DB_URL" | grep -Eiq '[?&](user|host|hostaddr|port|service)='; then
-              echo "::error title=db-deploy::SUPABASE_DB_URL містить параметр, що змінює ціль підключення (user, host, hostaddr, port, service). Скопіюйте рядок Session pooler із Connect без параметрів після «?»."
+            # Ціль підключення — лише userinfo й хост: query-параметри (user, host, hostaddr, port, service, зокрема в закодованому
+            # вигляді, напр. ?%75ser=) змінили б користувача чи хост уже після перевірки ref (рев'ю CodeRabbit, PR 99).
+            # Дозволено тільки порожній query або sslmode=<режим>.
+            query=""
+            case "$SUPABASE_DB_URL" in *\?*) query="${SUPABASE_DB_URL#*\?}" ;; esac
+            if [ -n "$query" ] && ! printf '%s' "$query" | grep -Eq '^sslmode=[a-z-]+$'; then
+              echo "::error title=db-deploy::SUPABASE_DB_URL містить параметри після «?», окрім sslmode. Скопіюйте рядок Session pooler із Connect без параметрів."
               exit 1
             fi
-            host=$(printf '%s' "$SUPABASE_DB_URL" | sed -n -E 's#^postgres(ql)?://[^@]*@([^:/?]+).*$##p')
+            host=$(printf '%s' "$SUPABASE_DB_URL" | sed -n -E 's#^postgres(ql)?://[^@]*@([^:/?]+).*$#\2#p')
             case "$host" in
               *.pooler.supabase.com) ;;
               *)

@@ -137,10 +137,30 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
+      # Секрет обходу йде в заголовку лише на адресу, яка точно належить цьому Vercel-проєкту: не http://, не чужий хост і не
+      # будь-який *.vercel.app (відповідь CodeRabbit на PR 99). Шаблон: <проєкт>-<…>-<VERCEL_SCOPE>.vercel.app, де проєкт —
+      # перша частина PROD_URL, а VERCEL_SCOPE — змінна репо (slug команди Vercel, не секрет). Навмисно червоний прогін
+      # https://example.invalid ця перевірка теж не пропустить: червоним буде цей крок, і алерт однаково піде.
       - name: Що перевіряємо
+        env:
+          PROD_URL: ${{ vars.PROD_URL }}
+          VERCEL_SCOPE: ${{ vars.VERCEL_SCOPE }}
         run: |
           if [ -z "$DEPLOY_URL" ]; then
             echo "::error title=smoke::Немає адреси деплою (client_payload.url чи поле url ручного запуску)"
+            exit 1
+          fi
+          case "$DEPLOY_URL" in http://*) echo "::error title=smoke::Адреса деплою не HTTPS: секрет обходу захисту не надсилаємо."; exit 1 ;; esac
+          host="${DEPLOY_URL#https://}"
+          host="${host%%/*}"
+          project="${PROD_URL#https://}"
+          project="${project%%.*}"
+          if [ -z "$VERCEL_SCOPE" ] || [ -z "$project" ]; then
+            echo "::error title=smoke::Задайте змінні репо PROD_URL і VERCEL_SCOPE (slug команди Vercel, напр. <команда>-projects): без них адресу деплою не перевірити."
+            exit 1
+          fi
+          if ! printf '%s' "$host" | grep -Eq "^${project}-[a-z0-9-]+-${VERCEL_SCOPE}\.vercel\.app$"; then
+            echo "::error title=smoke::Адреса деплою не належить цьому Vercel-проєкту (очікуємо ${project}-…-${VERCEL_SCOPE}.vercel.app). Запит не надсилаємо."
             exit 1
           fi
           if [ -z "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then

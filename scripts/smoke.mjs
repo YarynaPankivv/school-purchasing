@@ -113,6 +113,11 @@ async function main() {
 if (!base) {
   console.error("Використання: node scripts/smoke.mjs <base-url> [expected-sha]  (або змінна PROD_URL)");
   process.exitCode = 2;
+} else if (bypass && !base.startsWith("https://")) {
+  // Перший запит по HTTP віддав би секрет відкритим каналом, а редірект на HTTPS його вже не захистить (рев'ю CodeRabbit, PR 99).
+  // Без секрету HTTP лишається можливим — для локальних перевірок (npm run smoke -- http://localhost:3000).
+  console.error("Секрет обходу Vercel можна передавати лише через HTTPS: адресу задано без https://.");
+  process.exitCode = 2;
 } else {
   process.exitCode = await main();
 }
