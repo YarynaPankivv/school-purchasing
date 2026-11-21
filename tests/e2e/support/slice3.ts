@@ -109,6 +109,24 @@ export async function requestInfo(requestId: string): Promise<{ number: number; 
   return { number: Number(data.number), status: data.status as string, department };
 }
 
+/** Рядки закупівлі за секретним ключем у порядку позицій: невидима частина «Тоді» про те, що саме лежить у базі. */
+export async function requestLinesOf(
+  requestId: string,
+): Promise<Array<{ name: string | null; purpose: string | null; quantity: number | null; unit_price: number | null }>> {
+  const { data, error } = await adminClient()
+    .from("request_lines")
+    .select("name, purpose, quantity, unit_price")
+    .eq("request_id", requestId)
+    .order("position", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((line) => ({
+    name: line.name,
+    purpose: line.purpose,
+    quantity: line.quantity,
+    unit_price: line.unit_price === null ? null : Number(line.unit_price),
+  }));
+}
+
 /** Нова чернетка закупівлі автора (як після «New request»): база сама створює порожній рядок 1; закупівлю не подано. */
 export async function createDraftAs(author: UatUser, department: string): Promise<string> {
   const client = await clientOf(author);

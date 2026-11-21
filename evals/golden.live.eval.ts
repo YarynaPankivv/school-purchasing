@@ -7,8 +7,12 @@ import { DRAFT_PROMPT_VERSION } from "@/lib/ai/prompts/draft";
 import { DraftSchema } from "@/lib/ai/schema";
 import { acceptance, passRate, scoreCase, type GoldenCase } from "./scorer";
 import casesJson from "../tests/fixtures/golden/cases.json";
+import holdoutJson from "../tests/fixtures/golden/holdout.json";
 
 // `npm run eval` — ЖИВИЙ прогін golden cases PM (ValiaBihun/2026-quitcode-dream-team#70) на безкоштовних моделях OpenRouter.
+// SET=holdout — власний контрольний набір (tests/fixtures/golden/holdout.json): інші предмети й мета, ніж у промпті й у golden
+// cases, плюс варіанти кейсу № 8 PM. Частку успіху рахуємо окремо від golden; записи — recorded-holdout.json, звіт — з суфіксом -holdout
+// (фідбек WS10, пропозиція 4: 10 з 10 на наборі, під який підібрано приклади, ще не показує якості на реальному описі).
 // Ніколи не в `npm test` і не в CI. Потрібен ваш ключ у .env.local (OPENROUTER_API_KEY). Без ключа кейси пропускаються — не помилка.
 // Перший 429 зупиняє прогін: цей і решта кейсів — NOT RUN з причиною у звіті, у частку успіху не входять.
 // Таймаут, помилка постачальника, відповідь не за схемою — FAIL з причиною (входять у частку успіху).
@@ -16,13 +20,14 @@ import casesJson from "../tests/fixtures/golden/cases.json";
 //   ONLY=1,5   — лише ці кейси (налаштування промпту чи дозапис обірваного 429 прогону; звіт — з суфіксом -subset, не офіційний).
 // PowerShell: $env:RECORD="1"; npm run eval   (а потім Remove-Item Env:RECORD)
 
-const allCases = casesJson as GoldenCase[];
+const HOLDOUT = process.env.SET === "holdout";
+const allCases = (HOLDOUT ? holdoutJson : casesJson) as GoldenCase[];
 const only = (process.env.ONLY ?? "").split(",").map((v) => Number(v.trim())).filter(Boolean);
 const cases = only.length > 0 ? allCases.filter((c) => only.includes(c.id)) : allCases;
 const key = process.env.OPENROUTER_API_KEY;
 const RECORD = process.env.RECORD === "1";
 const RUNS = Math.max(1, Number(process.env.RUNS ?? 1) || 1);
-const RECORDED_PATH = "tests/fixtures/golden/recorded.json";
+const RECORDED_PATH = HOLDOUT ? "tests/fixtures/golden/recorded-holdout.json" : "tests/fixtures/golden/recorded.json";
 const REPORT_DIR = "evals/reports";
 
 // Бюджет: на прогін — по одному виклику моделі на кейс, з одного денного лічильника акаунта (50/день без покупки ≥10 кредитів).
@@ -96,6 +101,16 @@ describe.skipIf(!key)("golden cases, живий прогін (безкоштов
   });
 });
 
+// Рядок про поріг приймання PM: лише для повного прогону golden cases; holdout і підмножина його не мають.
+function acceptanceLine(verdict: ReturnType<typeof acceptance>): string {
+  if (HOLDOUT) return "- Поріг приймання PM тут не застосовується: holdout — власний контрольний набір, частка успіху окремо від golden cases PM";
+  if (only.length > 0) return "- Поріг приймання: не рахуємо на підмножині кейсів";
+  return `- Поріг приймання PM (не менше ${8} з 10, обов'язково № 1, 8, 11; перший прогін): **${verdict.accepted ? "прийнято" : "не прийнято"}**${verdict.missingRequired.length ? ` — не пройшли обов'язкові: ${verdict.missingRequired.join(", ")}` : ""}`;
+}
+
+// Суфікс імені звіту: -holdout для власного набору, -subset для налаштування на підмножині кейсів.
+const reportSuffix = () => `${HOLDOUT ? "-holdout" : ""}${only.length > 0 ? "-subset" : ""}`;
+
 // Звіт для домашки: частка успіху загалом і за моделлю + кожен кейс. Файл комітять (він без секретів).
 function writeReport() {
   if (rows.length === 0) return;
@@ -107,14 +122,12 @@ function writeReport() {
   const verdict = acceptance(ran.filter((r) => r.pass && r.run === 1).map((r) => r.id));
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const lines = [
-    `# Живий прогін golden cases — ${new Date().toISOString()}`,
+    `# Живий прогін ${HOLDOUT ? "holdout (власний набір)" : "golden cases"} — ${new Date().toISOString()}`,
     "",
     `- Промпт: \`${DRAFT_PROMPT_VERSION}\`; ланцюжок моделей: ${PRODUCT_MODELS.map((m) => `\`${m}\``).join(" → ")}; суддя не потрібен (у результаті немає вільного тексту)`,
     `- Прогонів: ${RUNS}; кейсів у прогоні: ${cases.length}${only.length > 0 ? ` (ONLY=${only.join(",")} — налаштування, не офіційний прогін)` : ""}`,
     `- **Частка успіху: ${total.passed}/${total.total} (${Math.round(total.rate * 100)}%)** — з кейсів, що отримали відповідь`,
-    only.length === 0
-      ? `- Поріг приймання PM (не менше ${8} з 10, обов'язково № 1, 8, 11; перший прогін): **${verdict.accepted ? "прийнято" : "не прийнято"}**${verdict.missingRequired.length ? ` — не пройшли обов'язкові: ${verdict.missingRequired.join(", ")}` : ""}`
-      : "- Поріг приймання: не рахуємо на підмножині кейсів",
+    acceptanceLine(verdict),
     `- Не запущено (NOT RUN): ${notRun.length}${stoppedAt ? ` — ліміт 429, зупинено на: ${stoppedAt}` : ""}`,
     "",
     "| Модель, що відповіла | Пройшло | Усього |",
@@ -127,6 +140,6 @@ function writeReport() {
     "",
   ];
   mkdirSync(REPORT_DIR, { recursive: true });
-  writeFileSync(`${REPORT_DIR}/${stamp}${only.length > 0 ? "-subset" : ""}.md`, lines.join("\n"));
+  writeFileSync(`${REPORT_DIR}/${stamp}${reportSuffix()}.md`, lines.join("\n"));
   console.log(`Звіт: ${REPORT_DIR}/${stamp}.md`);
 }

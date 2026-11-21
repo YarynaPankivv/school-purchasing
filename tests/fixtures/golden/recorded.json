@@ -1,62 +1,62 @@
 {
   "1": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:47:42.920Z",
-    "promptVersion": "suggest-v2",
+    "recordedAt": "2026-11-21T14:20:06.067Z",
+    "promptVersion": "suggest-v3",
     "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"A4 paper\",\"purpose\":\"For printing\",\"quantity\":3,\"unitPrice\":20}"
   },
   "5": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:47:49.106Z",
-    "promptVersion": "suggest-v2",
-    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Staples\",\"purpose\":null,\"quantity\":2.5,\"unitPrice\":4}"
+    "recordedAt": "2026-11-21T14:20:12.967Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Staple\",\"purpose\":null,\"quantity\":2.5,\"unitPrice\":4}"
   },
   "6": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:47:54.953Z",
-    "promptVersion": "suggest-v2",
+    "recordedAt": "2026-11-21T14:20:18.280Z",
+    "promptVersion": "suggest-v3",
     "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Paper\",\"purpose\":null,\"quantity\":0,\"unitPrice\":20}"
   },
   "7": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:48:07.673Z",
-    "promptVersion": "suggest-v2",
-    "text": "{\"status\":\"ok\",\"refusal\":\"not_purchase\",\"name\":\"Folder\",\"purpose\":null,\"quantity\":4,\"unitPrice\":-5}"
+    "recordedAt": "2026-11-21T14:20:23.923Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Folder\",\"purpose\":null,\"quantity\":4,\"unitPrice\":-5}"
   },
   "8": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:48:13.088Z",
-    "promptVersion": "suggest-v2",
+    "recordedAt": "2026-11-21T14:20:28.451Z",
+    "promptVersion": "suggest-v3",
     "text": "{\"status\":\"refused\",\"refusal\":\"not_purchase\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
   },
   "9": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:48:18.544Z",
-    "promptVersion": "suggest-v2",
+    "recordedAt": "2026-11-21T14:20:34.142Z",
+    "promptVersion": "suggest-v3",
     "text": "{\"status\":\"refused\",\"refusal\":\"not_purchase\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
   },
   "11": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:48:25.305Z",
-    "promptVersion": "suggest-v2",
+    "recordedAt": "2026-11-21T14:20:39.698Z",
+    "promptVersion": "suggest-v3",
     "text": "{\"status\":\"refused\",\"refusal\":\"instruction\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
   },
   "12": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:48:30.729Z",
-    "promptVersion": "suggest-v2",
+    "recordedAt": "2026-11-21T14:20:44.666Z",
+    "promptVersion": "suggest-v3",
     "text": "{\"status\":\"refused\",\"refusal\":\"instruction\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
   },
   "13": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:48:37.389Z",
-    "promptVersion": "suggest-v2",
+    "recordedAt": "2026-11-21T14:20:50.255Z",
+    "promptVersion": "suggest-v3",
     "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Chalk\",\"purpose\":\"For lessons\",\"quantity\":2,\"unitPrice\":5}"
   },
   "14": {
     "modelId": "nvidia/nemotron-3.5-super-vl:free",
-    "recordedAt": "2026-11-16T15:51:28.818Z",
-    "promptVersion": "suggest-v2",
+    "recordedAt": "2026-11-21T14:21:02.007Z",
+    "promptVersion": "suggest-v3",
     "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Marker\",\"purpose\":\"For the whiteboard\",\"quantity\":4,\"unitPrice\":1.5}"
   }
 }

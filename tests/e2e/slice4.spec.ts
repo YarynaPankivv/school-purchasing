@@ -8,7 +8,7 @@
 // Тег @live-ai: живий виклик моделі — ніколи в CI й не на локальній збірці (playwright.config.ts виключає його без UAT_BASE_URL).
 import { expect, test, type Page } from "@playwright/test";
 import { attachRuntimeErrors, given, signIn, thenStep, when } from "./support/uat";
-import { addToDepartment, createDraftAs, createUatUser, requestCountOf, requestInfo, type UatUser } from "./support/slice3";
+import { addToDepartment, createDraftAs, createUatUser, requestCountOf, requestInfo, requestLinesOf, type UatUser } from "./support/slice3";
 
 // Інтерфейс англійською, тож і браузер англійський: поле <input type="number"> бере мову інтерфейсу Chromium (не `locale`
 // контексту) і з uk показує ціну «20,00», а AC-AI-01 вимагає «20.00»; значення в полі те саме, різниться лише відображення.
@@ -70,6 +70,17 @@ test.describe("AI-помічник: пропозиція рядків за оп�
           await expect(lineField(page, "unit_price")).toHaveValue("20.00");
           await expect(page.getByTestId("request-status")).toHaveText("Draft");
           expect((await requestInfo(id)).status).toBe("draft");
+          // Прихована частина «Тоді»: до «Save» помічник нічого не записав — у базі лише порожній рядок; після «Save» — один рядок
+          // із запропонованими значеннями (фідбек WS10, пропозиція 5: раніше перевірявся лише статус заявки).
+          const before = await requestLinesOf(id);
+          expect(before).toHaveLength(1);
+          expect(before[0].name ?? "").toBe("");
+          await page.getByTestId("save-draft").click();
+          await expect.poll(async () => ((await requestLinesOf(id))[0]?.name ?? "")).toMatch(/paper/i);
+          const after = await requestLinesOf(id);
+          expect(after).toHaveLength(1);
+          expect(after[0]).toMatchObject({ quantity: 3, unit_price: 20 });
+          expect(after[0].purpose ?? "").toMatch(/print/i);
         },
       );
     },

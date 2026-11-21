@@ -2,13 +2,14 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
 // Безкоштовні моделі з'являються й зникають: перед роботою — `npm run ai:models`, ланцюжок перевіряє живий прогін
 // `npm run eval`. Порядок = пріоритет. Лише ID із `:free`: платна модель у списку fallback оплачується за її ціною.
-//   gemma-4-31b / gemma-4-26b — найкраща заявка на багатомовність; НЕ мають structured_outputs: json_schema може бути
-//     проігноровано, тому поля повторено в промпті, а zod — ворота (відповідь не за схемою = invalid_output).
-//   nemotron-3.5-super-vl     — строга схема (structured_outputs).
+//   nemotron-3.5-super-vl     — строга схема (structured_outputs) і єдина, що реально відповідала в усіх прогонах suggest-v2:
+//     усі 10 записів golden cases від неї. Тому вона перша (фідбек WS10: інакше кожен запит марно з'їдає частину 14-секундного вікна).
+//   gemma-4-31b / gemma-4-26b — запасні; НЕ мають structured_outputs: json_schema може бути проігноровано, тому поля
+//     повторено в промпті, а zod — ворота (відповідь не за схемою = invalid_output).
 export const PRODUCT_MODELS = [
+  "nvidia/nemotron-3.5-super-vl:free",
   "google/gemma-4-31b-it:free",
   "google/gemma-4-26b-a4b-it:free",
-  "nvidia/nemotron-3.5-super-vl:free",
 ] as const;
 
 // Фабрика приймає ключ параметром і НЕ читає process.env: так її можна імпортувати в eval-скрипті.

@@ -2,7 +2,7 @@
 // Змінили промпт — збільште DRAFT_PROMPT_VERSION, запустіть `npm run eval` (живий прогін) і перезапишіть записи (RECORD=1).
 // Інструкція англійською й без кирилиці в коді (AC-LANG-01 сканує src/). Опис покупки й назва/мета рядка — англійською (вимога PM 2026-11-16).
 
-export const DRAFT_PROMPT_VERSION = "suggest-v2";
+export const DRAFT_PROMPT_VERSION = "suggest-v3";
 
 // Межа введення: довжина (захист від надто довгого тексту) і вирізані власні теги-межі (інакше вхід закрив би <document> сам).
 export const DOCUMENT_MAX = 1000;
@@ -18,13 +18,13 @@ export const DRAFT_INSTRUCTIONS = [
   "Rules for the line fields (write name and purpose in English):",
   "- name: the ITEM being bought (the thing itself), NOT its packaging or unit (pack, box, piece, set). English, singular,",
   "  first letter capital, keep qualifiers such as size or type, without quantity and price. Examples of the transformation:",
-  "  'packs of A4 paper' -> 'A4 paper'; 'boxes of chalk' -> 'Chalk'; 'markers' -> 'Marker'.",
+  "  'boxes of pens' -> 'Pen'; 'reams of copy paper' -> 'Copy paper'; 'staplers' -> 'Stapler'.",
   '- purpose: only if the document states a purpose. Starts with the English word "For" followed by the purpose,',
-  "  first letter capital, for example 'For printing', 'For lessons', 'For the whiteboard'. If no purpose is stated, purpose is null.",
+  "  first letter capital, for example 'For the sports day', 'For the music room', 'For the office'. If no purpose is stated, purpose is null.",
   "- quantity: the number of units as written in the document. ALWAYS copy it even if it is a fraction, zero or negative",
   "  (do not round, do not fix, do not replace it with null). A decimal comma means a decimal point.",
-  "- unitPrice: price of ONE unit in US dollars as a number. If the text says each ('at ... each', 'each costs'), use that price. ALWAYS copy it even if",
-  "  it is negative (the word 'minus' means a minus sign). A decimal comma means a decimal point.",
+  "- unitPrice: price of ONE unit in US dollars as a number. If the text gives a price per unit, use that price. ALWAYS copy it even if",
+  "  it is negative (words such as 'minus' or 'negative' mean a minus sign). A decimal comma means a decimal point.",
   "- Set to null ONLY the single field that the document really does not state; never null a field that the text states.",
   // Безкоштовні моделі Gemma не гарантують json_schema (немає structured_outputs), тож поля повторюємо в тексті.
   "Answer with ONE JSON object and nothing else, with exactly these fields:",
