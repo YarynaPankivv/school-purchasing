@@ -34,6 +34,13 @@ export const DRAFT_INSTRUCTIONS = [
 
 // Недовірений текст завжди загортаємо як дані: теги-межі з вхідного тексту вирізано, довжину обмежено.
 export function wrapDocument(text: string): string {
-  const clean = text.replace(/<\/?\s*document\s*>/gi, "").slice(0, DOCUMENT_MAX);
-  return `<document>\n${clean}\n</document>`;
+  // Вирізання в циклі до стабільного результату: одноразове replace відновлювало б тег із вкладеного входу
+  // (`</docu</document>ment>` → `</document>`); `<document x="1">` і `< /document>` теж ловимо (фідбек WS10, пропозиція 1).
+  let clean = text;
+  let previous: string;
+  do {
+    previous = clean;
+    clean = clean.replace(/<\s*\/?\s*document\b[^>]*>/gi, "");
+  } while (clean !== previous);
+  return `<document>\n${clean.slice(0, DOCUMENT_MAX)}\n</document>`;
 }

@@ -9,6 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { recordAiCall } from "@/lib/ai/call-log";
 import { classifyError, failureToSuggestResult, proposeDraft, toSuggestResult, unavailable, type SuggestResult } from "@/lib/ai/draft";
+import { looksLikeInstruction } from "@/lib/ai/injection";
 import { AI_DESCRIPTION_MAX, AI_MESSAGES } from "@/lib/ai/messages";
 import { PRODUCT_MODELS } from "@/lib/ai/models";
 import { productModel } from "@/lib/ai/openrouter";
@@ -42,6 +43,8 @@ export async function suggestLine(requestId: unknown, description: unknown): Pro
   if (!(await editableRequest(ctx, requestId))) return { kind: "forbidden" };
   const text = typeof description === "string" ? description.trim().slice(0, AI_DESCRIPTION_MAX) : "";
   if (!text) return { kind: "not_purchase", message: AI_MESSAGES.notPurchase };
+  // AC-AI-06: вказівку в описі розпізнає код до моделі (запит із денного ліміту не витрачається; журналу llm.call і ai_call_log немає).
+  if (looksLikeInstruction(text)) return { kind: "instruction", message: AI_MESSAGES.instruction };
 
   // Немає ключа → помічник «недоступний» (AC-AI-04), ручна форма працює далі.
   const model = productModel();

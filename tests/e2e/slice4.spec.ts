@@ -2,7 +2,7 @@
 // (вказівка в описі). Тексти «Тоді» — дослівно з requirements/71-ai-proponuie-riadky-zakupivli.md; тексти помічника
 // англійські за таблицею requirements/49-… (ValiaBihun/2026-quitcode-dream-team#77, ADR 0007); опис покупки — англійський (вимога PM 2026-11-16).
 // AC-AI-03 (очікування) і AC-AI-04, 05 (15 секунд, ліміт) на проді не відтворити: відповідь надто швидка, а ліміт чи збій
-// провайдера не викликати — їх доводять tests/ui/ai-line-helper.test.tsx, tests/ai/suggest.test.ts (proof pack, «Не перевірено»).
+// провайдера не викликати — їх доводять tests/ui/ai-line-helper.test.tsx, tests/golden.test.ts, tests/pur/ai-actions.test.ts (proof pack, «Не перевірено»).
 // Кожен тест робить один запит до живої моделі (ліміт безкоштовного плану спільний з PM) і пише дані, тож працює з
 // синтетичними uat-<run>-…@example.test, яких прибирає teardown. Тег @writes: без SUPABASE_SECRET_KEY не запускаємо.
 // Тег @live-ai: живий виклик моделі — ніколи в CI й не на локальній збірці (playwright.config.ts виключає його без UAT_BASE_URL).
