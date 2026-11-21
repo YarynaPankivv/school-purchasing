@@ -1,0 +1,50 @@
+{
+  "101": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-21T14:21:15.429Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Ruler\",\"purpose\":\"For geometry\",\"quantity\":6,\"unitPrice\":2}"
+  },
+  "102": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-21T14:21:23.528Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Notebook\",\"purpose\":\"For the art class\",\"quantity\":12,\"unitPrice\":3}"
+  },
+  "103": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-21T14:21:33.025Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Pencil\",\"purpose\":\"For the library\",\"quantity\":2,\"unitPrice\":4.5}"
+  },
+  "104": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-21T14:21:38.893Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"ok\",\"refusal\":null,\"name\":\"Folder\",\"purpose\":\"For the science fair\",\"quantity\":15,\"unitPrice\":2.5}"
+  },
+  "105": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-21T14:21:46.985Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"ok\",\"refusal\":\"not_purchase\",\"name\":\"Battery\",\"purpose\":null,\"quantity\":3.5,\"unitPrice\":6}"
+  },
+  "201": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-21T14:21:51.939Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"refused\",\"refusal\":\"not_purchase\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
+  },
+  "202": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-21T14:21:57.164Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"refused\",\"refusal\":\"not_purchase\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
+  },
+  "301": {
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-21T14:22:04.485Z",
+    "promptVersion": "suggest-v3",
+    "text": "{\"status\":\"refused\",\"refusal\":\"instruction\",\"name\":null,\"purpose\":null,\"quantity\":null,\"unitPrice\":null}"
+  }
+}

@@ -78,7 +78,9 @@ export const unavailable = (reason: "timeout" | "limit" | "error"): SuggestResul
 
 // Правила, які можна перевірити кодом, — тут, а не лише в промпті: ціле від 1 і ціна від 0 (ті самі, що в ручному введенні).
 export function toSuggestResult(draft: Draft): SuggestResult {
-  if (draft.status === "refused") {
+  // Суперечлива пара (status ok + refusal instruction) — теж відмова: правило, яке перевіряється кодом, не лишаємо моделі
+  // (фідбек WS10, пропозиція 2; у записі кейсу 7 модель уже давала status ok з refusal not_purchase).
+  if (draft.status === "refused" || draft.refusal === "instruction") {
     return draft.refusal === "instruction"
       ? { kind: "instruction", message: AI_MESSAGES.instruction }
       : { kind: "not_purchase", message: AI_MESSAGES.notPurchase };
@@ -86,6 +88,8 @@ export function toSuggestResult(draft: Draft): SuggestResult {
   // Межі перевіряємо й для needs_info: модель могла назвати кількість, а мети в описі немає (golden 5, 6, 7).
   if (draft.quantity !== null && !parseQuantity(draft.quantity).ok) return { kind: "invalid_field", message: AI_MESSAGES.invalidQuantity };
   if (draft.unitPrice !== null && !parseUnitPrice(draft.unitPrice).ok) return { kind: "invalid_field", message: AI_MESSAGES.invalidPrice };
+  // refusal not_purchase при status ok: після перевірки меж (так запис кейсу 7 і далі дає повідомлення про ціну, як очікує PM).
+  if (draft.refusal === "not_purchase") return { kind: "not_purchase", message: AI_MESSAGES.notPurchase };
   // Чого бракує в описі, AI не вигадує (ValiaBihun/2026-quitcode-dream-team#79): відомі поля заповнюємо, відсутнє лишається
   // порожнім і позначеним, людина доповнює його й сама подає. Питання AI до працівника — наступна версія.
   // Пробільні назва чи мета — не заповнене поле (спільний парсер зробив би їх null при збереженні).

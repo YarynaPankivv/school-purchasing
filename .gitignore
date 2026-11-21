@@ -54,4 +54,3 @@ accounts.txt
 /playwright-report/
 /blob-report/
 /playwright/.auth/
-evals/reports/*-subset.md
