@@ -1,0 +1,42 @@
+# Dependabot: щотижневі PR з оновленнями npm-пакетів і дій GitHub — з паузою для свіжих версій і групами.
+# Куди: .github/dependabot.yml у вашому репо (файл новий; у шаблоні його немає).
+# Завдання README: D (ланцюг постачання). Секретів не потребує.
+# Джерело: GitHub Docs «Dependabot options reference» (cooldown, groups, ignore), станом на 09.11.2026.
+#
+# Що тут і навіщо:
+# - cooldown (пауза): Dependabot не пропонує версію, доки їй не виповниться N днів. Шкідливі версії пакетів зазвичай
+#   знаходять і знімають у перші дні — пауза не дає їм потрапити до вас. Узгоджено з .npmrc min-release-age=7.
+#   Пауза НЕ діє на оновлення безпеки (security updates) — вони приходять одразу, якщо в Settings → Code security
+#   увімкнено Dependabot security updates (окремий перемикач).
+# - groups: дрібні оновлення приходять одним PR, а не десятком.
+# - ignore: Supabase CLI 3.x змінює поведінку команд (без --remote вони йдуть у локальну базу) — до demo day лишаємось
+#   на закріпленій 2.x, тому мажорне оновлення пакета supabase не пропонуємо.
+# - github-actions: Dependabot оновлює дії, закріплені за SHA, разом із коментарем версії (# vX.Y.Z).
+#   Для цієї екосистеми cooldown підтримує лише default-days.
+# Перевірка: Insights → Dependency graph → Dependabot (останній запуск) або вкладка Pull requests (автор dependabot).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: supabase
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
