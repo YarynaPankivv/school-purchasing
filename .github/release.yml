@@ -1,0 +1,37 @@
+# Категорії автоматичних нотаток релізу GitHub: PR потрапляють у розділ за міткою (label).
+# Куди: .github/release.yml у вашому репо. Діє, коли ви створюєте реліз (Releases → Draft a new release → тег v1.0.0 →
+# Generate release notes): GitHub збирає злиті PR від попереднього тегу й розкладає їх за цими розділами.
+# Завдання README: A (тег v1.0.0 з нотатками релізу за категоріями). Секретів не потребує.
+# Джерело: GitHub Docs «Automatically generated release notes» (формат .github/release.yml), станом на 09.11.2026.
+#
+# Мітки: feature, bug, security, ops, documentation. Створіть їх один раз (Issues → Labels → New label) і ставте на PR.
+# Dependabot сам ставить на свої PR мітку dependencies — вони підуть у «Безпека й залежності».
+# PR з міткою skip-release-notes у нотатки не потрапляє. Перший збіг мітки виграє, тому порядок розділів важливий.
+changelog:
+  exclude:
+    labels:
+      - skip-release-notes
+  categories:
+    - title: Нове для користувачів
+      labels:
+        - feature
+        - enhancement
+    - title: Виправлення
+      labels:
+        - bug
+        - fix
+    - title: Безпека й залежності
+      labels:
+        - security
+        - dependencies
+    - title: Експлуатація (CI, деплой, сигнали)
+      labels:
+        - ops
+        - ci
+        - github_actions
+    - title: Документація
+      labels:
+        - documentation
+    - title: Інше
+      labels:
+        - "*"
