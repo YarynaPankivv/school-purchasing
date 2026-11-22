@@ -83,11 +83,13 @@ Ref проєкту Supabase не секрет, а ключі, рядки під�
 
 ## 7. Доступ PM до staging
 
-Staging закритий захистом Vercel (Standard Protection: preview і staging закриті, прод відкритий). Обраний спосіб — **спільне посилання Vercel (Shareable Link)**:
+Staging закритий захистом Vercel (Standard Protection: preview і staging закриті, прод відкритий). Обраний спосіб — **спільне посилання Vercel (Shareable Link)** на домен гілки `staging` ([документація](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/sharable-links)): PM не потрібен акаунт Vercel.
 
-1. Vercel → Deployments → деплой гілки `staging` → **Share** → створити посилання («up-to-date URL»: діє й для наступних деплоїв гілки).
-2. Надсилайте посилання PM особисто, не в групу й не в репо (воно містить токен доступу). У публічних файлах пишіть лише адресу без параметрів після «?».
-3. Відкликання: Settings → Deployment Protection → Shareable Links → видалити.
+1. Vercel → Deployments → деплой гілки `staging` → **Share** → у списку внизу діалогу **«Anyone with the link»** → **Copy Link**. Поле «Add team members or emails» не чіпаємо: це запрошення в команду (одним зовнішнім користувачем на Hobby чи пробним Pro).
+2. Посилання передається за параметром у адресі (`?_vercel_share=…`): **цей хвіст і є ключем доступу**. Надсилайте його PM особисто, не в групу й не в репо; у публічних файлах пишіть лише адресу без параметрів після «?». Перевірка: у вікні інкогніто має відкритися сторінка входу застосунку, а не вхід у Vercel (перевірено 22.11.2026).
+3. **Ліміт Hobby: одне спільне посилання на весь акаунт.** Нові не створюємо; потрібне інше — спершу відкликаємо це.
+4. Відкликання: Share → повернути «Only people with access»; список усіх посилань — Settings → Deployment Protection → Access → All Access → Shareable Links.
+5. Запасний шлях, якщо посилання не спрацює: Settings → Deployment Protection → **Deployment Protection Exceptions** → Add Domain з адресою домену `staging` (підтвердження фразою `unprotect my domain`). Тоді staging відкритий усім, решта preview лишається закритою; це доступно на Hobby й знімається так само (`reprotect my domain`). Дані на staging синтетичні, але на staging ходять тестові акаунти, тож цей шлях — виняток, а не норма.
 
 Акаунти для сценарію (`pm-requester@example.test`, `pm-approver@example.test`) — як на проді; пароль — у `accounts.zip`, не тут. Дані сценарію на staging: `npm run staging:demo` (відділ Primary School, схвалювач `pm-approver`).
 
