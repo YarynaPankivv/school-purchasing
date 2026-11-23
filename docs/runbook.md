@@ -65,9 +65,9 @@ Ref проєкту Supabase не секрет, а ключі, рядки під�
 
 - Ознака: `/api/health` → HTTP 503, `"db":"down"`, `reason: paused` (або HTTP 540 від Supabase).
 - Що робити: Supabase Dashboard → **саме той проєкт, у якого пауза** (прод `school-purchasing` чи staging `school-purchasing-staging`) → **Resume project**.
-  1. Перевіряйте кожні 30 секунд відповідь `/api/health` (для проду: `curl -s https://school-purchasing.vercel.app/api/health`; для staging — рядок JSON у журналі прогону smoke): база прокинулась, коли там `"db":"ok"` і `supabaseRef` потрібного проєкту.
+  1. Перевіряйте кожні 30 секунд свіжу відповідь `/api/health`: база прокинулась, коли там `"db":"ok"` і `supabaseRef` потрібного проєкту. Для проду: `curl -s https://school-purchasing.vercel.app/api/health`. Для staging кожна перевірка — **новий прогін smoke** (Actions → `smoke` → Run workflow, адреса staging) і рядок JSON з цього нового журналу; журнал попереднього прогону показує стан до відновлення і `"db":"ok"` у ньому не з'явиться.
   2. Скільки триває відновлення, документація Supabase не вказує ([Project Pausing](https://supabase.com/docs/guides/platform/free-project-pausing)). Тому 10 хвилин — наше робоче правило, а не гарантія Supabase: якщо `"db":"ok"` не з'явилось за 10 хвилин, дивіться Dashboard → Logs проєкту й сторінку статусу Supabase, а не чекайте далі.
-  3. Після `"db":"ok"` перезапустіть smoke (Actions → `smoke` → Run workflow): зелений прогін підтверджує відновлення.
+  3. Підтвердження відновлення — зелений прогін smoke після `"db":"ok"` (для staging це вже той новий прогін з кроку 1; для проду запустіть Actions → `smoke` → Run workflow).
 - Перед показом/приманням PM перевіряйте обидва проєкти, особливо staging. Щоденний smoke проду (07:23 за Києвом) тримає **прод-базу** активною, але не staging: staging будять перед UAT.
 - SEV1, якщо прод; PM пише клієнту за шаблоном.
 
