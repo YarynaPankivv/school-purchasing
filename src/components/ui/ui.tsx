@@ -208,7 +208,7 @@ export function TopBar({ query, showNewRequest }: { query?: string; showNewReque
           />
         </div>
         {showNewRequest ? (
-          <Link href="/requests/new" className={buttonVariants("default", "h-11 shrink-0 gap-1.5! rounded-full! px-4! font-medium! shadow-none! sm:h-9")}>
+          <Link href="/requests/new" className={buttonVariants("default", "h-11 shrink-0 gap-1.5! px-4! font-medium! shadow-none! sm:h-9")}>
             <Icon name="plus" className="size-4" />
             <span className="max-sm:sr-only">New request</span>
           </Link>
