@@ -92,7 +92,7 @@ export async function HomeContent() {
       ) : (
         <>
           <RowKeyNav />
-          <StatusLinks items={links} label="Request summary" />
+          <StatusLinks items={links} label="Request summary" variant="cards" />
           {/* Порожні списки рішень не показуємо: нуль уже видно в смузі лічильників. */}
           {overview.toDecide.length > 0 ? (
             <RequestList

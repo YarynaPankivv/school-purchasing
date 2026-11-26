@@ -42,7 +42,7 @@ export function Avatar({ name, size = "md" }: { name: string; size?: "md" | "lg"
 export type BadgeTone = "neutral" | "primary" | "ok" | "warn" | "danger" | "info";
 
 const BADGE_TONES: Record<BadgeTone, string> = {
-  neutral: "bg-muted text-muted-foreground",
+  neutral: "bg-muted text-muted-foreground ring-1 ring-inset ring-border",
   primary: "bg-accent text-accent-foreground",
   ok: "bg-status-approved text-status-approved-foreground",
   warn: "bg-status-pending text-status-pending-foreground",
@@ -245,9 +245,9 @@ export function PageShell({
         id="main-content"
         tabIndex={-1}
         // scroll-mt: після переходу за «Skip to content» початок вмісту не ховається під липкою шапкою (3.75rem) і TopBar.
-        className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col gap-6 px-4 pb-12 pt-6 scroll-mt-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:scroll-mt-16 sm:px-8 sm:pt-8"
+        className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col gap-7 px-4 pb-12 pt-6 scroll-mt-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:scroll-mt-16 sm:px-8 sm:pt-8"
       >
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 pb-1">
           {back ? (
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
               <Link

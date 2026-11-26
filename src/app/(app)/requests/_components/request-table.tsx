@@ -90,7 +90,7 @@ export function RequestTable({
     <Card title={title} description={description} action={<Badge>{items.length}</Badge>} className="overflow-hidden">
       <div className="-mx-5 -my-4 overflow-x-auto" role="region" aria-label={title} tabIndex={0}>
         <table className="w-full text-left text-sm" data-testid={testId}>
-          <thead className="border-b border-border">
+          <thead className="border-b border-border bg-muted/50">
             <tr>
               <th scope="col" className={`${HEAD} w-12 pl-5 text-right max-sm:hidden`}>
                 <span className="sr-only">Row </span>#

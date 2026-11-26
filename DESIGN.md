@@ -29,16 +29,16 @@
 
 | Токен | Для чого | Світла | Темна | Клас |
 |---|---|---|---|---|
-| `background` | тло сторінки (світлий нейтральний) | `oklch(0.972 0.003 250.0)` | `oklch(0.190 0.012 70.0)` | `bg-background` |
+| `background` | тло сторінки (світлий нейтральний) | `oklch(0.962 0.003 250.0)` | `oklch(0.190 0.006 250.0)` | `bg-background` |
 | `foreground` | основний текст (чорнильний) | `oklch(0.235 0.020 70.0)` | `oklch(0.930 0.010 85.0)` | `text-foreground` |
-| `card` / `card-foreground` | картки, панелі, поля вводу | `oklch(0.995 0.002 250.0)` / `oklch(0.235 0.020 70.0)` | `oklch(0.235 0.014 70.0)` / `oklch(0.930 0.010 85.0)` | `bg-card`, `text-card-foreground` |
-| `muted` | приглушене тло, наведення | `oklch(0.955 0.004 250.0)` | `oklch(0.275 0.016 70.0)` | `bg-muted` |
+| `card` / `card-foreground` | картки, панелі, поля вводу | `oklch(0.995 0.002 250.0)` / `oklch(0.235 0.020 70.0)` | `oklch(0.235 0.008 250.0)` / `oklch(0.930 0.010 85.0)` | `bg-card`, `text-card-foreground` |
+| `muted` | приглушене тло, наведення | `oklch(0.945 0.004 250.0)` | `oklch(0.275 0.010 250.0)` | `bg-muted` |
 | `muted-foreground` | підписи, допоміжний текст | `oklch(0.485 0.025 70.0)` | `oklch(0.720 0.020 80.0)` | `text-muted-foreground` |
 | `secondary` / `secondary-foreground` | другорядна дія (заливка) | як `muted` / `foreground` | як `muted` / `foreground` | `bg-secondary`, `text-secondary-foreground` |
 | `accent` / `accent-foreground` | вибраний пункт навігації, роль, наведення | `oklch(0.945 0.026 205.0)` / `oklch(0.340 0.062 215.0)` | `oklch(0.320 0.034 210.0)` / `oklch(0.870 0.050 205.0)` | `bg-accent`, `text-accent-foreground` |
 | `primary` / `primary-foreground` | основна дія (одна на екран), посилання — петроль | `oklch(0.420 0.074 215.0)` / `oklch(0.985 0.006 85.0)` | `oklch(0.730 0.082 205.0)` / `oklch(0.200 0.020 220.0)` | `bg-primary`, `text-primary-foreground`, `hover:bg-primary-hover` |
 | `destructive` / `destructive-foreground` | небезпечна дія («Reject», деактивація) | `oklch(0.520 0.165 28.0)` / `oklch(0.985 0.006 85.0)` | `oklch(0.700 0.150 25.0)` / `oklch(0.200 0.020 25.0)` | `bg-destructive`, `text-destructive-foreground`, `hover:bg-destructive-hover` |
-| `border` | розділювачі, межі карток | `oklch(0.905 0.006 250.0)` | `oklch(0.320 0.015 70.0)` | `border-border`, `divide-border` |
+| `border` | розділювачі, межі карток | `oklch(0.895 0.006 250.0)` | `oklch(0.320 0.010 250.0)` | `border-border`, `divide-border` |
 | `input` | межа поля вводу й перемикача (≥ 3:1) | `oklch(0.600 0.030 75.0)` | `oklch(0.580 0.030 75.0)` | `border-input` |
 | `ring` | кільце фокусу | `oklch(0.420 0.074 215.0)` | `oklch(0.730 0.082 205.0)` | `outline-ring` (глобально для `:focus-visible`) |
 | `status-pending` / `-foreground` | «Awaiting approval» (теплий бурштин) | `oklch(0.950 0.055 90.0)` / `oklch(0.410 0.090 70.0)` | `oklch(0.300 0.050 85.0)` / `oklch(0.850 0.120 85.0)` | `bg-status-pending`, `text-status-pending-foreground` |
@@ -58,11 +58,11 @@
 
 | Пара | Світла | Темна | Норма |
 |---|---|---|---|
-| `foreground` на `background` | 15.37 | 15.04 | ≥ 4.5 ✅ |
-| `muted-foreground` на `background` | 5.93 | 7.44 | ≥ 4.5 ✅ |
-| `muted-foreground` на `card` | 6.31 | 6.72 | ≥ 4.5 ✅ |
-| `muted-foreground` на `muted` | 5.62 | 5.98 | ≥ 4.5 ✅ |
-| `card-foreground` на `card` | 16.36 | 13.58 | ≥ 4.5 ✅ |
+| `foreground` на `background` | 14.96 | 14.98 | ≥ 4.5 ✅ |
+| `muted-foreground` на `background` | 5.77 | 7.40 | ≥ 4.5 ✅ |
+| `muted-foreground` на `card` | 6.31 | 6.70 | ≥ 4.5 ✅ |
+| `muted-foreground` на `muted` | 5.47 | 5.95 | ≥ 4.5 ✅ |
+| `card-foreground` на `card` | 16.36 | 13.57 | ≥ 4.5 ✅ |
 | `primary-foreground` на `primary` | 7.88 | 7.79 | ≥ 4.5 ✅ |
 | `accent-foreground` на `accent` | 9.86 | 8.60 | ≥ 4.5 ✅ |
 | `destructive-foreground` на `destructive` | 5.73 | 6.37 | ≥ 4.5 ✅ |
@@ -78,8 +78,8 @@
 | `foreground` на `tint-peach` | 13.83 | 10.08 | ≥ 4.5 ✅ |
 | `foreground` на `tint-butter` | 14.70 | 9.95 | ≥ 4.5 ✅ |
 | `foreground` на `tint-sky` | 13.89 | 10.61 | ≥ 4.5 ✅ |
-| `input` (межа поля) на `card` | 3.89 | 3.88 | ≥ 3 ✅ |
-| `ring` (фокус) на `background` | 7.58 | 7.98 | ≥ 3 ✅ |
+| `input` (межа поля) на `card` | 3.89 | 3.89 | ≥ 3 ✅ |
+| `ring` (фокус) на `background` | 7.38 | 7.98 | ≥ 3 ✅ |
 
 Межі карток (`border`) і розділювачі декоративні: без тексту поруч вони нічого не означають, тож норму 3:1 до них не
 застосовуємо.
@@ -115,7 +115,7 @@
 | `SubmitButton` | ті самі | кнопка форми з server action: блокується під час виконання (`aria-busy`), `confirm` — для небезпечних дій |
 | `LinkButton` | ті самі | посилання, що виглядає як кнопка |
 | `Input`, `Select`, `Textarea` + `Label`/`Field` | — | у кожного поля підпис (`Field` або `Label` з `htmlFor`); placeholder не замінює підпис; підказка стоїть поза підписом з `aria-describedby`. `Select` — власний (меню на токенах, клавіатура, прихований справжній `<select>` для форми), рідний системний список не показуємо ніде |
-| `StatusLinks`, `Pagination`, `RowKeyNav` | — | смуга фільтрів-лічильників (активний — петрольна рамка, `aria-current`), нумерація сторінок «‹ 1 … 5 … 20 ›», навігація рядками `J`/`K` |
+| `StatusLinks`, `Pagination`, `RowKeyNav` | `chips`, `cards` | смуга фільтрів-лічильників (активний — заливка `accent` і петрольна рамка, `aria-current`); `cards` — картки-показники з великим числом на головній, нумерація сторінок «‹ 1 … 5 … 20 ›», навігація рядками `J`/`K` |
 | `Checkbox`, `Switch` | — | прапорець і перемикач (дозволи, автосхвалення); колір лише з токенів |
 | `Card` | `default`, `danger` | контейнер сторінки із заголовком і дією; `danger` — для небезпечних зон |
 | `Badge`, `RoleBadge`, `StatusBadge` | `neutral`, `primary`, `ok`, `warn`, `danger`, `info` | статус завжди з текстом, не лише кольором |

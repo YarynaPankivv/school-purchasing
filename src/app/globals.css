@@ -8,13 +8,13 @@
   color-scheme: light dark;
   /* Одна крива для всього руху (DESIGN.md, розділ 7): швидкий старт, м'яке гальмування. */
   --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
-  --background: oklch(0.972 0.003 250.0); /* #f4f6f8 */
+  --background: oklch(0.962 0.003 250.0); /* #f1f3f4 */
   --foreground: oklch(0.235 0.020 70.0); /* #241d14 */
   --card: oklch(0.995 0.002 250.0); /* #fcfdff */
   --card-foreground: oklch(0.235 0.020 70.0); /* #241d14 */
-  --muted: oklch(0.955 0.004 250.0); /* #eef0f3 */
+  --muted: oklch(0.945 0.004 250.0); /* #ebedef */
   --muted-foreground: oklch(0.485 0.025 70.0); /* #685d50 */
-  --secondary: oklch(0.955 0.004 250.0); /* #eef0f3 */
+  --secondary: oklch(0.945 0.004 250.0); /* #ebedef */
   --secondary-foreground: oklch(0.235 0.020 70.0); /* #241d14 */
   --accent: oklch(0.945 0.026 205.0); /* #daf2f5 */
   --accent-foreground: oklch(0.340 0.062 215.0); /* #00404c */
@@ -24,7 +24,7 @@
   --destructive: oklch(0.520 0.165 28.0); /* #b5352d */
   --destructive-hover: oklch(0.460 0.155 28.0); /* #9c2620 */
   --destructive-foreground: oklch(0.985 0.006 85.0); /* #fcfaf6 */
-  --border: oklch(0.905 0.006 250.0); /* #dde0e3 */
+  --border: oklch(0.895 0.006 250.0); /* #d9dde0 */
   --input: oklch(0.600 0.030 75.0); /* #8b7e6d */
   --ring: oklch(0.420 0.074 215.0); /* #015766 */
   --status-pending: oklch(0.950 0.055 90.0); /* #fdeec5 */
@@ -46,13 +46,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: oklch(0.190 0.012 70.0); /* #17130e */
+    --background: oklch(0.190 0.006 250.0); /* #121416 */
     --foreground: oklch(0.930 0.010 85.0); /* #ebe7e0 */
-    --card: oklch(0.235 0.014 70.0); /* #221d17 */
+    --card: oklch(0.235 0.008 250.0); /* #1b1e22 */
     --card-foreground: oklch(0.930 0.010 85.0); /* #ebe7e0 */
-    --muted: oklch(0.275 0.016 70.0); /* #2d261f */
+    --muted: oklch(0.275 0.010 250.0); /* #24282c */
     --muted-foreground: oklch(0.720 0.020 80.0); /* #aba397 */
-    --secondary: oklch(0.275 0.016 70.0); /* #2d261f */
+    --secondary: oklch(0.275 0.010 250.0); /* #24282c */
     --secondary-foreground: oklch(0.930 0.010 85.0); /* #ebe7e0 */
     --accent: oklch(0.320 0.034 210.0); /* #1d383c */
     --accent-foreground: oklch(0.870 0.050 205.0); /* #afdee4 */
@@ -62,7 +62,7 @@
     --destructive: oklch(0.700 0.150 25.0); /* #ed756e */
     --destructive-hover: oklch(0.760 0.130 25.0); /* #f98f87 */
     --destructive-foreground: oklch(0.200 0.020 25.0); /* #1e1311 */
-    --border: oklch(0.320 0.015 70.0); /* #38322b */
+    --border: oklch(0.320 0.010 250.0); /* #2f3338 */
     --input: oklch(0.580 0.030 75.0); /* #857867 */
     --ring: oklch(0.730 0.082 205.0); /* #64b7c0 */
     --status-pending: oklch(0.300 0.050 85.0); /* #392c0c */
