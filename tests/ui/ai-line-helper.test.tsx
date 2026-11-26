@@ -12,7 +12,8 @@ describe("розмітка помічника", () => {
   it("AC-AI-03: поки відповіді немає — «Looking for lines…», кнопка «Suggest lines» неактивна, опис лишається в полі", () => {
     const html = renderToStaticMarkup(<AiHelperView description={DESCRIPTION} pending notice={null} />);
     expect(html).toContain("Looking for lines…");
-    expect(html).toMatch(/<button[^>]*disabled=""[^>]*data-testid="ai-suggest"[^>]*>Suggest lines<\/button>/);
+    // Перед написом стоїть значок-svg (оформлення): текст кнопки лишається «Suggest lines».
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*data-testid="ai-suggest"[^>]*>(?:<svg.*?<\/svg>)?Suggest lines<\/button>/);
     expect(html).toContain(`>${DESCRIPTION}</textarea>`);
     // Опис не входить до збереження чернетки: у textarea немає name.
     expect(html).not.toMatch(/<textarea[^>]*name=/);
