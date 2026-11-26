@@ -83,9 +83,10 @@
   }
 }
 
-/* Усі Tailwind-переходи (transition-colors, transition-transform, …) беруть ту саму криву. */
+/* Усі Tailwind-переходи (hover, фокус): 200 мс і м'яка симетрична крива — швидкий старт --ease-smooth на ховері сприймався як миттєвий стрибок. */
 @theme {
-  --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  --default-transition-duration: 200ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {

@@ -4,7 +4,7 @@ import { cn } from "./cn";
 
 export const FIELD =
   "w-full rounded-lg border border-input bg-card px-3 py-2.5 text-base text-foreground placeholder:text-muted-foreground sm:py-2 sm:text-sm " +
-  "transition-[border-color,background-color] duration-150 enabled:hover:border-foreground/40 disabled:cursor-not-allowed disabled:opacity-60";
+  "transition-[border-color,background-color] duration-200 enabled:hover:border-foreground/40 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function Input({ className, ref, ...props }: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) {
   return <input ref={ref} className={cn(FIELD, className)} {...props} />;

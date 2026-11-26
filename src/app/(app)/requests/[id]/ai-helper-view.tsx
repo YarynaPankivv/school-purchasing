@@ -31,7 +31,7 @@ export function AiHelperView({
   rootRef?: Ref<HTMLDivElement>;
 }): ReactNode {
   return (
-    <div ref={rootRef} className="flex flex-col gap-2 rounded-lg border border-primary/20 bg-accent p-4" data-testid="ai-helper">
+    <div ref={rootRef} className="flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-4" data-testid="ai-helper">
       <Label htmlFor="ai-description">{AI_UI.label}</Label>
       {/* Без name: опис не входить до збереження чернетки (saveDraft читає лише відомі поля). */}
       <Textarea
@@ -46,7 +46,7 @@ export function AiHelperView({
         <Button
           type="button"
           variant="outline"
-          className="gap-2! border-primary/40! bg-card! text-primary! hover:border-primary! hover:bg-primary! hover:text-primary-foreground!"
+          className="gap-2! border-primary/40! bg-card! text-primary! hover:border-primary! hover:bg-accent!"
           disabled={pending}
           aria-busy={pending}
           onClick={onAsk}

@@ -43,7 +43,7 @@ export function SidebarFrame({ children }: { children: ReactNode }) {
     <aside
       id="app-sidebar"
       data-collapsed={collapsed}
-      className="group/sidebar hidden w-64 shrink-0 flex-col border-r border-border bg-card transition-[width] duration-150 motion-reduce:transition-none data-[collapsed=true]:w-[4.5rem] lg:sticky lg:top-0 lg:flex lg:h-dvh"
+      className="group/sidebar hidden w-64 shrink-0 flex-col border-r border-border bg-card transition-[width] duration-200 motion-reduce:transition-none data-[collapsed=true]:w-[4.5rem] lg:sticky lg:top-0 lg:flex lg:h-dvh"
     >
       {children}
       {/* Розгорнута: іконка в рядку бренду праворуч. Згорнута: знак бренду, а при наведенні (чи фокусі) — іконка «розгорнути». */}
