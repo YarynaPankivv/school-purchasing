@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { RequestsSkeleton } from "@/components/ui";
 import Link from "next/link";
-import { Alert, EmptyState, Forbidden, PageShell, RowKeyNav, StatusLinks, type StatusLink } from "@/components/ui";
+import { Alert, EmptyState, Toast, Forbidden, PageShell, RowKeyNav, StatusLinks, type StatusLink } from "@/components/ui";
 import { requireActiveUser } from "@/lib/auth/session";
 import { orgErrorMessage } from "@/lib/org/errors";
 import { purErrorMessage } from "@/lib/pur/errors";
@@ -171,14 +171,14 @@ export async function RequestsPageContent({ searchParams }: PageProps<"/requests
       searchQuery={query}
     >
       <RowKeyNav />
-      <Alert message={errorMessage} />
+      <Toast message={errorMessage} />
       {searched.toDecide.length > 0 ? (
         <Alert
           tone="warn"
           message={`${searched.toDecide.length} ${searched.toDecide.length === 1 ? "request is" : "requests are"} waiting for your decision.`}
         />
       ) : null}
-      <Alert tone="ok" message={savedMessage} />
+      <Toast tone="ok" message={savedMessage} />
 
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <StatusLinks items={chips} label="Filter requests" />

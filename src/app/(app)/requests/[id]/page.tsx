@@ -4,6 +4,7 @@ import { RequestDetailSkeleton } from "@/components/ui";
 import { notFound } from "next/navigation";
 import {
   Alert,
+  Toast,
   Badge,
   Card,
   Checkbox,
@@ -216,8 +217,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
         ) : null
       }
     >
-      <Alert message={errorMessage} />
-      <Alert tone="ok" message={savedMessage} />
+      <Toast message={errorMessage} />
+      <Toast tone="ok" message={savedMessage} />
       {request.decision_reason && (request.status === "rejected" || request.status === "returned") ? (
         <Alert tone="warn" message={`Reason: ${request.decision_reason}`} />
       ) : null}

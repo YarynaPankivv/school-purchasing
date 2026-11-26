@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DepartmentDetailSkeleton } from "@/components/ui";
 import { notFound } from "next/navigation";
-import { Alert, Avatar, Badge, Card, EmptyState, Field, Forbidden, PageShell, RoleBadge, Select, SubmitButton, Switch } from "@/components/ui";
+import { Avatar, Badge, Card, EmptyState, Field, Forbidden, PageShell, RoleBadge, Select, SubmitButton, Switch, Toast } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth/session";
 import {
   NO_APPROVER_LABEL,
@@ -57,7 +57,7 @@ export async function DepartmentPageContent({ params, searchParams }: PageProps<
       back={{ href: "/admin/departments", label: "All departments" }}
       actions={hasApprover ? undefined : <Badge tone="warn">{NO_APPROVER_LABEL}</Badge>}
     >
-      <Alert message={orgErrorMessage(error)} />
+      <Toast message={orgErrorMessage(error)} />
 
       <Card title="Requesters" description="Employees who submit requests on behalf of this department.">
         {memberRows.length === 0 ? (

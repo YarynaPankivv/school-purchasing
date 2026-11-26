@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { NewRequestSkeleton } from "@/components/ui";
-import { Alert, Card, EmptyState, PageShell } from "@/components/ui";
+import { Card, EmptyState, PageShell, Toast } from "@/components/ui";
 import { requireActiveUser } from "@/lib/auth/session";
 import { onBehalfCandidates, personLabel, selectableDepartments } from "@/lib/org/departments";
 import { orgErrorMessage } from "@/lib/org/errors";
@@ -47,8 +47,8 @@ export async function NewRequestPageContent({ searchParams }: PageProps<"/reques
       description="The request is created as a draft on behalf of one of your departments."
       hideNewRequest
     >
-      <Alert message={orgErrorMessage(error)} />
-      <Alert tone="ok" message={created === "1" ? "Draft request created." : undefined} />
+      <Toast message={orgErrorMessage(error)} />
+      <Toast tone="ok" message={created === "1" ? "Draft request created." : undefined} />
 
       <Card title={options.length > 0 ? "Details" : undefined}>
         {options.length === 0 ? (

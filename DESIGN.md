@@ -119,6 +119,7 @@
 | `Checkbox`, `Switch` | — | прапорець і перемикач (дозволи, автосхвалення); колір лише з токенів |
 | `Card` | `default`, `danger` | контейнер сторінки із заголовком і дією; `danger` — для небезпечних зон |
 | `Badge`, `RoleBadge`, `StatusBadge` | `neutral`, `primary`, `ok`, `warn`, `danger`, `info` | статус завжди з текстом, не лише кольором |
+| `Toast` | `error`, `ok`, `warn`, `info` | результат дії (збережено, помилка) плаваючою плашкою внизу справа; текст є в SSR, на клієнті сам зникає, є «Close» |
 | `Alert` | `error`, `ok`, `warn`, `info` | текст помилки — дослівно з таблиці PM (англійською); введене лишається у формі |
 | `EmptyState` | — | порожній стан: м'яка плашка `bg-muted` з поясненням і що робити далі (без пунктирної рамки) |
 | `PageShell` | `size` `md`/`lg` | оболонка авторизованих сторінок: ліворуч бічна панель (`lg+`: бренд, пункти меню, блок «Administration» лише для `admin`, користувач і вихід), на вузьких екранах — верхня смуга з меню, що розкривається; праворуч заголовок сторінки й вміст |
@@ -135,12 +136,12 @@
 | Стан | Як виглядає | Приклад тексту |
 |---|---|---|
 | Порожній список | `EmptyState` (плашка `bg-muted`) або один рядок під заголовком секції, якщо секція порожня | «No requests awaiting your decision» |
-| Помилка дії | `Alert` (error) над формою; введене лишається у формі | «Add at least one line», «Provide a reason» |
+| Помилка дії | `Toast` (error) внизу справа, зникає за 10 с або по «Close»; введене лишається у формі | «Add at least one line», «Provide a reason» |
 | Сторінки немає (404) | `StatusPage` (нейтральна іконка), дії «Go to requests», «Back to home» | «Page not found» |
 | Помилка сторінки | `StatusPage` (`danger`), «Try again» і код `Reference`, без технічних деталей | «Something went wrong» |
 | Відмова в доступі | `Forbidden`: сторінка з поясненням, без даних | «Not enough permissions» |
 | Виконання | `SubmitButton` блокується, `aria-busy` | «Please wait…» |
-| Успіх | `Alert` (ok) | «Purchase submitted» |
+| Успіх | `Toast` (ok) внизу справа, зникає за 5 с | «Purchase submitted» |
 | Вимкнена дія | `disabled` (`opacity-50`) + пояснення поруч | — |
 
 ## 7. Доступність — мінімум
