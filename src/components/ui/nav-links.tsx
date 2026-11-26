@@ -25,8 +25,8 @@ export function NavLinks({ items, label = "Main navigation" }: { items: NavItem[
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 title={item.label}
-                className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:py-2 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:gap-0 group-data-[collapsed=true]/sidebar:px-0 ${
-                  active ? "bg-muted text-foreground before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:py-2 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:gap-0 group-data-[collapsed=true]/sidebar:px-0 ${
+                  active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 <Icon name={item.icon} className={`size-[18px] shrink-0 ${active ? "text-primary" : ""}`} />
