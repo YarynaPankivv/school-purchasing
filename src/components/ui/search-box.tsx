@@ -135,7 +135,7 @@ export function SearchBox({
         autoComplete="off"
         aria-keyshortcuts="/"
         enterKeyHint="search"
-        className="h-11 pl-10 pr-12 focus-visible:border-ring sm:h-9 [&::-webkit-search-cancel-button]:hidden"
+        className="h-11 rounded-full! border-transparent! bg-muted! pl-10 pr-12 transition-colors hover:bg-secondary! focus-visible:border-ring! focus-visible:bg-card! sm:h-9 [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <button
