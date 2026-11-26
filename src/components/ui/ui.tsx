@@ -273,6 +273,13 @@ export function PageShell({
   );
 }
 
+const CARD_TINTS = {
+  sky: "bg-tint-sky",
+  butter: "bg-tint-butter",
+  lavender: "bg-tint-lavender",
+  peach: "bg-tint-peach",
+} as const;
+
 export function Card({
   title,
   description,
@@ -280,6 +287,8 @@ export function Card({
   children,
   tone = "default",
   className = "",
+  icon,
+  iconTint = "sky",
 }: {
   title?: ReactNode;
   description?: ReactNode;
@@ -287,6 +296,9 @@ export function Card({
   children?: ReactNode;
   tone?: "default" | "danger";
   className?: string;
+  // Плитка зі значком перед заголовком (пастельні `tint-*`, текст — foreground): для ритму сторінки, не для статусів.
+  icon?: IconName;
+  iconTint?: "sky" | "butter" | "lavender" | "peach";
 }) {
   return (
     <section
@@ -294,9 +306,16 @@ export function Card({
     >
       {title ? (
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <h2 className="text-base font-semibold text-foreground">{title}</h2>
-            {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            {icon ? (
+              <span aria-hidden="true" className={`inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-foreground ${CARD_TINTS[iconTint]}`}>
+                <Icon name={icon} className="size-[18px]" />
+              </span>
+            ) : null}
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <h2 className="text-base font-semibold text-foreground">{title}</h2>
+              {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+            </div>
           </div>
           {action}
         </header>

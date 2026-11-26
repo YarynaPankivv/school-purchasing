@@ -240,7 +240,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
       <SummaryStrip
         label="Request summary"
         items={[
-          { label: "Request total", value: formatUsd(total), testId: "request-total" },
+          { label: "Request total", value: formatUsd(total), testId: "request-total", accent: true },
           ...(hasRejectedLines ? [{ label: "Approved total", value: formatUsd(approvedTotal), testId: "approved-total" }] : []),
           { label: "Status", value: <PurchaseStatusBadge status={request.status} /> },
           // Для чернетки дата вже є полем нижче: у підсумку дублюємо її лише тоді, коли форми немає.
@@ -253,7 +253,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
           <input type="hidden" name="id" value={request.id} />
 
           {editFields ? (
-            <Card title="Details" description="Department, purchase type, delivery date and a note for the approver.">
+            <Card icon="info" iconTint="sky" title="Details" description="Department, purchase type, delivery date and a note for the approver.">
               <div className="grid gap-4 sm:grid-cols-2">
                 {canChangeDepartment(request, actor) ? (
                   <Field label="Department">
@@ -312,6 +312,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
           ) : null}
 
           <Card
+            icon="list"
+            iconTint="butter"
             title="Lines"
             description="What you want to buy. Quantity is a whole number, unit price may be 0 when unknown."
             action={
@@ -427,7 +429,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
         </form>
       ) : (
         <>
-          <Card title="Details">
+          <Card icon="info" iconTint="sky" title="Details">
             <DetailList
               columns={2}
               items={[
@@ -441,7 +443,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
             />
           </Card>
 
-          <Card title="Lines" action={<Badge>{lines.length}</Badge>}>
+          <Card icon="list" iconTint="butter" title="Lines" action={<Badge>{lines.length}</Badge>}>
             <LinesTable lastHeader={<th className="pb-2 font-medium md:pl-4">Status</th>}>
                   {lines.map((line, index) => (
                     <tr key={line.id} data-testid="line-row" className="max-md:grid max-md:grid-cols-2 max-md:items-center max-md:gap-x-3 max-md:gap-y-2 max-md:py-4 max-md:first:pt-0 max-md:last:pb-0">
