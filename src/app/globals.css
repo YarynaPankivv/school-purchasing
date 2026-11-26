@@ -6,13 +6,13 @@
    палітри Tailwind. Світла й темна теми перемикаються за системою (prefers-color-scheme). Значення — OKLCH; hex — у коментарі. */
 :root {
   color-scheme: light dark;
-  --background: oklch(0.972 0.010 85.0); /* #f9f5ee */
+  --background: oklch(0.972 0.003 250.0); /* #f4f6f8 */
   --foreground: oklch(0.235 0.020 70.0); /* #241d14 */
-  --card: oklch(0.992 0.005 85.0); /* #fefcf9 */
+  --card: oklch(0.995 0.002 250.0); /* #fcfdff */
   --card-foreground: oklch(0.235 0.020 70.0); /* #241d14 */
-  --muted: oklch(0.950 0.013 85.0); /* #f2eee5 */
+  --muted: oklch(0.955 0.004 250.0); /* #eef0f3 */
   --muted-foreground: oklch(0.485 0.025 70.0); /* #685d50 */
-  --secondary: oklch(0.950 0.013 85.0); /* #f2eee5 */
+  --secondary: oklch(0.955 0.004 250.0); /* #eef0f3 */
   --secondary-foreground: oklch(0.235 0.020 70.0); /* #241d14 */
   --accent: oklch(0.945 0.026 205.0); /* #daf2f5 */
   --accent-foreground: oklch(0.340 0.062 215.0); /* #00404c */
@@ -22,7 +22,7 @@
   --destructive: oklch(0.520 0.165 28.0); /* #b5352d */
   --destructive-hover: oklch(0.460 0.155 28.0); /* #9c2620 */
   --destructive-foreground: oklch(0.985 0.006 85.0); /* #fcfaf6 */
-  --border: oklch(0.895 0.016 85.0); /* #e1dcd1 */
+  --border: oklch(0.905 0.006 250.0); /* #dde0e3 */
   --input: oklch(0.600 0.030 75.0); /* #8b7e6d */
   --ring: oklch(0.420 0.074 215.0); /* #015766 */
   --status-pending: oklch(0.950 0.055 90.0); /* #fdeec5 */
