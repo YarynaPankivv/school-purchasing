@@ -24,12 +24,13 @@ export function NavLinks({ items, label = "Main navigation" }: { items: NavItem[
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:py-2 ${
+                title={item.label}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:py-2 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0 ${
                   active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 <Icon name={item.icon} className={`size-[18px] shrink-0 ${active ? "text-primary" : ""}`} />
-                {item.label}
+                <span className="group-data-[collapsed=true]/sidebar:sr-only">{item.label}</span>
               </Link>
             </li>
           );

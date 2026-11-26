@@ -12,6 +12,7 @@ import { Label } from "./label";
 import { SearchBox } from "./search-box";
 import { Icon, type IconName } from "./icons";
 import { MobileMenu } from "./mobile-menu";
+import { SidebarFrame } from "./sidebar-frame";
 import { NavLinks, type NavItem } from "./nav-links";
 import { StatusPage } from "./status-page";
 
@@ -102,7 +103,7 @@ function SidebarNav({ user }: { user: ShellUser | null }) {
       <NavLinks items={main} />
       {admin.length > 0 ? (
         <div className="flex flex-col gap-1.5">
-          <p className="px-3 text-xs font-medium text-muted-foreground">Administration</p>
+          <p className="px-3 text-xs font-medium text-muted-foreground group-data-[collapsed=true]/sidebar:sr-only">Administration</p>
           <NavLinks items={admin} label="Administration" />
         </div>
       ) : null}
@@ -113,11 +114,11 @@ function SidebarNav({ user }: { user: ShellUser | null }) {
 function UserBlock({ user }: { user: ShellUser | null }) {
   const name = user ? user.fullName?.trim() || user.email || "—" : "";
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 group-data-[collapsed=true]/sidebar:flex-col">
       {user ? (
         <>
           <Avatar name={name} />
-          <div className="min-w-0 flex-1 leading-tight">
+          <div className="min-w-0 flex-1 leading-tight group-data-[collapsed=true]/sidebar:sr-only">
             <p className="truncate text-sm font-medium text-foreground">{name}</p>
             <p className="text-xs text-muted-foreground">{ROLE_LABELS[user.role]}</p>
           </div>
@@ -157,12 +158,12 @@ export function AppSidebar({ user }: { user: ShellUser | null }) {
       >
         Skip to content
       </a>
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card lg:sticky lg:top-0 lg:flex lg:h-dvh">
+      <SidebarFrame>
         {/* Висота рядка бренду = висоті TopBar (h-15.25), тож лінія під ним продовжує лінію під верхньою смугою. */}
-        <div className="flex h-15.25 shrink-0 items-center border-b border-border px-6">
+        <div className="flex h-15.25 shrink-0 items-center border-b border-border px-6 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0">
           <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
             <BrandMark className="size-10" />
-            <span className="w-min text-sm leading-tight">School Purchasing</span>
+            <span className="w-min text-sm leading-tight group-data-[collapsed=true]/sidebar:sr-only">School Purchasing</span>
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-5">
@@ -171,7 +172,7 @@ export function AppSidebar({ user }: { user: ShellUser | null }) {
         <div className="border-t border-border px-3 pb-5 pt-4">
           <UserBlock user={user} />
         </div>
-      </aside>
+      </SidebarFrame>
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-card px-4 py-2 lg:hidden">
         <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
           <BrandMark className="size-10" />
