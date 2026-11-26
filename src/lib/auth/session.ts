@@ -1,6 +1,7 @@
 // Хто увійшов і чи має право діяти (design.md D6). Авторизація — лише через getClaims(), ніколи getSession().
 // Викликати на початку кожної сторінки й server action: server actions доступні й прямим POST-запитом.
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { isAppRole, type AppRole } from "@/lib/org/roles";
 
@@ -16,7 +17,9 @@ export type CurrentUser = {
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-export async function getSessionContext(): Promise<{ supabase: Supabase; user: CurrentUser | null }> {
+// cache(): у межах одного запиту (layout і сторінка рендеряться разом) профіль читається один раз, а не двічі — це
+// прибирає зайвий круговий рейс до бази при кожному відкритті сторінки й після кожної дії.
+export const getSessionContext = cache(async (): Promise<{ supabase: Supabase; user: CurrentUser | null }> => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
@@ -48,7 +51,7 @@ export async function getSessionContext(): Promise<{ supabase: Supabase; user: C
       hasProfile: true,
     },
   };
-}
+});
 
 // Неактивний — виходить і бачить текст PM про деактивацію (AC-ORG-12); без профілю — текст невірного пароля.
 export async function requireActiveUser(): Promise<{ supabase: Supabase; user: CurrentUser }> {
