@@ -20,7 +20,7 @@
 # - Окрема група concurrency, НЕ supabase-prod: інакше нічна копія в черзі могла б скасувати db-deploy, що чекає.
 # - Якщо на середовищі production увімкнено обов'язкового рецензента, кожен запуск чекатиме схвалення.
 # НЕ ПЕРЕВІРЕНО повністю від початку до кінця на проєкті курсу: перший запуск — вручну, і дивіться журнал.
-# Відновлення рядків схеми auth.* у локальну базу НЕ відрепетирувано — якщо падає, запустіть з scope=public.
+# Відновлення рядків схеми auth.* у локальну базу НЕ відрепетирувано: за розкладом відновлюється scope=public (нічні прогони з all падали); all — лише ручний запуск, якщо падає, беріть public.
 name: backup
 
 on:
@@ -111,7 +111,7 @@ jobs:
     timeout-minutes: 25
     env:
       BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
-      SCOPE: ${{ inputs.scope || 'all' }}
+      SCOPE: ${{ inputs.scope || 'public' }}
       LOCAL_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres # стандартна локальна база Supabase CLI
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -138,7 +138,7 @@ jobs:
             -o "$RUNNER_TEMP/backup.tgz" -d "$f" 2>/dev/null
           tar -xzf "$RUNNER_TEMP/backup.tgz" -C "$RUNNER_TEMP"
           rm -f "$RUNNER_TEMP/backup.tgz"
-      - name: Відновити дані (scope=${{ inputs.scope || 'all' }})
+      - name: Відновити дані (scope=${{ inputs.scope || 'public' }})
         run: |
           set -euo pipefail
           file="$RUNNER_TEMP/backup/data.sql"; [ "$SCOPE" = public ] && file="$RUNNER_TEMP/backup/data-public.sql"
