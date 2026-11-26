@@ -406,7 +406,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
             </LinesTable>
           </Card>
 
-          <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-card">
+          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center justify-end gap-3 border-t border-border bg-background/90 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8">
             {request.editing ? (
               <SubmitButton formAction={setEditing.bind(null, false)} testId="save-changes">
                 Save changes
