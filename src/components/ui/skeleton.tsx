@@ -209,7 +209,7 @@ export function HomeSkeleton() {
     <PageSkeleton>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton key={index} className="h-[5.5rem] rounded-xl" />
+          <Skeleton key={index} className="h-[4.5rem] rounded-xl" />
         ))}
       </div>
       <Card>

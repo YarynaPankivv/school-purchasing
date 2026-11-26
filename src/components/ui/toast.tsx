@@ -6,6 +6,7 @@
 // (успіх — за 5 с, помилка — за 10 с) і має кнопку «Close». Постійні підказки (причина відхилення, «автор редагує») — це
 // Alert у потоці сторінки, не тост.
 import { useEffect, useState } from "react";
+import { ORG_ERROR_MESSAGES } from "@/lib/org/errors";
 import { Icon, type IconName } from "./icons";
 
 const TONES = {
@@ -18,6 +19,8 @@ const TONES = {
 type ToastProps = { message?: string; tone?: keyof typeof TONES };
 
 export function Toast({ message, tone = "error" }: ToastProps) {
+  // Вимога PM («Вигляд і тон»): відмова в доступі — нейтральна, не червона: людина нічого не зламала.
+  if (message === ORG_ERROR_MESSAGES.forbidden) tone = "info";
   // key: нове повідомлення (інший текст чи тон) показується знову, навіть якщо попереднє закрили.
   return message ? <ToastView key={`${tone}:${message}`} message={message} tone={tone} /> : null;
 }

@@ -49,7 +49,7 @@ function StatCards({ items, label }: { items: StatusLink[]; label: string }) {
             <li key={item.label}>
               <Link
                 href={item.href}
-                className={`group flex h-full flex-col gap-2 rounded-xl border p-4 transition-colors ${
+                className={`group flex h-full flex-col gap-1.5 rounded-xl border px-4 py-3 transition-colors ${
                   urgent
                     ? "border-status-pending-foreground/25 bg-status-pending text-status-pending-foreground hover:border-status-pending-foreground/50"
                     : "border-border bg-card text-foreground hover:border-input"
@@ -62,7 +62,7 @@ function StatCards({ items, label }: { items: StatusLink[]; label: string }) {
                     className="size-4 shrink-0 opacity-60 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100"
                   />
                 </span>
-                {item.count === undefined ? null : <span className="text-3xl font-semibold leading-none tabular-nums">{item.count}</span>}
+                {item.count === undefined ? null : <span className="text-2xl font-semibold leading-none tabular-nums">{item.count}</span>}
               </Link>
             </li>
           );
