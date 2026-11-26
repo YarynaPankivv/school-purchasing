@@ -103,7 +103,7 @@ function SidebarNav({ user }: { user: ShellUser | null }) {
       <NavLinks items={main} />
       {admin.length > 0 ? (
         <div className="flex flex-col gap-1.5">
-          <p className="px-3 text-xs font-medium text-muted-foreground group-data-[collapsed=true]/sidebar:sr-only">Administration</p>
+          <p className="px-3 text-xs font-medium text-muted-foreground sb-label whitespace-nowrap">Administration</p>
           <NavLinks items={admin} label="Administration" />
         </div>
       ) : null}
@@ -114,11 +114,11 @@ function SidebarNav({ user }: { user: ShellUser | null }) {
 function UserBlock({ user }: { user: ShellUser | null }) {
   const name = user ? user.fullName?.trim() || user.email || "—" : "";
   return (
-    <div className="flex items-center gap-3 group-data-[collapsed=true]/sidebar:flex-col">
+    <div className="flex items-center gap-3 group-data-[collapsed=true]/sidebar:flex-col group-data-[collapsed=true]/sidebar:gap-2">
       {user ? (
         <>
           <Avatar name={name} />
-          <div className="min-w-0 flex-1 leading-tight group-data-[collapsed=true]/sidebar:sr-only">
+          <div className="min-w-0 flex-1 leading-tight sb-label">
             <p className="truncate text-sm font-medium text-foreground">{name}</p>
             <p className="text-xs text-muted-foreground">{ROLE_LABELS[user.role]}</p>
           </div>
@@ -161,9 +161,9 @@ export function AppSidebar({ user }: { user: ShellUser | null }) {
       <SidebarFrame>
         {/* Висота рядка бренду = висоті TopBar (h-15.25), тож лінія під ним продовжує лінію під верхньою смугою. */}
         <div className="flex h-15.25 shrink-0 items-center border-b border-border px-6 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0">
-          <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
+          <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground group-data-[collapsed=true]/sidebar:gap-0">
             <BrandMark className="size-10" />
-            <span className="w-min text-sm leading-tight group-data-[collapsed=true]/sidebar:sr-only">School Purchasing</span>
+            <span className="sb-label w-min text-sm leading-tight">School Purchasing</span>
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-5">

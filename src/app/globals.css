@@ -6,6 +6,8 @@
    палітри Tailwind. Світла й темна теми перемикаються за системою (prefers-color-scheme). Значення — OKLCH; hex — у коментарі. */
 :root {
   color-scheme: light dark;
+  /* Одна крива для всього руху (DESIGN.md, розділ 7): швидкий старт, м'яке гальмування. */
+  --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
   --background: oklch(0.972 0.003 250.0); /* #f4f6f8 */
   --foreground: oklch(0.235 0.020 70.0); /* #241d14 */
   --card: oklch(0.995 0.002 250.0); /* #fcfdff */
@@ -79,6 +81,11 @@
     --tint-butter: oklch(0.330 0.055 90.0); /* #403410 */
     --tint-sky: oklch(0.310 0.050 235.0); /* #133446 */
   }
+}
+
+/* Усі Tailwind-переходи (transition-colors, transition-transform, …) беруть ту саму криву. */
+@theme {
+  --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @theme inline {
@@ -161,7 +168,7 @@ body {
   border-radius: 9999px;
   background: var(--input);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s var(--ease-smooth);
 }
 .toggle::after {
   content: "";
@@ -173,7 +180,7 @@ body {
   border-radius: 9999px;
   background: var(--card);
   box-shadow: 0 1px 2px oklch(0.2 0.02 70 / 0.3);
-  transition: transform 0.15s ease;
+  transition: transform 0.15s var(--ease-smooth);
 }
 .toggle:checked {
   background: var(--primary);
@@ -201,14 +208,38 @@ body {
   }
 }
 .anim-enter {
-  animation: enter 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: enter 180ms var(--ease-smooth) both;
 }
 .anim-pop {
   transform-origin: top;
-  animation: pop 120ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: pop 120ms var(--ease-smooth) both;
+}
+
+/* Підписи бічної панелі: при згортанні плавно зникають і стискаються (а не ховаються стрибком); у дереві доступності лишаються. */
+.sb-label {
+  max-width: 14rem;
+  max-height: 6rem;
+  overflow: hidden;
+  transition:
+    max-width 150ms var(--ease-smooth),
+    max-height 150ms var(--ease-smooth),
+    opacity 120ms var(--ease-smooth);
+}
+[data-collapsed="true"] .sb-label {
+  max-width: 0;
+  max-height: 0;
+  opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Для тих, хто просить менше руху, будь-який перехід чи анімація (зокрема Tailwind transition-*) — миттєві. */
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
   .toggle,
   .toggle::after {
     transition: none;

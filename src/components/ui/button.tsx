@@ -7,7 +7,7 @@ export type ButtonVariant = "default" | "secondary" | "outline" | "ghost" | "des
 
 const BASE =
   "inline-flex touch-manipulation items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium " +
-  "transition-[color,background-color,border-color,transform] duration-150 ease-out " +
+  "transition-[color,background-color,border-color,transform] duration-150 " +
   "active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50";
 
 const VARIANTS: Record<ButtonVariant, string> = {
