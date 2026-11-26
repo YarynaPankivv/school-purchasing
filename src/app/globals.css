@@ -207,6 +207,27 @@ body {
     transform: scale(0.97) translateY(-2px);
   }
 }
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+@keyframes toast-timer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.anim-toast {
+  animation: toast-in 220ms var(--ease-smooth) both;
+}
+.toast-timer {
+  transform-origin: left;
+  animation: toast-timer linear both;
+}
 .anim-enter {
   animation: enter 180ms var(--ease-smooth) both;
 }
@@ -245,7 +266,8 @@ body {
     transition: none;
   }
   .anim-enter,
-  .anim-pop {
+  .anim-pop,
+  .anim-toast {
     animation: none;
   }
 }
