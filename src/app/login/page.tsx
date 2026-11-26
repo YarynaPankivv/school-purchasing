@@ -47,7 +47,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       >
         <div className="absolute left-12 top-12 flex items-center gap-2.5 font-semibold tracking-tight xl:left-16">
           <BrandMark variant="on-brand" className="size-10" />
-          <span className="w-min text-base leading-tight">School Purchasing</span>
+          <span className="w-min text-sm leading-tight">School Purchasing</span>
         </div>
 
         <div className="relative flex w-full max-w-lg flex-col gap-10">

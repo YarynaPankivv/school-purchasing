@@ -162,7 +162,7 @@ export function AppSidebar({ user }: { user: ShellUser | null }) {
         <div className="flex h-15.25 shrink-0 items-center border-b border-border px-6">
           <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
             <BrandMark className="size-10" />
-            <span className="w-min text-base leading-tight">School Purchasing</span>
+            <span className="w-min text-sm leading-tight">School Purchasing</span>
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-5">
@@ -175,7 +175,7 @@ export function AppSidebar({ user }: { user: ShellUser | null }) {
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-card px-4 py-2 lg:hidden">
         <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
           <BrandMark className="size-10" />
-          <span className="w-min text-base leading-tight">School Purchasing</span>
+          <span className="w-min text-sm leading-tight">School Purchasing</span>
         </Link>
         <MobileMenu>
           <SidebarNav user={user} />
