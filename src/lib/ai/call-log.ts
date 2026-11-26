@@ -56,13 +56,14 @@ export async function recordAiCall(supabase: SupabaseClient<Database>, call: AiC
         errorKind,
       });
     }
-    await supabase.from("ai_call_log").insert({
-      state,
-      error_kind: errorKind ?? null,
-      model: call.model,
-      fallback_used: fallbackUsed,
-      latency_ms: Math.max(0, Math.round(call.latencyMs)),
-      prompt_version: call.promptVersion,
+    // Прямого INSERT у таблицю немає (міграція 20261126154620): запис лише через функцію, яка перевіряє користувача й ліміт.
+    await supabase.rpc("record_ai_call", {
+      p_state: state,
+      p_error_kind: errorKind ?? null,
+      p_model: call.model,
+      p_fallback_used: fallbackUsed,
+      p_latency_ms: Math.max(0, Math.round(call.latencyMs)),
+      p_prompt_version: call.promptVersion,
     });
   } catch {
     // Навмисно нічого не пишемо: помилка запису не повинна нести ні тексту користувача, ні адрес із ключами.
