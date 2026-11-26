@@ -112,7 +112,7 @@
 | Компонент | Варіанти | Правило |
 |---|---|---|
 | `Button` | `default`, `secondary`, `outline`, `ghost`, `destructive`, `destructive-ghost`, `link` | `default` — одна основна дія на екран; `destructive` — лише з підтвердженням |
-| `SubmitButton` | ті самі | кнопка форми з server action: блокується під час виконання (`aria-busy`), `confirm` — для небезпечних дій |
+| `SubmitButton` | ті самі | кнопка форми з server action: блокується під час виконання (`aria-busy`), `confirm` — для небезпечних дій: власне модальне вікно `ConfirmDialog` (Esc і клік по затемненню — «Cancel», фокус на «Cancel»), а не нативний `window.confirm` |
 | `LinkButton` | ті самі | посилання, що виглядає як кнопка |
 | `Input`, `Select`, `Textarea` + `Label`/`Field` | — | у кожного поля підпис (`Field` або `Label` з `htmlFor`); placeholder не замінює підпис; підказка стоїть поза підписом з `aria-describedby`. `Select` — власний (меню на токенах, клавіатура, прихований справжній `<select>` для форми), рідний системний список не показуємо ніде |
 | `StatusLinks`, `Pagination`, `RowKeyNav` | `chips`, `cards` | смуга фільтрів-лічильників (активний — заливка `accent` і петрольна рамка, `aria-current`); `cards` — картки-показники з великим числом на головній, нумерація сторінок «‹ 1 … 5 … 20 ›», навігація рядками `J`/`K` |
