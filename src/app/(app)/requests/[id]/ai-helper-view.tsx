@@ -31,7 +31,7 @@ export function AiHelperView({
   rootRef?: Ref<HTMLDivElement>;
 }): ReactNode {
   return (
-    <div ref={rootRef} className="flex flex-col gap-2" data-testid="ai-helper">
+    <div ref={rootRef} className="flex flex-col gap-2 rounded-lg border border-border bg-muted/40 p-4" data-testid="ai-helper">
       <Label htmlFor="ai-description">{AI_UI.label}</Label>
       {/* Без name: опис не входить до збереження чернетки (saveDraft читає лише відомі поля). */}
       <Textarea

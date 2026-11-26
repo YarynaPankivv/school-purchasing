@@ -29,6 +29,7 @@ import { PURCHASE_TYPE_LABELS } from "@/lib/org/requests";
 import { isAppRole } from "@/lib/org/roles";
 import { canAdminReject, canDecide, canReopen, decisionBlockReason, forwardedLines } from "@/lib/pur/decisions";
 import { PUR_ERROR_MESSAGES, purErrorMessage } from "@/lib/pur/errors";
+import { NoteField } from "./note-field";
 import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail, LINE_NAME_MAX, NOTE_MAX, PURPOSE_MAX, REASON_MAX, unitPriceInputValue, withDisplayNumbers } from "@/lib/pur/lines";
 import { loadDepartmentApprovers } from "../_lib/approvers";
 import { AiLineHelper } from "./ai-line-helper";
@@ -242,7 +243,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
           { label: "Request total", value: formatUsd(total), testId: "request-total" },
           ...(hasRejectedLines ? [{ label: "Approved total", value: formatUsd(approvedTotal), testId: "approved-total" }] : []),
           { label: "Status", value: <PurchaseStatusBadge status={request.status} /> },
-          { label: "Delivery date", value: formatDate(request.delivery_date) },
+          // Для чернетки дата вже є полем нижче: у підсумку дублюємо її лише тоді, коли форми немає.
+          ...(editable ? [] : [{ label: "Delivery date", value: formatDate(request.delivery_date) }]),
         ]}
       />
 
@@ -283,8 +285,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                 <Field label="Delivery date">
                   <DateField name="delivery_date" defaultValue={request.delivery_date ?? ""} />
                 </Field>
-                <div className="flex flex-col gap-2 text-sm font-medium text-foreground">
-                  <label className="flex cursor-pointer items-center gap-2">
+                <div className="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+                  <label className="flex h-5 cursor-pointer items-center gap-2">
                     <Checkbox name="on_behalf_flag" defaultChecked={request.on_behalf_of_id !== null} />
                     Submitting on behalf of a colleague
                   </label>
@@ -303,15 +305,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                   </Select>
                 </div>
                 <div className="sm:col-span-2">
-                  <Field label="Note" hint={`Up to ${NOTE_MAX} characters.`} hintId="note-hint">
-                    <Textarea
-                      name="note"
-                      rows={3}
-                      maxLength={NOTE_MAX}
-                      defaultValue={request.note ?? ""}
-                      aria-describedby="note-hint"
-                    />
-                  </Field>
+                  <NoteField defaultValue={request.note ?? ""} max={NOTE_MAX} />
                 </div>
               </div>
             </Card>
@@ -412,7 +406,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
             </LinesTable>
           </Card>
 
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-card">
             {request.editing ? (
               <SubmitButton formAction={setEditing.bind(null, false)} testId="save-changes">
                 Save changes
