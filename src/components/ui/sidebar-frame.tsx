@@ -26,7 +26,7 @@ function readCollapsed() {
   }
 }
 
-export function SidebarFrame({ children }: { children: ReactNode }) {
+export function SidebarFrame({ brand, children }: { brand: ReactNode; children: ReactNode }) {
   // На сервері й під час гідратації — розгорнута; збережений стан підхоплюється одразу після гідратації.
   const collapsed = useSyncExternalStore(subscribe, readCollapsed, () => false);
 
@@ -43,20 +43,23 @@ export function SidebarFrame({ children }: { children: ReactNode }) {
     <aside
       id="app-sidebar"
       data-collapsed={collapsed}
-      className="group/sidebar hidden w-64 shrink-0 flex-col border-r border-border bg-card transition-[width] duration-150 motion-reduce:transition-none data-[collapsed=true]:w-[4.5rem] lg:sticky lg:top-0 lg:z-20 lg:flex lg:h-dvh"
+      className="group/sidebar hidden w-64 shrink-0 flex-col border-r border-border bg-card transition-[width] duration-150 motion-reduce:transition-none data-[collapsed=true]:w-[4.5rem] lg:sticky lg:top-0 lg:flex lg:h-dvh"
     >
+      {brand}
+      <div className="flex justify-end px-3 pt-3 group-data-[collapsed=true]/sidebar:justify-center">
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={!collapsed}
+          aria-controls="app-sidebar"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Icon name={collapsed ? "chevron-right" : "chevron-left"} className="size-[18px]" />
+        </button>
+      </div>
       {children}
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={!collapsed}
-        aria-controls="app-sidebar"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute -right-3.5 top-4 z-30 inline-flex size-7 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-card transition-colors hover:bg-muted hover:text-foreground"
-      >
-        <Icon name={collapsed ? "chevron-right" : "chevron-left"} className="size-4" />
-      </button>
     </aside>
   );
 }

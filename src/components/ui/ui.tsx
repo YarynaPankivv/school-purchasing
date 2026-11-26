@@ -158,15 +158,20 @@ export function AppSidebar({ user }: { user: ShellUser | null }) {
       >
         Skip to content
       </a>
-      <SidebarFrame>
-        {/* Висота рядка бренду = висоті TopBar (h-15.25), тож лінія під ним продовжує лінію під верхньою смугою. */}
-        <div className="flex h-15.25 shrink-0 items-center border-b border-border px-6 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0">
-          <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
-            <BrandMark className="size-10" />
-            <span className="w-min text-sm leading-tight group-data-[collapsed=true]/sidebar:sr-only">School Purchasing</span>
-          </Link>
-        </div>
-        <div className="flex-1 overflow-y-auto px-3 py-5">
+      <SidebarFrame
+        brand={
+          <>
+            {/* Висота рядка бренду = висоті TopBar (h-15.25), тож лінія під ним продовжує лінію під верхньою смугою. */}
+            <div className="flex h-15.25 shrink-0 items-center border-b border-border px-6 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0">
+              <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
+                <BrandMark className="size-10" />
+                <span className="w-min text-sm leading-tight group-data-[collapsed=true]/sidebar:sr-only">School Purchasing</span>
+              </Link>
+            </div>
+          </>
+        }
+      >
+        <div className="flex-1 overflow-y-auto px-3 pb-5 pt-2">
           <SidebarNav user={user} />
         </div>
         <div className="border-t border-border px-3 pb-5 pt-4">
