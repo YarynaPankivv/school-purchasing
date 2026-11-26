@@ -26,7 +26,7 @@ function readCollapsed() {
   }
 }
 
-export function SidebarFrame({ brand, children }: { brand: ReactNode; children: ReactNode }) {
+export function SidebarFrame({ children }: { children: ReactNode }) {
   // На сервері й під час гідратації — розгорнута; збережений стан підхоплюється одразу після гідратації.
   const collapsed = useSyncExternalStore(subscribe, readCollapsed, () => false);
 
@@ -45,21 +45,23 @@ export function SidebarFrame({ brand, children }: { brand: ReactNode; children: 
       data-collapsed={collapsed}
       className="group/sidebar hidden w-64 shrink-0 flex-col border-r border-border bg-card transition-[width] duration-150 motion-reduce:transition-none data-[collapsed=true]:w-[4.5rem] lg:sticky lg:top-0 lg:flex lg:h-dvh"
     >
-      {brand}
-      <div className="flex justify-end px-3 pt-3 group-data-[collapsed=true]/sidebar:justify-center">
-        <button
-          type="button"
-          onClick={toggle}
-          aria-expanded={!collapsed}
-          aria-controls="app-sidebar"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <Icon name={collapsed ? "chevron-right" : "chevron-left"} className="size-[18px]" />
-        </button>
-      </div>
       {children}
+      {/* Розгорнута: іконка в рядку бренду праворуч. Згорнута: знак бренду, а при наведенні (чи фокусі) — іконка «розгорнути». */}
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={!collapsed}
+        aria-controls="app-sidebar"
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className={
+          collapsed
+            ? "absolute inset-x-0 top-0 flex h-15.25 items-center justify-center bg-card text-muted-foreground opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100"
+            : "absolute right-3 top-3.5 inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        }
+      >
+        <Icon name={collapsed ? "chevron-right" : "chevron-left"} className="size-[18px]" />
+      </button>
     </aside>
   );
 }
