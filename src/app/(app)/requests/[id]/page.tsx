@@ -36,7 +36,7 @@ import { purchaseNumberLabel } from "@/lib/pur/numbers";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
 import { PURCHASE_STATUS_LABELS, cancelOutcome } from "@/lib/pur/statuses";
-import { formatDate, formatDateTime, formatHistoryTime } from "@/lib/pur/time";
+import { formatDate, formatHistoryTime } from "@/lib/pur/time";
 import { formatUsd, lineTotal, lineTotalCents, requestTotal } from "@/lib/pur/totals";
 import { LiveLineTotal } from "./live-line-total";
 import type { Actor, LineRow } from "@/lib/pur/types";
@@ -161,7 +161,9 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
     .filter(Boolean)
     .join(" · ");
 
-  const savedMessage = typeof saved === "string" && Object.hasOwn(SAVED, saved) ? SAVED[saved] : undefined;
+  // «Редагування» вже показує постійний банер нижче: тимчасове «saved=editing_on» дублювало б його (зауваження PM, приймання 23.11).
+  const savedMessage =
+    typeof saved === "string" && Object.hasOwn(SAVED, saved) && !(saved === "editing_on" && request.editing) ? SAVED[saved] : undefined;
   const incomplete = error === "lines_incomplete" && typeof detail === "string" ? withDisplayNumbers(incompleteLinesFromDetail(detail), lines) : [];
   const errorMessage =
     incomplete.length > 0
@@ -438,7 +440,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                 { label: "Purchase type", value: PURCHASE_TYPE_LABELS[request.purchase_type ?? "procurement"] },
                 { label: "Author", value: names.get(request.author_id) ?? "—" },
                 { label: "On behalf of", value: request.on_behalf_of_id ? (names.get(request.on_behalf_of_id) ?? "—") : "—" },
-                { label: "Created", value: formatDateTime(request.created_at) },
+                { label: "Created", value: formatHistoryTime(request.created_at) },
                 { label: "Note", value: request.note ?? "—", wide: true },
               ]}
             />
