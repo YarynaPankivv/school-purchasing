@@ -17,6 +17,13 @@ describe("isTrustedBypassTarget (smoke, секрет обходу)", () => {
     expect(isTrustedBypassTarget("https://school-purchasing-git-staging-other-team.vercel.app", env)).toBe(false);
   });
 
+  it("крапки в шаблоні — справжні крапки, а не «будь-який символ», і середня частина не порожня", () => {
+    expect(isTrustedBypassTarget("https://school-purchasing-ab12-team-projectsXvercelXapp", env)).toBe(false);
+    expect(isTrustedBypassTarget("https://school-purchasing-ab12-team-projects-vercel-app", env)).toBe(false);
+    expect(isTrustedBypassTarget("https://school-purchasing--team-projects.vercel.app", env)).toBe(false);
+    expect(isTrustedBypassTarget("https://school-purchasing-team-projects.vercel.app", env)).toBe(false);
+  });
+
   it("не https, логін у адресі, керівні символи і хитрі хости відхилено", () => {
     expect(isTrustedBypassTarget("http://school-purchasing.vercel.app", env)).toBe(false);
     expect(isTrustedBypassTarget("https://user:pw@school-purchasing.vercel.app", env)).toBe(false);

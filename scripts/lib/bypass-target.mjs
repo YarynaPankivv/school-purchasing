@@ -17,5 +17,9 @@ export function isTrustedBypassTarget(address, { prodUrl = "", scope = "" } = {}
   if (!SAFE.test(project)) return false;
   if (url.hostname === `${project}.vercel.app`) return true;
   if (!SAFE.test(scope)) return false;
-  return new RegExp(`^${project}-[a-z0-9-]+-${scope}\.vercel\.app$`).test(url.hostname);
+  // Без RegExp зі змінних: у шаблонному рядку «\.» дорівнює просто «.», тож крапка стала б метасимволом (будь-який символ).
+  const prefix = `${project}-`;
+  const suffix = `-${scope}.vercel.app`;
+  const middle = url.hostname.slice(prefix.length, url.hostname.length - suffix.length);
+  return url.hostname.startsWith(prefix) && url.hostname.endsWith(suffix) && SAFE.test(middle);
 }
