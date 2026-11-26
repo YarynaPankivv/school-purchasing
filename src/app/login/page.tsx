@@ -45,8 +45,6 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         aria-hidden="true"
         className="relative hidden select-none flex-col items-center justify-center overflow-hidden bg-brand px-12 py-24 text-brand-foreground lg:col-start-1 lg:row-start-1 lg:flex xl:px-16"
       >
-        <span className="pointer-events-none absolute -bottom-40 -left-24 size-[26rem] rounded-full bg-brand-foreground/5" />
-
         <div className="absolute left-12 top-12 flex items-center gap-2.5 font-semibold tracking-tight xl:left-16">
           <BrandMark variant="on-brand" className="size-9" />
           School Purchasing
