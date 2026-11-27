@@ -408,6 +408,17 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: { user_id: string; label: string }[];
       };
+      record_ai_call: {
+        Args: {
+          p_state: string;
+          p_error_kind: string | null;
+          p_model: string | null;
+          p_fallback_used: boolean;
+          p_latency_ms: number | null;
+          p_prompt_version: string;
+        };
+        Returns: undefined;
+      };
       reopen_purchase: {
         Args: { target_request: string };
         Returns: string;

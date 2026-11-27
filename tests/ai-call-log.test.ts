@@ -17,9 +17,9 @@ const base = (result: SuggestResult): AiCallInfo => ({
   promptVersion: "suggest-v2",
 });
 
-function fakeSupabase(insert: ReturnType<typeof vi.fn>) {
-  const from = vi.fn(() => ({ insert }));
-  return { client: { from } as never, from };
+// Запис іде функцією record_ai_call (rpc), а не прямим INSERT у таблицю.
+function fakeSupabase(rpc: ReturnType<typeof vi.fn>) {
+  return { client: { rpc } as never, rpc };
 }
 
 describe("ai_call_log (SLO-2)", () => {
@@ -40,51 +40,51 @@ describe("ai_call_log (SLO-2)", () => {
   });
 
   it("пише в ai_call_log лише технічні поля: без тексту користувача і повідомлень", async () => {
-    const insert = vi.fn().mockResolvedValue({ error: null });
-    const { client, from } = fakeSupabase(insert);
+    const rpc = vi.fn().mockResolvedValue({ error: null });
+    const { client } = fakeSupabase(rpc);
     const state = await recordAiCall(client, base({ kind: "unavailable", reason: "limit", message: `The assistant is unavailable today ${USER_TEXT}` }));
     expect(state).toBe("unavailable");
-    expect(from).toHaveBeenCalledWith("ai_call_log");
-    expect(insert).toHaveBeenCalledTimes(1);
-    const row = insert.mock.calls[0][0] as Record<string, unknown>;
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc.mock.calls[0][0]).toBe("record_ai_call");
+    const row = rpc.mock.calls[0][1] as Record<string, unknown>;
     expect(row).toEqual({
-      state: "unavailable",
-      error_kind: "limit",
-      model: "google/gemma-4-31b-it:free",
-      fallback_used: false,
-      latency_ms: 1830,
-      prompt_version: "suggest-v2",
+      p_state: "unavailable",
+      p_error_kind: "limit",
+      p_model: "google/gemma-4-31b-it:free",
+      p_fallback_used: false,
+      p_latency_ms: 1830,
+      p_prompt_version: "suggest-v2",
     });
     const json = JSON.stringify(row);
     for (const marker of ["olena", "secret-note", "unavailable today", "A4 paper"]) expect(json).not.toContain(marker);
   });
 
   it("позначає fallback, коли відповіла не перша модель, і не пише в базу, коли виклику не було", async () => {
-    const insert = vi.fn().mockResolvedValue({ error: null });
-    const { client } = fakeSupabase(insert);
+    const rpc = vi.fn().mockResolvedValue({ error: null });
+    const { client } = fakeSupabase(rpc);
     await recordAiCall(client, { ...base(line), model: "nvidia/nemotron-3.5-super-vl:free" });
-    expect((insert.mock.calls[0][0] as { fallback_used: boolean }).fallback_used).toBe(true);
-    insert.mockClear();
+    expect((rpc.mock.calls[0][1] as { p_fallback_used: boolean }).p_fallback_used).toBe(true);
+    rpc.mockClear();
     expect(await recordAiCall(client, base({ kind: "forbidden" }))).toBeNull();
-    expect(insert).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it("без виклику моделі (немає ключа) рядок у ai_call_log є — запит входить у SLO-2, — а події llm.call немає", async () => {
-    const insert = vi.fn().mockResolvedValue({ error: null });
-    const { client } = fakeSupabase(insert);
+    const rpc = vi.fn().mockResolvedValue({ error: null });
+    const { client } = fakeSupabase(rpc);
     const info = vi.spyOn(console, "info");
     const error = vi.spyOn(console, "error");
     const state = await recordAiCall(client, { ...base({ kind: "unavailable", reason: "error", message: "x" }), latencyMs: 0, modelCalled: false });
     expect(state).toBe("unavailable");
-    expect(insert).toHaveBeenCalledTimes(1);
-    expect(insert.mock.calls[0][0]).toMatchObject({ state: "unavailable", error_kind: "error", latency_ms: 0 });
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc.mock.calls[0][1]).toMatchObject({ p_state: "unavailable", p_error_kind: "error", p_latency_ms: 0 });
     expect(info).not.toHaveBeenCalled();
     expect(error).not.toHaveBeenCalled();
   });
 
   it("збій запису в базу не кидає виняток: помічник відповідає далі", async () => {
-    const insert = vi.fn().mockRejectedValue(new Error(`insert failed for ${USER_TEXT}`));
-    const { client } = fakeSupabase(insert);
+    const rpc = vi.fn().mockRejectedValue(new Error(`rpc failed for ${USER_TEXT}`));
+    const { client } = fakeSupabase(rpc);
     await expect(recordAiCall(client, base(line))).resolves.toBe("ok");
   });
 });

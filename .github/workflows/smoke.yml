@@ -129,6 +129,9 @@ jobs:
       DEPLOY_ENV: ${{ github.event.client_payload.environment || 'manual' }}
       DEPLOY_BRANCH: ${{ github.event.client_payload.git.ref || '' }}
       SMOKE_TARGET: deploy
+      # Для другої лінії захисту в smoke.mjs: секрет обходу йде лише на адресу цього проєкту (див. scripts/lib/bypass-target.mjs).
+      PROD_URL: ${{ vars.PROD_URL }}
+      VERCEL_SCOPE: ${{ vars.VERCEL_SCOPE }}
       # Дія з postmortem 2026-11-21: staging і PR-preview мають показувати ref бази staging і ніколи — ref прод-бази
       # (змінні репо, не секрети); хибна NEXT_PUBLIC_SUPABASE_URL дає збій із назвою змінної для перевірки.
       EXPECT_SUPABASE_REF: ${{ vars.SUPABASE_STAGING_REF }}
