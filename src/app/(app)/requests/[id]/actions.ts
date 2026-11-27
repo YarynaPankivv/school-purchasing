@@ -160,10 +160,11 @@ export async function saveDraft(formData: FormData) {
 
 export async function addLine(formData: FormData) {
   const { ctx, request, path, id } = await authorRequest(formData);
-  // Збереження введеного в формі й додавання порожнього рядка не залежать одне від одного: один круговий рейс замість двох.
+  // Спершу зберігаємо введене в формі: якщо воно відхилене (наприклад, невалідна дата), рядок не додається (persist перериває дію).
+  await persist(ctx, request, path, formData);
   // Позицію присвоює тригер assign_line_position; порожній рядок дозволений у чернетці (повноту перевіряє подання).
-  const [, inserted] = await Promise.all([persist(ctx, request, path, formData), ctx.supabase.from("request_lines").insert({ request_id: id })]);
-  if (inserted.error) failDb(path, inserted.error);
+  const { error } = await ctx.supabase.from("request_lines").insert({ request_id: id });
+  if (error) failDb(path, error);
   stay();
 }
 

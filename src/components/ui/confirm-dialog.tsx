@@ -21,6 +21,12 @@ export function ConfirmDialog({
   onCancel: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // Спершу закриваємо <dialog> (він робить решту сторінки inert), і лише потім викликаємо обробник: інакше фокус на кнопці
+  // запуску чи reportValidity() не спрацюють, поки діалог ще в DOM.
+  const closeThen = (handler: () => void) => () => {
+    ref.current?.close();
+    handler();
+  };
   const danger = confirmVariant === "destructive" || confirmVariant === "destructive-ghost";
 
   useEffect(() => {
@@ -34,10 +40,10 @@ export function ConfirmDialog({
       aria-labelledby="confirm-dialog-message"
       onCancel={(event) => {
         event.preventDefault();
-        onCancel();
+        closeThen(onCancel)();
       }}
       onClick={(event) => {
-        if (event.target === ref.current) onCancel();
+        if (event.target === ref.current) closeThen(onCancel)();
       }}
       className="anim-enter m-auto w-[min(26rem,calc(100vw-2rem))] rounded-xl border border-border bg-card p-0 text-card-foreground shadow-card backdrop:bg-foreground/40"
     >
@@ -53,10 +59,10 @@ export function ConfirmDialog({
         </p>
       </div>
       <div className="flex justify-end gap-2 border-t border-border bg-muted/40 px-5 py-3">
-        <Button type="button" variant="outline" onClick={onCancel} autoFocus>
+        <Button type="button" variant="outline" onClick={closeThen(onCancel)} autoFocus>
           Cancel
         </Button>
-        <Button type="button" variant={confirmVariant === "destructive-ghost" ? "destructive" : confirmVariant} onClick={onConfirm}>
+        <Button type="button" variant={confirmVariant === "destructive-ghost" ? "destructive" : confirmVariant} onClick={closeThen(onConfirm)}>
           {confirmLabel}
         </Button>
       </div>
