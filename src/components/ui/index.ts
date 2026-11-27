@@ -28,6 +28,7 @@ export { SummaryStrip, type SummaryItem } from "./summary-strip";
 export { SubmitButton } from "./submit-button";
 export { Icon, type IconName } from "./icons";
 export { MobileMenu } from "./mobile-menu";
+export { Toast } from "./toast";
 export { NavLinks, type NavItem } from "./nav-links";
 export {
   Alert,

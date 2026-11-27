@@ -1,7 +1,7 @@
 // Розмітка помічника «Запропонувати рядки» без логіки й без server actions (design.md D5): її рендерить і сторінка, і
 // unit-тест станів AC-AI-03 (очікування: «Шукаю рядки…», неактивна кнопка, опис у полі) і повідомлень AC-AI-02, 04, 05, 06.
 import type { ReactNode, Ref } from "react";
-import { Alert, Button, Label, Textarea } from "@/components/ui";
+import { Alert, Button, Icon, Label, Textarea } from "@/components/ui";
 import { AI_UI } from "@/lib/ai/messages";
 import type { SuggestResult } from "@/lib/ai/draft";
 
@@ -31,7 +31,7 @@ export function AiHelperView({
   rootRef?: Ref<HTMLDivElement>;
 }): ReactNode {
   return (
-    <div ref={rootRef} className="flex flex-col gap-2" data-testid="ai-helper">
+    <div ref={rootRef} className="flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-4" data-testid="ai-helper">
       <Label htmlFor="ai-description">{AI_UI.label}</Label>
       {/* Без name: опис не входить до збереження чернетки (saveDraft читає лише відомі поля). */}
       <Textarea
@@ -43,7 +43,16 @@ export function AiHelperView({
         data-testid="ai-description"
       />
       <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" disabled={pending} aria-busy={pending} onClick={onAsk} data-testid="ai-suggest">
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2! border-primary/40! bg-card! text-primary! hover:border-primary! hover:bg-accent!"
+          disabled={pending}
+          aria-busy={pending}
+          onClick={onAsk}
+          data-testid="ai-suggest"
+        >
+          <Icon name="sparkles" className="size-4" />
           {AI_UI.button}
         </Button>
         {pending ? (

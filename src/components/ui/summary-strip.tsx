@@ -2,7 +2,7 @@
 // Значення — звичайна вага й tabular-nums; на вузьких екранах пункти стають рядками.
 import type { ReactNode } from "react";
 
-export type SummaryItem = { label: string; value: ReactNode; testId?: string };
+export type SummaryItem = { label: string; value: ReactNode; testId?: string; accent?: boolean };
 
 export function SummaryStrip({ items, label }: { items: SummaryItem[]; label: string }) {
   return (
@@ -13,7 +13,8 @@ export function SummaryStrip({ items, label }: { items: SummaryItem[]; label: st
       {items.map((item) => (
         <div key={item.label} className="flex flex-col gap-1 px-5 py-3">
           <dt className="text-sm text-muted-foreground">{item.label}</dt>
-          <dd data-testid={item.testId} className="flex min-h-7 items-center text-xl font-medium tabular-nums text-foreground">
+          <dd data-testid={item.testId} className={`flex min-h-7 items-center text-xl tabular-nums ${item.accent ? "font-semibold text-primary" : "font-medium text-foreground"}`}
+          >
             {item.value}
           </dd>
         </div>

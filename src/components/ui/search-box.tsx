@@ -135,7 +135,7 @@ export function SearchBox({
         autoComplete="off"
         aria-keyshortcuts="/"
         enterKeyHint="search"
-        className="h-11 pl-10 pr-12 focus-visible:border-ring sm:h-9 [&::-webkit-search-cancel-button]:hidden"
+        className="h-11 pl-10 pr-12 transition-colors hover:border-foreground/40 focus-visible:border-ring sm:h-9 [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <button
@@ -152,14 +152,7 @@ export function SearchBox({
             ×
           </span>
         </button>
-      ) : (
-        <kbd
-          aria-hidden="true"
-          className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-card px-1.5 py-0.5 font-sans text-xs font-medium text-muted-foreground group-focus-within:hidden sm:block"
-        >
-          /
-        </kbd>
-      )}
+      ) : null}
       {showList ? (
         <div className="anim-pop absolute left-0 right-0 top-full z-30 mt-1 rounded-lg border border-border bg-card p-1 shadow-card">
           {query === "" ? <p className="px-3 pb-1 pt-2 text-xs text-muted-foreground">Recent</p> : null}

@@ -23,7 +23,9 @@ export type IconName =
   | "calendar"
   | "plus"
   | "sort"
-  | "list";
+  | "list"
+  | "x"
+  | "sparkles";
 
 const PATHS: Record<IconName, ReactNode> = {
   home: (
@@ -100,6 +102,8 @@ const PATHS: Record<IconName, ReactNode> = {
   calendar: <path d="M7 3v3M17 3v3M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1ZM4 10h16" />,
   sort: <path d="m8 9 4-4 4 4M8 15l4 4 4-4" />,
   list: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
+  x: <path d="M6 6l12 12M18 6 6 18" />,
+  sparkles: <path d="M10 4l1.9 5.1L17 11l-5.1 1.9L10 18l-1.9-5.1L3 11l5.1-1.9zM18 3v4M16 5h4M19 15v4M17 17h4" />,
 };
 
 export function Icon({ name, className = "size-5" }: { name: IconName; className?: string }) {

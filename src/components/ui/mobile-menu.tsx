@@ -43,7 +43,7 @@ export function MobileMenu({ children }: { children: ReactNode }) {
         onClick={(event) => {
           if ((event.target as HTMLElement).closest("a")) setOpen(false);
         }}
-        className="absolute right-0 top-12 z-20 flex w-72 flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-card"
+        className="anim-pop absolute right-0 top-12 z-20 flex w-72 flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-card"
       >
         {children}
       </div>

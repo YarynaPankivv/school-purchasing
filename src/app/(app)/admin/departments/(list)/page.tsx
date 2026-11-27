@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DepartmentsSkeleton } from "@/components/ui";
 import Link from "next/link";
-import { Alert, Badge, Card, EmptyState, Forbidden, Icon, PageShell } from "@/components/ui";
+import { Badge, Card, EmptyState, Forbidden, Icon, PageShell, Toast } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth/session";
 import { NO_APPROVER_LABEL, departmentHasActiveApprover } from "@/lib/org/departments";
 import { orgErrorMessage } from "@/lib/org/errors";
@@ -57,7 +57,7 @@ export async function DepartmentsPageContent({ searchParams }: PageProps<"/admin
 
   return (
     <PageShell title="Departments" description={summary} actions={<AddDepartment count={rows.length} />}>
-      <Alert message={orgErrorMessage(error)} />
+      <Toast message={orgErrorMessage(error)} />
 
       {rows.length === 0 ? (
         <EmptyState>No departments yet. Create the first one and add requesters to it.</EmptyState>

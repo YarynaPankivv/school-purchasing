@@ -12,6 +12,7 @@ import { Label } from "./label";
 import { SearchBox } from "./search-box";
 import { Icon, type IconName } from "./icons";
 import { MobileMenu } from "./mobile-menu";
+import { SidebarFrame } from "./sidebar-frame";
 import { NavLinks, type NavItem } from "./nav-links";
 import { StatusPage } from "./status-page";
 
@@ -41,7 +42,7 @@ export function Avatar({ name, size = "md" }: { name: string; size?: "md" | "lg"
 export type BadgeTone = "neutral" | "primary" | "ok" | "warn" | "danger" | "info";
 
 const BADGE_TONES: Record<BadgeTone, string> = {
-  neutral: "bg-muted text-muted-foreground",
+  neutral: "bg-muted text-muted-foreground ring-1 ring-inset ring-border",
   primary: "bg-accent text-accent-foreground",
   ok: "bg-status-approved text-status-approved-foreground",
   warn: "bg-status-pending text-status-pending-foreground",
@@ -102,7 +103,7 @@ function SidebarNav({ user }: { user: ShellUser | null }) {
       <NavLinks items={main} />
       {admin.length > 0 ? (
         <div className="flex flex-col gap-1.5">
-          <p className="px-3 text-xs font-medium text-muted-foreground">Administration</p>
+          <p className="px-3 text-xs font-medium text-muted-foreground sb-label whitespace-nowrap">Administration</p>
           <NavLinks items={admin} label="Administration" />
         </div>
       ) : null}
@@ -113,11 +114,11 @@ function SidebarNav({ user }: { user: ShellUser | null }) {
 function UserBlock({ user }: { user: ShellUser | null }) {
   const name = user ? user.fullName?.trim() || user.email || "—" : "";
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 group-data-[collapsed=true]/sidebar:flex-col group-data-[collapsed=true]/sidebar:gap-2">
       {user ? (
         <>
           <Avatar name={name} />
-          <div className="min-w-0 flex-1 leading-tight">
+          <div className="min-w-0 flex-1 leading-tight sb-label">
             <p className="truncate text-sm font-medium text-foreground">{name}</p>
             <p className="text-xs text-muted-foreground">{ROLE_LABELS[user.role]}</p>
           </div>
@@ -157,12 +158,12 @@ export function AppSidebar({ user }: { user: ShellUser | null }) {
       >
         Skip to content
       </a>
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card lg:sticky lg:top-0 lg:flex lg:h-dvh">
+      <SidebarFrame>
         {/* Висота рядка бренду = висоті TopBar (h-15.25), тож лінія під ним продовжує лінію під верхньою смугою. */}
-        <div className="flex h-15.25 shrink-0 items-center border-b border-border px-6">
-          <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
-            <BrandMark />
-            School Purchasing
+        <div className="flex h-15.25 shrink-0 items-center border-b border-border px-6 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0">
+          <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground group-data-[collapsed=true]/sidebar:gap-0">
+            <BrandMark className="size-10" />
+            <span className="sb-label w-min text-sm leading-tight">School Purchasing</span>
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-5">
@@ -171,11 +172,11 @@ export function AppSidebar({ user }: { user: ShellUser | null }) {
         <div className="border-t border-border px-3 pb-5 pt-4">
           <UserBlock user={user} />
         </div>
-      </aside>
+      </SidebarFrame>
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-card px-4 py-2 lg:hidden">
         <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground">
-          <BrandMark />
-          School Purchasing
+          <BrandMark className="size-10" />
+          <span className="w-min text-sm leading-tight">School Purchasing</span>
         </Link>
         <MobileMenu>
           <SidebarNav user={user} />
@@ -207,8 +208,8 @@ export function TopBar({ query, showNewRequest }: { query?: string; showNewReque
           />
         </div>
         {showNewRequest ? (
-          <Link href="/requests/new" className={buttonVariants("default", "h-11 shrink-0 gap-1.5! px-3! font-normal! shadow-none! sm:h-9")}>
-            <Icon name="file-plus" className="size-4" />
+          <Link href="/requests/new" className={buttonVariants("default", "h-11 shrink-0 gap-1.5! px-4! font-medium! shadow-none! sm:h-9")}>
+            <Icon name="plus" className="size-4" />
             <span className="max-sm:sr-only">New request</span>
           </Link>
         ) : null}
@@ -244,9 +245,9 @@ export function PageShell({
         id="main-content"
         tabIndex={-1}
         // scroll-mt: після переходу за «Skip to content» початок вмісту не ховається під липкою шапкою (3.75rem) і TopBar.
-        className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col gap-6 px-4 pb-12 pt-6 scroll-mt-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:scroll-mt-16 sm:px-8 sm:pt-8"
+        className="mx-auto flex w-full min-w-0 max-w-5xl flex-1 flex-col gap-7 px-4 pb-12 pt-6 scroll-mt-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:scroll-mt-16 sm:px-8 sm:pt-8"
       >
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 pb-1">
           {back ? (
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
               <Link
@@ -279,6 +280,7 @@ export function Card({
   children,
   tone = "default",
   className = "",
+  icon,
 }: {
   title?: ReactNode;
   description?: ReactNode;
@@ -286,6 +288,8 @@ export function Card({
   children?: ReactNode;
   tone?: "default" | "danger";
   className?: string;
+  // Петрольний значок перед заголовком, без фону.
+  icon?: IconName;
 }) {
   return (
     <section
@@ -293,9 +297,12 @@ export function Card({
     >
       {title ? (
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <h2 className="text-base font-semibold text-foreground">{title}</h2>
-            {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            {icon ? <Icon name={icon} className="mt-0.5 size-5 shrink-0 text-primary" /> : null}
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <h2 className="text-base font-semibold text-foreground">{title}</h2>
+              {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+            </div>
           </div>
           {action}
         </header>

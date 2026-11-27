@@ -207,7 +207,11 @@ export function PageSkeleton({
 export function HomeSkeleton() {
   return (
     <PageSkeleton>
-      <Chips count={3} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton key={index} className="h-[4.5rem] rounded-xl" />
+        ))}
+      </div>
       <Card>
         <RequestRows rows={4} />
       </Card>

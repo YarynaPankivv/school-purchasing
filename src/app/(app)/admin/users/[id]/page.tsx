@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { UserDetailSkeleton } from "@/components/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Alert, Avatar, Badge, Card, EmptyState, Forbidden, PageShell, RoleBadge, SubmitButton, Switch } from "@/components/ui";
+import { Avatar, Badge, Card, EmptyState, Forbidden, PageShell, RoleBadge, SubmitButton, Switch, Toast } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth/session";
 import { isUuid, personLabel } from "@/lib/org/departments";
 import { ORG_ERROR_MESSAGES, orgErrorMessage } from "@/lib/org/errors";
@@ -67,8 +67,8 @@ export async function UserPageContent({ params, searchParams }: PageProps<"/admi
 
   return (
     <PageShell title={label} back={{ href: "/admin/users", label: "All employees" }}>
-      <Alert message={orgErrorMessage(error)} />
-      <Alert tone="ok" message={savedMessage} />
+      <Toast message={orgErrorMessage(error)} />
+      <Toast tone="ok" message={savedMessage} />
 
       <Card>
         <div className="flex flex-wrap items-center gap-4">

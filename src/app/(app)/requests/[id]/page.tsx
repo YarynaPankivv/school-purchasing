@@ -4,6 +4,7 @@ import { RequestDetailSkeleton } from "@/components/ui";
 import { notFound } from "next/navigation";
 import {
   Alert,
+  Toast,
   Badge,
   Card,
   Checkbox,
@@ -28,6 +29,7 @@ import { PURCHASE_TYPE_LABELS } from "@/lib/org/requests";
 import { isAppRole } from "@/lib/org/roles";
 import { canAdminReject, canDecide, canReopen, decisionBlockReason, forwardedLines } from "@/lib/pur/decisions";
 import { PUR_ERROR_MESSAGES, purErrorMessage } from "@/lib/pur/errors";
+import { NoteField } from "./note-field";
 import { incompleteLinesFromDetail, incompleteLinesMessage, isKnownInvalidDetail, LINE_NAME_MAX, NOTE_MAX, PURPOSE_MAX, REASON_MAX, unitPriceInputValue, withDisplayNumbers } from "@/lib/pur/lines";
 import { loadDepartmentApprovers } from "../_lib/approvers";
 import { AiLineHelper } from "./ai-line-helper";
@@ -36,7 +38,7 @@ import { purchaseNumberLabel } from "@/lib/pur/numbers";
 import { toLineRow, toPurchaseRow } from "@/lib/pur/rows";
 import { itemsSummary } from "@/lib/pur/summary";
 import { PURCHASE_STATUS_LABELS, cancelOutcome } from "@/lib/pur/statuses";
-import { formatDate, formatDateTime, formatHistoryTime } from "@/lib/pur/time";
+import { formatDate, formatHistoryTime } from "@/lib/pur/time";
 import { formatUsd, lineTotal, lineTotalCents, requestTotal } from "@/lib/pur/totals";
 import { LiveLineTotal } from "./live-line-total";
 import type { Actor, LineRow } from "@/lib/pur/types";
@@ -161,7 +163,9 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
     .filter(Boolean)
     .join(" · ");
 
-  const savedMessage = typeof saved === "string" && Object.hasOwn(SAVED, saved) ? SAVED[saved] : undefined;
+  // «Редагування» вже показує постійний банер нижче: тимчасове «saved=editing_on» дублювало б його (зауваження PM, приймання 23.11).
+  const savedMessage =
+    typeof saved === "string" && Object.hasOwn(SAVED, saved) && !(saved === "editing_on" && request.editing) ? SAVED[saved] : undefined;
   const incomplete = error === "lines_incomplete" && typeof detail === "string" ? withDisplayNumbers(incompleteLinesFromDetail(detail), lines) : [];
   const errorMessage =
     incomplete.length > 0
@@ -214,8 +218,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
         ) : null
       }
     >
-      <Alert message={errorMessage} />
-      <Alert tone="ok" message={savedMessage} />
+      <Toast message={errorMessage} />
+      <Toast tone="ok" message={savedMessage} />
       {request.decision_reason && (request.status === "rejected" || request.status === "returned") ? (
         <Alert tone="warn" message={`Reason: ${request.decision_reason}`} />
       ) : null}
@@ -236,10 +240,11 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
       <SummaryStrip
         label="Request summary"
         items={[
-          { label: "Request total", value: formatUsd(total), testId: "request-total" },
+          { label: "Request total", value: formatUsd(total), testId: "request-total", accent: true },
           ...(hasRejectedLines ? [{ label: "Approved total", value: formatUsd(approvedTotal), testId: "approved-total" }] : []),
           { label: "Status", value: <PurchaseStatusBadge status={request.status} /> },
-          { label: "Delivery date", value: formatDate(request.delivery_date) },
+          // Для чернетки дата вже є полем нижче: у підсумку дублюємо її лише тоді, коли форми немає.
+          ...(editable ? [] : [{ label: "Delivery date", value: formatDate(request.delivery_date) }]),
         ]}
       />
 
@@ -248,7 +253,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
           <input type="hidden" name="id" value={request.id} />
 
           {editFields ? (
-            <Card title="Details" description="Department, purchase type, delivery date and a note for the approver.">
+            <Card icon="info" title="Details" description="Department, purchase type, delivery date and a note for the approver.">
               <div className="grid gap-4 sm:grid-cols-2">
                 {canChangeDepartment(request, actor) ? (
                   <Field label="Department">
@@ -280,8 +285,8 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                 <Field label="Delivery date">
                   <DateField name="delivery_date" defaultValue={request.delivery_date ?? ""} />
                 </Field>
-                <div className="flex flex-col gap-2 text-sm font-medium text-foreground">
-                  <label className="flex cursor-pointer items-center gap-2">
+                <div className="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+                  <label className="flex h-5 cursor-pointer items-center gap-2">
                     <Checkbox name="on_behalf_flag" defaultChecked={request.on_behalf_of_id !== null} />
                     Submitting on behalf of a colleague
                   </label>
@@ -300,21 +305,14 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                   </Select>
                 </div>
                 <div className="sm:col-span-2">
-                  <Field label="Note" hint={`Up to ${NOTE_MAX} characters.`} hintId="note-hint">
-                    <Textarea
-                      name="note"
-                      rows={3}
-                      maxLength={NOTE_MAX}
-                      defaultValue={request.note ?? ""}
-                      aria-describedby="note-hint"
-                    />
-                  </Field>
+                  <NoteField defaultValue={request.note ?? ""} max={NOTE_MAX} />
                 </div>
               </div>
             </Card>
           ) : null}
 
           <Card
+            icon="list"
             title="Lines"
             description="What you want to buy. Quantity is a whole number, unit price may be 0 when unknown."
             action={
@@ -409,7 +407,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
             </LinesTable>
           </Card>
 
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center justify-end gap-3 border-t border-border bg-background/90 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8">
             {request.editing ? (
               <SubmitButton formAction={setEditing.bind(null, false)} testId="save-changes">
                 Save changes
@@ -430,7 +428,7 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
         </form>
       ) : (
         <>
-          <Card title="Details">
+          <Card icon="info" title="Details">
             <DetailList
               columns={2}
               items={[
@@ -438,13 +436,13 @@ export async function RequestPageContent({ params, searchParams }: PageProps<"/r
                 { label: "Purchase type", value: PURCHASE_TYPE_LABELS[request.purchase_type ?? "procurement"] },
                 { label: "Author", value: names.get(request.author_id) ?? "—" },
                 { label: "On behalf of", value: request.on_behalf_of_id ? (names.get(request.on_behalf_of_id) ?? "—") : "—" },
-                { label: "Created", value: formatDateTime(request.created_at) },
+                { label: "Created", value: formatHistoryTime(request.created_at) },
                 { label: "Note", value: request.note ?? "—", wide: true },
               ]}
             />
           </Card>
 
-          <Card title="Lines" action={<Badge>{lines.length}</Badge>}>
+          <Card icon="list" title="Lines" action={<Badge>{lines.length}</Badge>}>
             <LinesTable lastHeader={<th className="pb-2 font-medium md:pl-4">Status</th>}>
                   {lines.map((line, index) => (
                     <tr key={line.id} data-testid="line-row" className="max-md:grid max-md:grid-cols-2 max-md:items-center max-md:gap-x-3 max-md:gap-y-2 max-md:py-4 max-md:first:pt-0 max-md:last:pb-0">

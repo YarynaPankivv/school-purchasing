@@ -3,7 +3,7 @@ import { Badge, type BadgeTone } from "@/components/ui";
 import { isLineStatus, isPurchaseStatus, lineStatusLabel, purchaseStatusLabel, type LineStatus, type PurchaseStatus } from "@/lib/pur/statuses";
 
 const PURCHASE_TONES: Record<PurchaseStatus, BadgeTone> = {
-  draft: "neutral",
+  draft: "primary",
   pending: "warn",
   approved: "ok",
   partially_approved: "ok",
