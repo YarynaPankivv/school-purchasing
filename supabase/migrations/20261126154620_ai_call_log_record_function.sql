@@ -26,6 +26,9 @@ begin
     raise exception 'not allowed' using errcode = '42501';
   end if;
   -- Ліміт на користувача: 20 запитів на хвилину — стеля безкоштовних моделей; більше за годину справжній працівник не дає.
+  -- Транзакційне блокування на користувача: паралельні виклики одного користувача рахують і вставляють по черзі, тож за
+  -- READ COMMITTED два виклики на межі 199 → 200 не проходять обидва.
+  perform pg_advisory_xact_lock(hashtextextended(actor::text, 0));
   select count(*) into recent
     from public.ai_call_log
     where user_id = actor and created_at > now() - interval '1 hour';
